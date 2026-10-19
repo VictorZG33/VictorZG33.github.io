@@ -1,0 +1,569 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Wentao Zhang is a PhD candidate in Chemical Engineering at Yale working on atomic layer deposition, nanofabrication and transport modeling for semiconductor processing and solar fuels.">
+<meta property="og:title" content="Wentao Zhang">
+<meta property="og:description" content="Wentao Zhang is a PhD candidate in Chemical Engineering at Yale working on atomic layer deposition, nanofabrication and transport modeling for semiconductor processing and solar fuels.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://wentaoz.com/">
+<link rel="canonical" href="https://wentaoz.com/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20fill%3D%22%230F1720%22%2F%3E%3Crect%20x%3D%224%22%20y%3D%226%22%20width%3D%2224%22%20height%3D%226%22%20fill%3D%22%23737db5%22%2F%3E%3Crect%20x%3D%224%22%20y%3D%2213%22%20width%3D%2224%22%20height%3D%226%22%20fill%3D%22%236c96ef%22%2F%3E%3Crect%20x%3D%224%22%20y%3D%2220%22%20width%3D%2224%22%20height%3D%226%22%20fill%3D%22%237edbc6%22%2F%3E%3C%2Fsvg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<title>Wentao Zhang</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&display=swap">
+<style>
+/* Layout: one left-aligned column on a two-track grid (section name | content).
+   The only full-width object is the oxide colour strip under the name. */
+:root {
+  --bg: #FFFFFF;         /* cleanroom white */
+  --ink: #0F1720;        /* blue-black, the cast of bare silicon */
+  --ink-2: #51606F;      /* secondary text */
+  --rule: #D3D9E0;       /* hairlines and the strip outline */
+  --film: #6C96EF;       /* 300 nm of SiO2 on Si; the script keeps it in step with the strip */
+  --film-mark: #6790E5;  /* the same colour held to 3:1 on --bg, for underlines and focus */
+
+  --display: "Archivo", "Helvetica Neue", Arial, sans-serif;   /* name, section names, controls */
+  --body: "STIX Two Text", "STIXGeneral", Cambria, "Times New Roman", serif;  /* running text, citations */
+
+  --small: 0.8125rem;
+  --ui: 0.9375rem;
+  --text: 1.125rem;
+  --label-col: 11rem;
+  --measure: 40rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0C1218; --ink: #E9EDF2; --ink-2: #9FAAB8; --rule: #28323D;
+    --film: #6C96EF; --film-mark: #6C96EF;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0C1218; --ink: #E9EDF2; --ink-2: #9FAAB8; --rule: #28323D;
+  --film: #6C96EF; --film-mark: #6C96EF;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: var(--text);
+  line-height: 1.6;
+  -webkit-text-size-adjust: 100%;
+  text-rendering: optimizeLegibility;
+}
+h1, h2, h3, p, ol, ul, dl, dd, figure { margin: 0; }
+ol, ul { padding: 0; list-style: none; }
+sub { font-size: 0.72em; line-height: 0; }
+
+a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--film-mark);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
+  overflow-wrap: anywhere;
+}
+a:hover { text-decoration-thickness: 3px; }
+a:focus-visible, button:focus-visible {
+  outline: 2px solid var(--film-mark);
+  outline-offset: 3px;
+}
+
+.page {
+  max-width: 66rem;
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 5vw, 3.5rem);
+  padding-block: clamp(2.5rem, 7vw, 5.5rem) 3.5rem;
+  display: grid;
+  gap: clamp(3rem, 7vw, 4.75rem);
+}
+
+/* Masthead */
+.masthead { display: grid; gap: 1.25rem; }
+.name {
+  font-family: var(--display);
+  font-stretch: 125%;
+  font-weight: 700;
+  font-size: clamp(2.6rem, 9.5vw, 6.25rem);
+  line-height: 0.95;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+.lead {
+  max-width: 36rem;
+  font-size: clamp(1.25rem, 2.6vw, 1.625rem);
+  line-height: 1.35;
+}
+
+/* Oxide colour strip */
+.film { display: grid; gap: 0.5rem; }
+.film-strip {
+  position: relative;
+  height: clamp(3.5rem, 9vw, 5.5rem);
+  box-shadow: 0 0 0 1px var(--rule);
+  cursor: ew-resize;
+  touch-action: pan-y;
+  /* first paint and no-script fallback; the canvas draws the same colours at full resolution */
+  background: linear-gradient(90deg, #d9dfee 0%, #d2d6e0 5%, #beb9b7 10%, #9a8c91 15%, #737db5 20%, #76a6e0 25%, #a0ccef 30%, #c4dee3 35%, #d8ddbc 40%, #e0c792 45%, #d89bab 50%, #b27ad9 55%, #6c96ef 60%, #43c1e7 65%, #7edbc6 70%, #b9df9f 75%, #dfcda6 80%, #eea9cc 85%, #df8be6 90%, #af93e7 95%, #62b5d0 100%);
+}
+.film-strip canvas { display: block; width: 100%; height: 100%; }
+.film-range {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;   /* the strip handles the pointer; the input keeps keyboard and screen-reader control */
+}
+.film-cursor {
+  position: absolute;
+  top: -0.375rem; bottom: -0.375rem;
+  left: var(--pos, 60%);
+  width: 0.375rem;
+  margin-left: -0.1875rem;
+  background: var(--bg);
+  border: 1.5px solid var(--ink);
+  border-radius: 0.25rem;
+  pointer-events: none;
+}
+.film-range:focus-visible ~ .film-cursor {
+  outline: 2px solid var(--film-mark);
+  outline-offset: 2px;
+}
+.film-axis {
+  position: relative;
+  height: 1.625rem;
+  font-family: var(--display);
+  font-size: var(--small);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+.tick { position: absolute; top: 0; width: 0; }
+.tick::before {
+  content: "";
+  position: absolute; left: 0; top: 0;
+  width: 1px; height: 0.375rem;
+  background: var(--ink-2);
+}
+.tick:last-child::before { left: -1px; }
+.tick b {
+  position: absolute; top: 0.5rem;
+  font-weight: inherit;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+.tick:first-child b { transform: none; }
+.tick:last-child b { transform: translateX(-100%); }
+
+/* Two-track rows: section name | content */
+.row {
+  display: grid;
+  grid-template-columns: var(--label-col) minmax(0, var(--measure));
+  column-gap: 2.5rem;
+  row-gap: 0.75rem;
+  align-items: start;
+}
+.row > * { min-width: 0; }
+.row h2 {
+  font-family: var(--display);
+  font-stretch: 112%;
+  font-weight: 650;
+  font-size: 1rem;
+  line-height: 1.3;
+  padding-top: 0.28em;   /* sits the label on the first text baseline */
+  text-wrap: balance;
+}
+.stack { display: grid; gap: 1rem; }
+
+.film-note { margin-top: 0.5rem; }
+.readout {
+  display: flex; align-items: center; gap: 0.625rem;
+  font-family: var(--display);
+  font-size: 1rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  padding-top: 0.2em;
+}
+.swatch {
+  width: 1.125rem; height: 1.125rem;
+  flex: none;
+  background: var(--film);
+  box-shadow: 0 0 0 1px var(--rule);
+}
+.film-note p { font-size: var(--ui); line-height: 1.55; color: var(--ink-2); }
+
+/* What I work on */
+.work { display: grid; gap: 1.5rem; }
+.work dt {
+  font-family: var(--display);
+  font-weight: 650;
+  font-size: 1rem;
+  line-height: 1.3;
+  margin-bottom: 0.3rem;
+}
+
+/* Publications */
+.pubs { display: grid; gap: 1.75rem; }
+.pubs li { display: grid; gap: 0.3rem; }
+.pub-title { font-weight: 600; line-height: 1.4; text-wrap: pretty; }
+.pub-authors, .pub-venue { font-size: var(--ui); line-height: 1.5; color: var(--ink-2); }
+.pub-authors strong { color: var(--ink); font-weight: 600; }
+.pub-venue a { color: var(--ink); }
+.legend { font-size: var(--small); font-family: var(--display); color: var(--ink-2); }
+
+/* Education */
+.edu { display: grid; gap: 1.125rem; }
+.edu li { display: grid; gap: 0.1rem; }
+.edu strong { font-weight: 600; }
+.edu span { font-size: var(--ui); color: var(--ink-2); }
+
+/* Contact */
+.contact { display: grid; gap: 1rem; justify-items: start; }
+.address-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1rem; }
+.address {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(1.125rem, 3.4vw, 1.375rem);
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+button.copy {
+  font-family: var(--display);
+  font-size: var(--small);
+  font-weight: 650;
+  line-height: 1;
+  color: var(--ink);
+  background: transparent;
+  border: 1.5px solid var(--ink);
+  border-radius: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+}
+button.copy:hover { background: var(--ink); color: var(--bg); }
+
+.foot {
+  border-top: 1px solid var(--rule);
+  padding-top: 1.25rem;
+  font-family: var(--display);
+  font-size: var(--small);
+  color: var(--ink-2);
+}
+
+@media (max-width: 24rem) {
+  .tick .unit { display: none; }   /* keeps "400" and "500" apart on the narrowest phones; the readout carries the unit */
+}
+@media (max-width: 46rem) {
+  body { font-size: 1.0625rem; }
+  .row { grid-template-columns: minmax(0, 1fr); }
+  .row h2 { padding-top: 0; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header class="masthead">
+    <h1 class="name">Wentao Zhang</h1>
+    <p class="lead">I grow thin films one atomic layer at a time and build the models that explain how they behave. PhD candidate in Chemical Engineering at Yale.</p>
+  </header>
+
+  <figure class="film">
+    <div class="film-strip" id="film-strip">
+      <canvas id="film-canvas" width="600" height="1" aria-hidden="true"></canvas>
+      <input class="film-range" id="film-thickness" type="range" min="0" max="500" step="1" value="300" aria-label="Oxide thickness in nanometres" aria-valuetext="300 nanometres">
+      <span class="film-cursor" aria-hidden="true"></span>
+    </div>
+    <div class="film-axis" aria-hidden="true">
+      <span class="tick" style="left:0%"><b>0</b></span>
+      <span class="tick" style="left:20%"><b>100</b></span>
+      <span class="tick" style="left:40%"><b>200</b></span>
+      <span class="tick" style="left:60%"><b>300</b></span>
+      <span class="tick" style="left:80%"><b>400</b></span>
+      <span class="tick" style="left:100%"><b>500<span class="unit"> nm</span></b></span>
+    </div>
+    <figcaption class="row film-note">
+      <output class="readout" id="film-readout" for="film-thickness"><span class="swatch"></span><span id="film-value">300 nm</span></output>
+      <p>The color of a silicon wafer under a film of SiO<sub>2</sub>, computed from thin-film interference for thicknesses from 0 to 500 nm. Cleanrooms keep this chart on the wall for reading oxide thickness by eye. Drag along the strip, or use the arrow keys, to pick a thickness.</p>
+    </figcaption>
+  </figure>
+
+  <section class="row" id="about">
+    <h2>About</h2>
+    <div class="stack">
+      <p>I am a PhD candidate in Chemical Engineering at Yale University, in <a href="https://lightcatalysis.yale.edu/">Shu Hu&rsquo;s Photocatalysis and Reaction Engineering Lab</a>, which I joined in 2021. My work sits between semiconductor processing and electrochemistry. I develop protective and passivating coatings for III&ndash;V semiconductors such as InP and GaInP, do the nanofabrication that turns them into devices, and write the transport models that connect a recipe to a result.</p>
+      <p>Before Yale I studied chemical engineering at the Cooper Union and at Columbia University, where my research followed ion transport in membrane-coated electrocatalysts.</p>
+    </div>
+  </section>
+
+  <section class="row" id="work">
+    <h2>What I work on</h2>
+    <dl class="work">
+      <div>
+        <dt>Atomic layer deposition</dt>
+        <dd>Process development for TiO<sub>2</sub>, Al<sub>2</sub>O<sub>3</sub> and GaN films and multilayer stacks, tuned for passivation and interface chemistry. I also run and maintain the group&rsquo;s plasma ALD system.</dd>
+      </div>
+      <div>
+        <dt>Nanofabrication</dt>
+        <dd>Electron-beam and photolithography, reactive ion etching and PECVD for sub-100 nm III&ndash;V structures, checked with SEM/EDX, XPS, AFM and ellipsometry.</dd>
+      </div>
+      <div>
+        <dt>Modeling</dt>
+        <dd>COMSOL and ANSYS Fluent models of transport, reaction and plasma, used to plan experiments and to explain their results. One example is the coupled transport and pore-diffusion model in our paper on electrified polyethylene pyrolysis.</dd>
+      </div>
+      <div>
+        <dt>Solar fuels</dt>
+        <dd>Photoelectrochemistry and photocatalysis on coated semiconductors, from water splitting to turning dissolved carbon into fuels.</dd>
+      </div>
+    </dl>
+  </section>
+
+  <section class="row" id="publications">
+    <h2>Publications</h2>
+    <div class="stack">
+      <ol class="pubs">
+        <li>
+          <span class="pub-title">Enhanced Photocatalytic Charge Separation in Coating-Protected Porous Silicon Quantum Dot Films With Stability Approaching 100 Hours</span>
+          <span class="pub-authors">X. Ma, Z. Li, M. Amirifard, Q. Ennis, H. Su, J. Shang, <strong>W. Zhang</strong>, R. Yanagi, Y. Lee, U. Kortshagen, S. Hu*</span>
+          <span class="pub-venue"><i>Advanced Functional Materials</i>, e02774 (2026)</span>
+        </li>
+        <li>
+          <span class="pub-title">Selective Electrified Polyethylene Upcycling by Pore-Modulated Pyrolysis</span>
+          <span class="pub-authors">J. Yang&dagger;, Q. Dong&dagger;, C. Zhang&dagger;, <strong>W. Zhang&dagger;</strong>, &hellip;, S. Hu*, G. Beckham, L. Hu*</span>
+          <span class="pub-venue"><i>Nature Chemical Engineering</i> 2, 424&ndash;435 (2025). <a href="https://doi.org/10.1038/s44286-025-00248-0">doi:10.1038/s44286-025-00248-0</a></span>
+        </li>
+        <li>
+          <span class="pub-title">Solar-Driven Selective Conversion of Millimolar Dissolved Carbon to Fuels with Molecular Flux Generation</span>
+          <span class="pub-authors">B. Liu, Z. Qian, X. Shi, H. Su, <strong>W. Zhang</strong>, &hellip;, S. Hu*</span>
+          <span class="pub-venue"><i>Nature Communications</i> 16, 1558 (2025). <a href="https://doi.org/10.1038/s41467-025-56106-3">doi:10.1038/s41467-025-56106-3</a></span>
+        </li>
+        <li>
+          <span class="pub-title">Models and Measurements Quantify Photon Recycling, Charge-Carrier Diffusion, and Photon Scattering Contributions to Photoluminescence in InP Nanowire Arrays</span>
+          <span class="pub-authors">D. Lustig, F. Chen, <strong>W. Zhang</strong>, O. Bird, J. Fajardo Jr., S. Ardo, S. Hu, A. Talin, R. Chandran*, J. Sambur*</span>
+          <span class="pub-venue"><i>Journal of Physical Chemistry C</i> 129, 8270&ndash;8283 (2025). <a href="https://doi.org/10.1021/acs.jpcc.5c01618">doi:10.1021/acs.jpcc.5c01618</a></span>
+        </li>
+        <li>
+          <span class="pub-title">Photoemission Study of GaN Passivation Layers and Band Alignment at GaInP(100) Heterointerfaces</span>
+          <span class="pub-authors">S. Shekarabi, M. A. Z. Pour, H. Su, <strong>W. Zhang</strong>, C. He, K. D. Hanke, O. Romanyuk, A. Paszuk, W. Jaegermann, S. Hu*, T. Hannappel*</span>
+          <span class="pub-venue"><i>ACS Applied Materials &amp; Interfaces</i> 17(4), 7087&ndash;7097 (2025). <a href="https://doi.org/10.1021/acsami.4c17453">doi:10.1021/acsami.4c17453</a></span>
+        </li>
+      </ol>
+      <p class="legend">&dagger; equal contribution &nbsp; * corresponding author</p>
+    </div>
+  </section>
+
+  <section class="row" id="education">
+    <h2>Education</h2>
+    <ul class="edu">
+      <li><strong>Yale University</strong><span>Ph.D. candidate, Chemical Engineering, 2021 to present</span></li>
+      <li><strong>Columbia University</strong><span>M.S., Chemical Engineering</span></li>
+      <li><strong>The Cooper Union</strong><span>B.Eng., Chemical Engineering</span></li>
+    </ul>
+  </section>
+
+  <section class="row" id="outside">
+    <h2>Outside the lab</h2>
+    <p>I shoot film, from 35 mm up to 4&times;5 sheets, and some astrophotography when the sky allows. I also rock climb and ski.</p>
+  </section>
+
+  <section class="row" id="contact">
+    <h2>Contact</h2>
+    <div class="contact">
+      <div class="address-line">
+        <span class="address" id="address">wentao.zhang@yale.edu</span>
+        <button class="copy" id="copy-address" type="button">Copy address</button>
+      </div>
+      <p><a href="https://lightcatalysis.yale.edu/">Hu group at Yale</a></p>
+    </div>
+  </section>
+
+  <footer class="foot">&copy; 2026 Wentao Zhang</footer>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---- Colour of SiO2 on Si: thin-film interference -> CIE XYZ under D65 -> sRGB ----
+     Approximate optical constants: Si n,k after Aspnes & Studna (1983); SiO2 Sellmeier
+     after Malitson (1965); CIE 1931 observer from the analytic fit of Wyman et al. (2013). */
+  var MAX = 500, GAIN = 2;
+  var SI = [[375.7,6.709,1.321],[387.5,6.062,0.630],[400.0,5.570,0.387],[413.3,5.222,0.269],[427.5,4.961,0.203],[442.8,4.753,0.163],[459.2,4.583,0.130],[476.9,4.442,0.090],[495.9,4.320,0.073],[516.6,4.215,0.060],[539.1,4.123,0.048],[563.6,4.042,0.032],[590.4,3.969,0.030],[619.9,3.906,0.022],[652.5,3.847,0.016],[688.8,3.796,0.013],[729.3,3.752,0.010],[774.9,3.714,0.008],[826.6,3.673,0.005]];
+  var D65 = [49.98,54.65,82.75,91.49,93.43,86.68,104.87,117.01,117.81,114.86,115.92,108.81,109.35,107.80,104.79,107.69,104.41,104.05,100.00,96.33,95.79,88.69,90.01,89.60,87.70,83.29,83.70,80.03,80.21,82.28,78.28,69.72,71.61,74.35,61.60,69.89,75.09,63.59,46.42,66.81,63.38];
+
+  function siNK(l) {
+    for (var i = 1; i < SI.length; i++) {
+      if (l <= SI[i][0]) {
+        var a = SI[i - 1], b = SI[i], t = (l - a[0]) / (b[0] - a[0]);
+        return [a[1] + t * (b[1] - a[1]), a[2] + t * (b[2] - a[2])];
+      }
+    }
+    return [SI[SI.length - 1][1], SI[SI.length - 1][2]];
+  }
+  function nOxide(l) {
+    var x2 = (l / 1000) * (l / 1000);
+    return Math.sqrt(1 + 0.6961663 * x2 / (x2 - 0.0684043 * 0.0684043) + 0.4079426 * x2 / (x2 - 0.1162414 * 0.1162414) + 0.8974794 * x2 / (x2 - 9.896161 * 9.896161));
+  }
+  function lobe(l, mu, s1, s2) { var t = (l - mu) * (l < mu ? s1 : s2); return Math.exp(-0.5 * t * t); }
+  function cmf(l) {
+    return [
+      0.362 * lobe(l, 442.0, 0.0624, 0.0374) + 1.056 * lobe(l, 599.8, 0.0264, 0.0323) - 0.065 * lobe(l, 501.1, 0.0490, 0.0382),
+      0.821 * lobe(l, 568.8, 0.0213, 0.0247) + 0.286 * lobe(l, 530.9, 0.0613, 0.0322),
+      1.217 * lobe(l, 437.0, 0.0845, 0.0278) + 0.681 * lobe(l, 459.0, 0.0385, 0.0725)
+    ];
+  }
+  /* Normal-incidence reflectance of air / SiO2 (d nm) / Si at wavelength l nm */
+  function reflectance(l, d) {
+    var n1 = nOxide(l), nk = siNK(l), n2 = nk[0], k2 = nk[1];
+    var r01 = (1 - n1) / (1 + n1);
+    var ar = n1 - n2, ai = k2, br = n1 + n2, bi = -k2, den = br * br + bi * bi;
+    var r12r = (ar * br + ai * bi) / den, r12i = (ai * br - ar * bi) / den;
+    var ph = -4 * Math.PI * n1 * d / l, c = Math.cos(ph), s = Math.sin(ph);
+    var er = r12r * c - r12i * s, ei = r12r * s + r12i * c;
+    var nr = r01 + er, dr = 1 + r01 * er, di = r01 * ei;
+    return (nr * nr + ei * ei) / (dr * dr + di * di);
+  }
+  var LAMBDA = [], CMF = [], WHITE = [0, 0, 0];
+  for (var i = 0; i < 41; i++) {
+    var l = 380 + 10 * i, c = cmf(l);
+    LAMBDA.push(l); CMF.push(c);
+    WHITE[0] += D65[i] * c[0]; WHITE[1] += D65[i] * c[1]; WHITE[2] += D65[i] * c[2];
+  }
+  function encode(v) { v = Math.min(1, Math.max(0, v)); return Math.round(255 * (v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1 / 2.4) - 0.055)); }
+  function filmRGB(d) {
+    var X = 0, Y = 0, Z = 0;
+    for (var i = 0; i < 41; i++) {
+      var p = D65[i] * reflectance(LAMBDA[i], d);
+      X += p * CMF[i][0]; Y += p * CMF[i][1]; Z += p * CMF[i][2];
+    }
+    X = X / WHITE[0] * 0.9505 * GAIN; Y = Y / WHITE[1] * GAIN; Z = Z / WHITE[2] * 1.089 * GAIN;
+    return [
+      encode(3.2406 * X - 1.5372 * Y - 0.4986 * Z),
+      encode(-0.9689 * X + 1.8758 * Y + 0.0415 * Z),
+      encode(0.0557 * X - 0.2040 * Y + 1.0570 * Z)
+    ];
+  }
+  var TABLE = [];
+  for (var d = 0; d <= MAX; d++) TABLE.push(filmRGB(d));
+
+  /* ---- Page wiring ---- */
+  var root = document.documentElement;
+  var strip = document.getElementById('film-strip');
+  var canvas = document.getElementById('film-canvas');
+  var range = document.getElementById('film-thickness');
+  var valueEl = document.getElementById('film-value');
+  if (!strip || !canvas || !range) return;
+
+  function draw() {
+    var w = Math.max(2, Math.round(strip.clientWidth * (window.devicePixelRatio || 1)));
+    canvas.width = w; canvas.height = 1;
+    var ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    var img = ctx.createImageData(w, 1);
+    for (var x = 0; x < w; x++) {
+      var pos = x / (w - 1) * MAX, lo = Math.floor(pos), hi = Math.min(MAX, lo + 1), t = pos - lo;
+      for (var ch = 0; ch < 3; ch++) img.data[4 * x + ch] = Math.round(TABLE[lo][ch] + t * (TABLE[hi][ch] - TABLE[lo][ch]));
+      img.data[4 * x + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+
+  function parseRGB(str) {
+    var m = String(str).match(/[\d.]+/g);
+    return m && m.length >= 3 ? [+m[0], +m[1], +m[2]] : null;
+  }
+  function luminance(rgb) {
+    var v = rgb.map(function (c) { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); });
+    return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2];
+  }
+  function contrast(a, b) { var x = luminance(a), y = luminance(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); }
+  /* Underlines and focus rings take the film colour, nudged toward the text colour until it reads at 3:1 */
+  function markColour(rgb) {
+    var style = getComputedStyle(document.body);
+    var bg = parseRGB(style.backgroundColor), ink = parseRGB(style.color);
+    if (!bg || !ink) return rgb;
+    for (var t = 0; t <= 1.0001; t += 0.05) {
+      var m = rgb.map(function (v, i) { return Math.round(v + (ink[i] - v) * t); });
+      if (contrast(m, bg) >= 3) return m;
+    }
+    return ink;
+  }
+  function css(rgb) { return 'rgb(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ')'; }
+
+  function apply() {
+    var d = Math.min(MAX, Math.max(0, Math.round(+range.value || 0)));
+    var rgb = TABLE[d];
+    strip.style.setProperty('--pos', (d / MAX * 100) + '%');
+    root.style.setProperty('--film', css(rgb));
+    root.style.setProperty('--film-mark', css(markColour(rgb)));
+    range.setAttribute('aria-valuetext', d + ' nanometres');
+    if (valueEl) valueEl.textContent = d + ' nm';
+  }
+
+  function fromPointer(e) {
+    var rect = strip.getBoundingClientRect();
+    var f = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+    range.value = Math.round(f * MAX);
+    apply();
+  }
+  var dragging = false;
+  strip.addEventListener('pointerdown', function (e) {
+    dragging = true;
+    try { strip.setPointerCapture(e.pointerId); } catch (err) {}
+    fromPointer(e);
+    range.focus({ preventScroll: true });
+    e.preventDefault();
+  });
+  strip.addEventListener('pointermove', function (e) { if (dragging) fromPointer(e); });
+  ['pointerup', 'pointercancel'].forEach(function (type) {
+    strip.addEventListener(type, function () { dragging = false; });
+  });
+  range.addEventListener('input', apply);
+
+  if ('ResizeObserver' in window) new ResizeObserver(draw).observe(strip);
+  else window.addEventListener('resize', draw);
+  if (window.matchMedia) {
+    var mq = window.matchMedia('(prefers-color-scheme: dark)');
+    if (mq.addEventListener) mq.addEventListener('change', apply);
+  }
+  if ('MutationObserver' in window) new MutationObserver(apply).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
+
+  draw();
+  apply();
+
+  /* ---- Copy address ---- */
+  var copyBtn = document.getElementById('copy-address');
+  var address = document.getElementById('address');
+  if (copyBtn && address) {
+    var resetTimer;
+    var label = function (text) {
+      copyBtn.textContent = text;
+      clearTimeout(resetTimer);
+      resetTimer = setTimeout(function () { copyBtn.textContent = 'Copy address'; }, 2000);
+    };
+    var selectAddress = function () {
+      var r = document.createRange();
+      r.selectNodeContents(address);
+      var sel = window.getSelection();
+      sel.removeAllRanges(); sel.addRange(r);
+      label('Address selected');
+    };
+    copyBtn.addEventListener('click', function () {
+      var text = address.textContent.trim();
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { label('Copied'); }, selectAddress);
+      } else {
+        selectAddress();
+      }
+    });
+  }
+})();
+</script>
+</body>
+</html>
