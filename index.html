@@ -379,8 +379,8 @@ a:focus-visible, button:focus-visible {
 }
 .kit dt { font-family: var(--display); font-weight: 650; color: var(--ink-2); }
 
-/* Wine Moon card: the one boxed object on the page, because it leads to a separate tool */
-.moon {
+/* Tool cards (Wine Moon, Fall Line): the only boxed objects on the page, because each leads to a separate tool */
+.moon, .fl {
   --wm: var(--ink-2);
   display: grid; gap: 0.625rem;
   padding: 1.125rem 1.25rem 1.125rem 1.375rem;
@@ -389,25 +389,40 @@ a:focus-visible, button:focus-visible {
   color: inherit;
   text-decoration: none;
 }
-.moon:hover { border-color: var(--ink); border-left-color: var(--wm); }
+.moon:hover, .fl:hover { border-color: var(--ink); border-left-color: var(--wm); }
 .moon.day-fruit { --wm: var(--wm-fruit); }
 .moon.day-flower { --wm: var(--wm-flower); }
 .moon.day-leaf { --wm: var(--wm-leaf); }
 .moon.day-root { --wm: var(--wm-root); }
-.moon-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.625rem; }
-.moon-zh { font-family: "Noto Serif SC", "Songti SC", "STSong", "SimSun", var(--body); font-weight: 700; font-size: 1.375rem; letter-spacing: 0.04em; }
-.moon-en { font-style: italic; font-size: 1.25rem; }
+.moon-head, .fl-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.625rem; }
+.moon-zh, .fl-zh { font-family: "Noto Serif SC", "Songti SC", "STSong", "SimSun", var(--body); font-weight: 700; font-size: 1.375rem; letter-spacing: 0.04em; }
+.moon-en, .fl-en { font-style: italic; font-size: 1.25rem; }
 .moon-live {
   display: flex; align-items: center; gap: 0.5rem;
   font-family: var(--display); font-weight: 650; font-size: var(--ui);
   color: var(--wm);
 }
 .moon-dot { width: 0.75rem; height: 0.75rem; border-radius: 50%; background: var(--wm); flex: none; }
-.moon-desc { font-size: var(--ui); line-height: 1.5; color: var(--ink-2); }
-.moon-cta {
+.moon-desc, .fl-desc { font-size: var(--ui); line-height: 1.5; color: var(--ink-2); }
+.moon-cta, .fl-cta {
   font-family: var(--display); font-weight: 650; font-size: var(--small);
   text-decoration: underline; text-decoration-color: var(--film-mark); text-decoration-thickness: 2px; text-underline-offset: 0.2em;
 }
+/* Fall Line's left edge is its own slope-angle legend, 20° at the top to 50°+ at the bottom */
+.fl {
+  --fl-bands: #9ed668 0 14.29%, #f6e23c 0 28.57%, #f8a01e 0 42.86%, #e8422e 0 57.14%, #b61678 0 71.43%, #6834aa 0 85.71%, #1e1a3c 0;
+  position: relative;
+}
+.fl::before {
+  content: "";
+  position: absolute; top: -1px; bottom: -1px; left: -4px; width: 4px;
+  background: linear-gradient(180deg, var(--fl-bands));
+}
+.fl-live {
+  display: flex; align-items: center; gap: 0.5rem;
+  font-family: var(--display); font-weight: 650; font-size: var(--ui);
+}
+.fl-strip { width: 4.5rem; height: 0.75rem; flex: none; background: linear-gradient(90deg, var(--fl-bands)); }
 
 /* Contact */
 .contact { display: grid; gap: 1rem; justify-items: start; }
@@ -614,6 +629,12 @@ button.copy:hover { background: var(--ink); color: var(--bg); }
 
       <div class="panel" role="tabpanel" id="panel-skiing" aria-labelledby="tab-skiing" data-title="Skiing">
         <p>Winter weekends go to skiing.</p>
+        <a class="fl" href="fallline/">
+          <span class="fl-head"><span class="fl-zh">滚落线</span><span class="fl-en">Fall Line</span></span>
+          <span class="fl-live"><i class="fl-strip" aria-hidden="true"></i><span>Slope angle, 20° to 50°+</span></span>
+          <span class="fl-desc">A 3D ski map I built after FATMAP went dark. It shades every slope by its angle and the way it faces, computed in your browser from open elevation data, draws runs and lifts for ski areas around the world, replays GPX tracks and keeps working offline on the mountain. In Chinese and English.</span>
+          <span class="fl-cta">Open the map</span>
+        </a>
       </div>
 
       <div class="panel" role="tabpanel" id="panel-climbing" aria-labelledby="tab-climbing" data-title="Climbing">
