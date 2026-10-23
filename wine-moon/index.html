@@ -8,6 +8,16 @@
 <meta property="og:description" content="醉月历 Wine Moon: a biodynamic wine calendar by Wentao Zhang. It computes the Moon's sidereal position in the browser and tells you whether today is a fruit, flower, leaf or root day, after Maria Thun's When Wine Tastes Best.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://wentaoz.com/wine-moon/">
+<meta property="og:site_name" content="Wentao Zhang">
+<meta property="og:image" content="https://wentaoz.com/wine-moon/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="醉月历 Wine Moon, with the four day types: fruit, flower, leaf and root.">
+<meta name="twitter:card" content="summary_large_image">
+<script>
+/* Apply the theme picked with the Dark button (here or on the homepage) before first paint */
+(function () { try { var t = localStorage.getItem('wentaoz.theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {} })();
+</script>
 <link rel="canonical" href="https://wentaoz.com/wine-moon/">
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20fill%3D%22%23EFEEE8%22/%3E%3Ccircle%20cx%3D%2217%22%20cy%3D%2216%22%20r%3D%229%22%20fill%3D%22%238A1C2D%22/%3E%3Ccircle%20cx%3D%2213%22%20cy%3D%2214%22%20r%3D%228%22%20fill%3D%22%23EFEEE8%22/%3E%3C/svg%3E">
 <style>html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}[hidden]{display:none!important}</style>
@@ -89,6 +99,13 @@ body {
 .brand .name { font-family: var(--font-display-cjk); font-weight: 900; font-size: 20px; letter-spacing: 0.04em; }
 .brand .name-latin { font-family: var(--font-display-latin); font-style: italic; font-size: 20px; }
 .eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+.tools { display: flex; align-items: center; gap: 8px; flex: none; }
+.theme {
+  appearance: none; border: 1px solid var(--rule-strong); border-radius: 999px; background: transparent; color: var(--muted);
+  font: 500 12px/1 var(--font-body); padding: 7px 11px; cursor: pointer; letter-spacing: 0.04em;
+}
+.theme[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.theme:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .lang { display: inline-flex; border: 1px solid var(--rule-strong); border-radius: 999px; overflow: hidden; flex: none; }
 .lang button {
   appearance: none; border: 0; background: transparent; color: var(--muted); font: 500 12px/1 var(--font-body);
@@ -212,7 +229,7 @@ footer .sig { font-family: var(--font-display-latin); font-style: italic; font-s
   .row .p { transition: width 0.3s ease, left 0.3s ease; }
 }
 </style>
-<noscript><style>.lang, .hero, section.block, details, footer { display: none; }</style></noscript>
+<noscript><style>.tools, .hero, section.block, details, footer { display: none; }</style></noscript>
 </head>
 <body>
 <div class="page lang-zh day-fruit" id="page">
@@ -222,9 +239,12 @@ footer .sig { font-family: var(--font-display-latin); font-style: italic; font-s
       <div class="brand"><span class="name" lang="zh-CN">醉月历</span><span class="name-latin" lang="en">Wine Moon</span></div>
       <div class="eyebrow" id="eyebrow"></div>
     </div>
-    <div class="lang" role="group" aria-label="Language">
-      <button type="button" id="btn-zh" data-lang="zh" aria-pressed="true" lang="zh-CN">中文</button>
-      <button type="button" id="btn-en" data-lang="en" aria-pressed="false" lang="en">EN</button>
+    <div class="tools">
+      <button type="button" class="theme" id="btn-theme" aria-pressed="false" hidden></button>
+      <div class="lang" role="group" aria-label="Language">
+        <button type="button" id="btn-zh" data-lang="zh" aria-pressed="true" lang="zh-CN">中文</button>
+        <button type="button" id="btn-en" data-lang="en" aria-pressed="false" lang="en">EN</button>
+      </div>
     </div>
   </header>
 
@@ -337,7 +357,8 @@ footer .sig { font-family: var(--font-display-latin); font-style: italic; font-s
           '<p><span class="k">时间</span><br>按你设备的时区（' + TZ + '）显示；换个地方打开，时间会自动换算。</p>';
       },
       footSig: '醉月历',
-      footNote: '没有证据说月亮真能改变酒的味道，但挑个好日子开瓶总归不亏。'
+      footNote: '没有证据说月亮真能改变酒的味道，但挑个好日子开瓶总归不亏。',
+      theme: '深色'
     },
     en: {
       locale: 'en-US',
@@ -384,7 +405,8 @@ footer .sig { font-family: var(--font-display-latin); font-style: italic; font-s
           '<p><span class="k">Time</span><br>Shown in your device’s time zone (' + TZ + '); open it elsewhere and the times convert.</p>';
       },
       footSig: 'Wine Moon',
-      footNote: 'There is no evidence the Moon changes how wine tastes. Picking a good day to open a bottle costs nothing.'
+      footNote: 'There is no evidence the Moon changes how wine tastes. Picking a good day to open a bottle costs nothing.',
+      theme: 'Dark'
     }
   };
 
@@ -450,6 +472,7 @@ footer .sig { font-family: var(--font-display-latin); font-style: italic; font-s
     document.documentElement.lang = state.lang === 'zh' ? 'zh-CN' : 'en';
     $('btn-zh').setAttribute('aria-pressed', state.lang === 'zh');
     $('btn-en').setAttribute('aria-pressed', state.lang === 'en');
+    $('btn-theme').textContent = L.theme;
     $('eyebrow').textContent = L.eyebrow;
 
     $('whenLabel').textContent = state.mode === 'now' ? L.now : L.chosen;
@@ -556,6 +579,24 @@ footer .sig { font-family: var(--font-display-latin); font-style: italic; font-s
   function setLang(l) { state.lang = l; try { localStorage.setItem('winemoon.lang', l); } catch (e) {} render(); }
   $('btn-zh').addEventListener('click', function () { setLang('zh'); });
   $('btn-en').addEventListener('click', function () { setLang('en'); });
+
+  // light / dark: follows the system until chosen; the choice is shared with the homepage
+  var root = document.documentElement;
+  var mqDark = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  function isDark() { var t = root.getAttribute('data-theme'); return t ? t === 'dark' : !!(mqDark && mqDark.matches); }
+  function showTheme() { $('btn-theme').setAttribute('aria-pressed', isDark() ? 'true' : 'false'); }
+  $('btn-theme').addEventListener('click', function () {
+    var next = isDark() ? 'light' : 'dark', system = mqDark && mqDark.matches ? 'dark' : 'light';
+    // picking what the system already shows clears the choice, so the page follows the system again
+    if (next === system) root.removeAttribute('data-theme'); else root.setAttribute('data-theme', next);
+    try {
+      if (next === system) localStorage.removeItem('wentaoz.theme'); else localStorage.setItem('wentaoz.theme', next);
+    } catch (e) {}
+    showTheme();
+  });
+  if (mqDark && mqDark.addEventListener) mqDark.addEventListener('change', showTheme);
+  showTheme();
+  $('btn-theme').hidden = false;
   $('prevBtn').addEventListener('click', function () {
     var t = state.mode === 'now' ? new Date() : state.chosen;
     var p = W.periodAt(W.jdFromDate(t));
