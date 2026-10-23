@@ -8,15 +8,48 @@
 <meta property="og:description" content="Wentao Zhang is a PhD candidate in Chemical Engineering at Yale working on atomic layer deposition, nanofabrication and transport modeling for semiconductor processing and solar fuels.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://wentaoz.com/">
+<meta property="og:site_name" content="Wentao Zhang">
+<meta property="og:image" content="https://wentaoz.com/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Wentao Zhang, above the colors a TiO2 film takes on a silicon wafer from 0 to 300 nm.">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="canonical" href="https://wentaoz.com/">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "Wentao Zhang",
+  "url": "https://wentaoz.com/",
+  "image": "https://wentaoz.com/og.png",
+  "email": "mailto:wentao.zhang@yale.edu",
+  "jobTitle": "PhD candidate in Chemical Engineering",
+  "affiliation": { "@type": "CollegeOrUniversity", "name": "Yale University", "url": "https://www.yale.edu/" },
+  "alumniOf": [
+    { "@type": "CollegeOrUniversity", "name": "Columbia University" },
+    { "@type": "CollegeOrUniversity", "name": "The Cooper Union" }
+  ],
+  "knowsAbout": ["Atomic layer deposition", "Nanofabrication", "Transport modeling", "Photoelectrochemistry", "Solar fuels"],
+  "sameAs": [
+    "https://scholar.google.com/citations?user=eYAOuJlZ_C8C",
+    "https://www.linkedin.com/in/wentao-zhang-yale/"
+  ]
+}
+</script>
+<script>
+/* Apply the theme picked with the Dark mode button before first paint; without one, the system setting rules */
+(function () { try { var t = localStorage.getItem('wentaoz.theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {} })();
+</script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20fill%3D%22%230F1720%22%2F%3E%3Crect%20x%3D%224%22%20y%3D%226%22%20width%3D%2224%22%20height%3D%226%22%20fill%3D%22%23737db5%22%2F%3E%3Crect%20x%3D%224%22%20y%3D%2213%22%20width%3D%2224%22%20height%3D%226%22%20fill%3D%22%236c96ef%22%2F%3E%3Crect%20x%3D%224%22%20y%3D%2220%22%20width%3D%2224%22%20height%3D%226%22%20fill%3D%22%237edbc6%22%2F%3E%3C%2Fsvg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <title>Wentao Zhang</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&family=Noto+Serif+SC:wght@700&display=swap">
+<!-- Only the widths and weights the page uses; the Chinese face is cut down to the three characters of 醉月历 -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..700&family=STIX+Two+Text:ital,wght@0,400..600;1,400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700&text=%E9%86%89%E6%9C%88%E5%8E%86&display=swap">
 <style>
 /* Layout: one left-aligned column on a two-track grid (section name | content).
-   The only full-width object is the TiO2 film colour strip under the name. */
+   The only full-width object is the film colour strip under the name. */
 :root {
   --bg: #FFFFFF;         /* cleanroom white */
   --ink: #0F1720;        /* blue-black, the cast of bare silicon */
@@ -82,13 +115,34 @@ a:focus-visible, button:focus-visible {
 }
 
 .page {
+  position: relative;
   max-width: 66rem;
   margin-inline: auto;
   padding-inline: clamp(1rem, 5vw, 3.5rem);
-  padding-block: clamp(2.5rem, 7vw, 5.5rem) 3.5rem;
+  padding-block: clamp(3rem, 7vw, 5.5rem) 3.5rem;
   display: grid;
   gap: clamp(3rem, 7vw, 4.75rem);
 }
+
+/* Light / dark switch, top right above the name; the dot fills when dark mode is on */
+.theme-toggle {
+  position: absolute;
+  top: 0.75rem;
+  right: clamp(1rem, 5vw, 3.5rem);
+  display: flex; align-items: center; gap: 0.4rem;
+  font-family: var(--display);
+  font-size: var(--small);
+  font-weight: 650;
+  line-height: 1;
+  color: var(--ink-2);
+  background: none;
+  border: 0;
+  padding: 0.375rem 0;
+  cursor: pointer;
+}
+.theme-toggle:hover { color: var(--ink); }
+.theme-dot { width: 0.75rem; height: 0.75rem; border-radius: 50%; border: 1.5px solid currentColor; }
+.theme-toggle[aria-pressed="true"] .theme-dot { background: currentColor; }
 
 /* Masthead */
 .masthead { display: grid; gap: 1.25rem; }
@@ -188,6 +242,7 @@ a:focus-visible, button:focus-visible {
 .stack { display: grid; gap: 1rem; }
 
 .film-note { margin-top: 0.5rem; }
+.film-controls { display: grid; gap: 0.875rem; justify-items: start; align-content: start; }
 .readout {
   display: flex; align-items: center; gap: 0.625rem;
   font-family: var(--display);
@@ -202,7 +257,69 @@ a:focus-visible, button:focus-visible {
   background: var(--film);
   box-shadow: 0 0 0 1px var(--rule);
 }
-.film-note p { font-size: var(--ui); line-height: 1.55; color: var(--ink-2); }
+.cycles {
+  font-family: var(--display);
+  font-size: var(--ui);
+  font-weight: 600;
+  line-height: 1.3;
+}
+.cycles span { display: block; margin-top: 0.15rem; font-size: var(--small); font-weight: 500; color: var(--ink-2); }
+.material { display: flex; }
+.material button {
+  font-family: var(--display);
+  font-size: var(--small);
+  font-weight: 650;
+  line-height: 1;
+  color: var(--ink);
+  background: transparent;
+  border: 1.5px solid var(--ink);
+  padding: 0.5rem 0.5rem;
+  cursor: pointer;
+}
+.material button + button { border-left-width: 0; }
+.material button:first-child { border-radius: 0.25rem 0 0 0.25rem; }
+.material button:last-child { border-radius: 0 0.25rem 0.25rem 0; }
+.material button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.film-text > p { font-size: var(--ui); line-height: 1.55; color: var(--ink-2); }
+
+/* Reflectance spectrum under the readout: this film in ink, bare Si in the secondary grey */
+.spectrum { position: relative; display: grid; gap: 0.5rem; }
+.spectrum-key {
+  display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem;
+  font-family: var(--display);
+  font-size: var(--small);
+  line-height: 1.4;
+  color: var(--ink-2);
+}
+.spectrum-key > span { display: inline-flex; align-items: center; gap: 0.5rem; }
+.key { flex: none; width: 1rem; height: 2px; background: var(--ink); }
+.key.sp-si { height: 1.5px; background: var(--ink-2); }
+.spectrum svg { display: block; width: 100%; height: auto; overflow: visible; touch-action: pan-y; }
+.sp-grid { stroke: var(--rule); stroke-width: 1; shape-rendering: crispEdges; }
+.sp-tick { font-family: var(--display); font-size: 12px; font-weight: 500; fill: var(--ink-2); font-variant-numeric: tabular-nums; }
+.sp-line { fill: none; stroke-linejoin: round; stroke-linecap: round; }
+.sp-line.sp-film { stroke: var(--ink); stroke-width: 2; }
+.sp-line.sp-si { stroke: var(--ink-2); stroke-width: 1.5; }
+.sp-dot { stroke: var(--bg); stroke-width: 2; }
+.sp-dot.sp-film { fill: var(--ink); }
+.sp-dot.sp-si { fill: var(--ink-2); }
+.sp-cross { stroke: var(--ink-2); stroke-width: 1; shape-rendering: crispEdges; }
+.spectrum-tip {
+  position: absolute; top: 1.75rem; left: 0;
+  display: grid; gap: 0.2rem;
+  padding: 0.5rem 0.625rem;
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  font-family: var(--display);
+  font-size: var(--small);
+  line-height: 1.3;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.spectrum-tip > span { display: flex; align-items: center; gap: 0.5rem; }
+.spectrum-tip b { font-weight: 650; color: var(--ink); }
 
 /* What I work on */
 .work { display: grid; gap: 1.5rem; }
@@ -222,6 +339,7 @@ a:focus-visible, button:focus-visible {
 .pub-authors strong { color: var(--ink); font-weight: 600; }
 .pub-venue a { color: var(--ink); }
 .legend { font-size: var(--small); font-family: var(--display); color: var(--ink-2); }
+.pub-more { font-size: var(--ui); }
 
 /* Education */
 .edu { display: grid; gap: 1.125rem; }
@@ -314,6 +432,7 @@ button.copy {
   cursor: pointer;
 }
 button.copy:hover { background: var(--ink); color: var(--bg); }
+.links { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; }
 
 .foot {
   border-top: 1px solid var(--rule);
@@ -331,10 +450,35 @@ button.copy:hover { background: var(--ink); color: var(--bg); }
   .row { grid-template-columns: minmax(0, 1fr); }
   .row h2 { padding-top: 0; }
 }
+
+/* Print: light colours whatever the theme, every hobby panel at once, no controls,
+   and the addresses behind the profile links written out */
+@page { margin: 16mm 18mm; }
+@media print {
+  :root {
+    --bg: #FFFFFF !important; --ink: #000000 !important; --ink-2: #454E58 !important; --rule: #B9C1C9 !important;
+    --film-mark: #000000 !important;
+    color-scheme: light !important;
+  }
+  body { font-size: 10.5pt; line-height: 1.45; }
+  .page { max-width: none; padding: 0; gap: 1.5rem; }
+  .work, .pubs { gap: 1rem; }
+  .edu, .hobbies { gap: 0.75rem; }
+  .row { grid-template-columns: 8rem minmax(0, 1fr); column-gap: 1.5rem; }
+  .row h2 { padding-top: 0.28em; }
+  .theme-toggle, .copy, .material, .tabs, .moon, .film-cursor, .spectrum { display: none !important; }
+  .hobbies .panel[hidden] { display: grid !important; }
+  .panel::before { content: attr(data-title); font-family: var(--display); font-weight: 650; font-size: var(--ui); }
+  .film-strip, .swatch { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .film, .work > div, .pubs li, .edu li, .panel, .contact { break-inside: avoid; }
+  .links a::after { content: " " attr(href); font-family: var(--body); font-size: 0.85em; color: var(--ink-2); }
+}
 </style>
 </head>
 <body>
 <div class="page">
+
+  <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false" hidden><i class="theme-dot" aria-hidden="true"></i>Dark mode</button>
 
   <header class="masthead">
     <h1 class="name">Wentao Zhang</h1>
@@ -344,7 +488,7 @@ button.copy:hover { background: var(--ink); color: var(--bg); }
   <figure class="film">
     <div class="film-strip" id="film-strip">
       <canvas id="film-canvas" width="600" height="1" aria-hidden="true"></canvas>
-      <input class="film-range" id="film-thickness" type="range" min="0" max="300" step="1" value="70" aria-label="TiO2 film thickness in nanometres" aria-valuetext="70 nanometres">
+      <input class="film-range" id="film-thickness" type="range" min="0" max="300" step="1" value="70" aria-label="Film thickness in nanometres" aria-valuetext="70 nanometres of TiO2, about 1,400 ALD cycles">
       <span class="film-cursor" aria-hidden="true"></span>
     </div>
     <div class="film-axis" aria-hidden="true">
@@ -354,8 +498,23 @@ button.copy:hover { background: var(--ink); color: var(--bg); }
       <span class="tick" style="left:100%"><b>300<span class="unit"> nm</span></b></span>
     </div>
     <figcaption class="row film-note">
-      <output class="readout" id="film-readout" for="film-thickness"><span class="swatch"></span><span id="film-value">70 nm</span></output>
-      <p>The color of a silicon wafer under a film of TiO<sub>2</sub>, computed from thin-film interference for thicknesses from 0 to 300 nm. Cleanrooms keep a chart like this on the wall for reading oxide thickness by eye; this one is for the titanium dioxide I grow by atomic layer deposition. Drag along the strip, or use the arrow keys, to pick a thickness.</p>
+      <div class="film-controls">
+        <output class="readout" id="film-readout" for="film-thickness"><span class="swatch"></span><span id="film-value">70 nm</span></output>
+        <p class="cycles" id="film-cycles">&asymp; 1,400 ALD cycles<span>at 0.05 nm per cycle</span></p>
+        <div class="material" id="film-material" role="group" aria-label="Film material" hidden>
+          <button type="button" data-material="tio2" aria-pressed="true">TiO<sub>2</sub></button>
+          <button type="button" data-material="al2o3" aria-pressed="false">Al<sub>2</sub>O<sub>3</sub></button>
+          <button type="button" data-material="sio2" aria-pressed="false">SiO<sub>2</sub></button>
+        </div>
+      </div>
+      <div class="stack film-text">
+        <div class="spectrum" id="film-spectrum" hidden>
+          <p class="spectrum-key" aria-hidden="true"><span><i class="key"></i><span id="spectrum-key-film"></span></span><span><i class="key sp-si"></i>Bare Si</span></p>
+          <svg id="spectrum-svg" role="img"></svg>
+          <div class="spectrum-tip" id="spectrum-tip" hidden></div>
+        </div>
+        <p>The color of a silicon wafer under a transparent film, computed from thin-film interference for thicknesses from 0 to 300 nm. Cleanrooms keep a chart like this on the wall for reading oxide thickness by eye. TiO<sub>2</sub> and Al<sub>2</sub>O<sub>3</sub> are films I grow by atomic layer deposition; SiO<sub>2</sub> is the thermal oxide the wall charts were made for. The plot shows how much light the wafer reflects at each wavelength, and the color is what the dips leave behind. Drag along the strip, or use the arrow keys, to pick a thickness; the address bar keeps it, so a copied link opens on the same color.</p>
+      </div>
     </figcaption>
   </figure>
 
@@ -420,6 +579,7 @@ button.copy:hover { background: var(--ink); color: var(--bg); }
         </li>
       </ol>
       <p class="legend">&dagger; equal contribution &nbsp; * corresponding author</p>
+      <p class="pub-more"><a href="https://scholar.google.com/citations?user=eYAOuJlZ_C8C&amp;hl=en">All publications on Google Scholar</a></p>
     </div>
   </section>
 
@@ -442,7 +602,7 @@ button.copy:hover { background: var(--ink); color: var(--bg); }
         <button type="button" role="tab" id="tab-photography" data-key="photography" aria-controls="panel-photography" aria-selected="false" tabindex="-1">Photography</button>
       </div>
 
-      <div class="panel" role="tabpanel" id="panel-wine" aria-labelledby="tab-wine">
+      <div class="panel" role="tabpanel" id="panel-wine" aria-labelledby="tab-wine" data-title="Wine">
         <p>Burgundy first, then Piedmont, with detours through California. I organize blind tastings with friends, everyone bringing a bottle, and keep my tasting notes on <a href="https://www.cellartracker.com/user.asp?iUserOverride=902605">CellarTracker</a>. Sake when I can find good sake.</p>
         <a class="moon" id="moon-card" href="wine-moon/">
           <span class="moon-head"><span class="moon-zh" lang="zh-CN">醉月历</span><span class="moon-en">Wine Moon</span></span>
@@ -452,15 +612,15 @@ button.copy:hover { background: var(--ink); color: var(--bg); }
         </a>
       </div>
 
-      <div class="panel" role="tabpanel" id="panel-skiing" aria-labelledby="tab-skiing">
+      <div class="panel" role="tabpanel" id="panel-skiing" aria-labelledby="tab-skiing" data-title="Skiing">
         <p>Winter weekends go to skiing.</p>
       </div>
 
-      <div class="panel" role="tabpanel" id="panel-climbing" aria-labelledby="tab-climbing">
+      <div class="panel" role="tabpanel" id="panel-climbing" aria-labelledby="tab-climbing" data-title="Climbing">
         <p>Rock climbing, mostly at the Gunks in New York.</p>
       </div>
 
-      <div class="panel" role="tabpanel" id="panel-photography" aria-labelledby="tab-photography">
+      <div class="panel" role="tabpanel" id="panel-photography" aria-labelledby="tab-photography" data-title="Photography">
         <p>Mostly film. 35 mm on a Leica M3 and a Nikon 35Ti, panoramas on a Fuji TX-1; 6&times;6 on a Rolleiflex 2.8F; 4&times;5 on a large-format camera that also takes an Instax Wide back. Provia and Portra, and Kodak 5294 in 35 mm. I develop the film myself, scan it on an Epson V800, and print in the darkroom under an enlarger. Astrophotography when the sky cooperates.</p>
       </div>
     </div>
@@ -473,7 +633,7 @@ button.copy:hover { background: var(--ink); color: var(--bg); }
         <a class="address" id="address" href="mailto:wentao.zhang@yale.edu">wentao.zhang@yale.edu</a>
         <button class="copy" id="copy-address" type="button">Copy address</button>
       </div>
-      <p><a href="https://lightcatalysis.yale.edu/">Hu group at Yale</a></p>
+      <p class="links"><a href="https://scholar.google.com/citations?user=eYAOuJlZ_C8C&amp;hl=en">Google Scholar</a><a href="https://www.linkedin.com/in/wentao-zhang-yale/">LinkedIn</a><a href="https://lightcatalysis.yale.edu/">Hu group at Yale</a></p>
     </div>
   </section>
 
@@ -485,10 +645,12 @@ button.copy:hover { background: var(--ink); color: var(--bg); }
 (function () {
   'use strict';
 
-  /* ---- Colour of TiO2 on Si: thin-film interference -> CIE XYZ under D65 -> sRGB ----
-     Approximate optical constants: Si n,k after Aspnes & Studna (1983); amorphous ALD TiO2
-     as a one-term Sellmeier fitted to Siefke et al. (2016), n = 2.40 at 550 nm, taken as
-     transparent across the visible; CIE 1931 observer from the analytic fit of Wyman et al. (2013). */
+  /* ---- Colour of a transparent film on Si: thin-film interference -> CIE XYZ under D65 -> sRGB ----
+     Approximate optical constants: Si n,k after Aspnes & Studna (1983); every film taken as
+     transparent across the visible. Amorphous ALD TiO2 as a one-term Sellmeier fitted to Siefke
+     et al. (2016), n = 2.40 at 550 nm; amorphous ALD Al2O3 as a two-term Cauchy, n = 1.64 at 633 nm;
+     thermal SiO2 as fused silica after Malitson (1965). CIE 1931 observer from the analytic fit of
+     Wyman et al. (2013). */
   var MAX = 300, GAIN = 2;
   var SI = [[375.7,6.709,1.321],[387.5,6.062,0.630],[400.0,5.570,0.387],[413.3,5.222,0.269],[427.5,4.961,0.203],[442.8,4.753,0.163],[459.2,4.583,0.130],[476.9,4.442,0.090],[495.9,4.320,0.073],[516.6,4.215,0.060],[539.1,4.123,0.048],[563.6,4.042,0.032],[590.4,3.969,0.030],[619.9,3.906,0.022],[652.5,3.847,0.016],[688.8,3.796,0.013],[729.3,3.752,0.010],[774.9,3.714,0.008],[826.6,3.673,0.005]];
   var D65 = [49.98,54.65,82.75,91.49,93.43,86.68,104.87,117.01,117.81,114.86,115.92,108.81,109.35,107.80,104.79,107.69,104.41,104.05,100.00,96.33,95.79,88.69,90.01,89.60,87.70,83.29,83.70,80.03,80.21,82.28,78.28,69.72,71.61,74.35,61.60,69.89,75.09,63.59,46.42,66.81,63.38];
@@ -502,10 +664,17 @@ button.copy:hover { background: var(--ink); color: var(--bg); }
     }
     return [SI[SI.length - 1][1], SI[SI.length - 1][2]];
   }
-  function nOxide(l) {
-    var x2 = (l / 1000) * (l / 1000);
-    return Math.sqrt(1 + 4.0037 * x2 / (x2 - 0.2175 * 0.2175));
+  function sellmeier(l, terms) {
+    var x2 = (l / 1000) * (l / 1000), s = 1;
+    for (var i = 0; i < terms.length; i++) s += terms[i][0] * x2 / (x2 - terms[i][1] * terms[i][1]);
+    return Math.sqrt(s);
   }
+  /* n(l) for each film; gpc is the growth per ALD cycle in nm behind the cycle count (0: not grown by ALD) */
+  var MATERIALS = {
+    tio2:  { name: 'TiO2',  html: 'TiO<sub>2</sub>', gpc: 0.05, n: function (l) { return sellmeier(l, [[4.0037, 0.2175]]); } },
+    al2o3: { name: 'Al2O3', html: 'Al<sub>2</sub>O<sub>3</sub>', gpc: 0.11, n: function (l) { var x = l / 1000; return 1.632 + 0.0049 / (x * x); } },
+    sio2:  { name: 'SiO2',  html: 'SiO<sub>2</sub>', gpc: 0, n: function (l) { return sellmeier(l, [[0.6961663, 0.0684043], [0.4079426, 0.1162414], [0.8974794, 9.896161]]); } }
+  };
   function lobe(l, mu, s1, s2) { var t = (l - mu) * (l < mu ? s1 : s2); return Math.exp(-0.5 * t * t); }
   function cmf(l) {
     return [
@@ -514,9 +683,9 @@ button.copy:hover { background: var(--ink); color: var(--bg); }
       1.217 * lobe(l, 437.0, 0.0845, 0.0278) + 0.681 * lobe(l, 459.0, 0.0385, 0.0725)
     ];
   }
-  /* Normal-incidence reflectance of air / TiO2 (d nm) / Si at wavelength l nm */
-  function reflectance(l, d) {
-    var n1 = nOxide(l), nk = siNK(l), n2 = nk[0], k2 = nk[1];
+  /* Normal-incidence reflectance of air / film (d nm) / Si at wavelength l nm */
+  function reflectance(l, d, mat) {
+    var n1 = mat.n(l), nk = siNK(l), n2 = nk[0], k2 = nk[1];
     var r01 = (1 - n1) / (1 + n1);
     var ar = n1 - n2, ai = k2, br = n1 + n2, bi = -k2, den = br * br + bi * bi;
     var r12r = (ar * br + ai * bi) / den, r12i = (ai * br - ar * bi) / den;
@@ -532,10 +701,10 @@ button.copy:hover { background: var(--ink); color: var(--bg); }
     WHITE[0] += D65[i] * c[0]; WHITE[1] += D65[i] * c[1]; WHITE[2] += D65[i] * c[2];
   }
   function encode(v) { v = Math.min(1, Math.max(0, v)); return Math.round(255 * (v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1 / 2.4) - 0.055)); }
-  function filmRGB(d) {
+  function filmRGB(d, mat) {
     var X = 0, Y = 0, Z = 0;
     for (var i = 0; i < 41; i++) {
-      var p = D65[i] * reflectance(LAMBDA[i], d);
+      var p = D65[i] * reflectance(LAMBDA[i], d, mat);
       X += p * CMF[i][0]; Y += p * CMF[i][1]; Z += p * CMF[i][2];
     }
     X = X / WHITE[0] * 0.9505 * GAIN; Y = Y / WHITE[1] * GAIN; Z = Z / WHITE[2] * 1.089 * GAIN;
@@ -545,8 +714,15 @@ button.copy:hover { background: var(--ink); color: var(--bg); }
       encode(0.0557 * X - 0.2040 * Y + 1.0570 * Z)
     ];
   }
-  var TABLE = [];
-  for (var d = 0; d <= MAX; d++) TABLE.push(filmRGB(d));
+  var TABLES = {};   // colour for every whole nm, per material, built on first use
+  function tableFor(key) {
+    if (!TABLES[key]) {
+      var table = [];
+      for (var d = 0; d <= MAX; d++) table.push(filmRGB(d, MATERIALS[key]));
+      TABLES[key] = table;
+    }
+    return TABLES[key];
+  }
 
   /* ---- Page wiring ---- */
   var root = document.documentElement;
@@ -554,9 +730,31 @@ button.copy:hover { background: var(--ink); color: var(--bg); }
   var canvas = document.getElementById('film-canvas');
   var range = document.getElementById('film-thickness');
   var valueEl = document.getElementById('film-value');
+  var cyclesEl = document.getElementById('film-cycles');
+  var matGroup = document.getElementById('film-material');
+  var matButtons = matGroup ? [].slice.call(matGroup.querySelectorAll('button')) : [];
   if (!strip || !canvas || !range) return;
 
+  /* The address keeps the colour: ?d=thickness, plus &m=material when it isn't TiO2 */
+  var material = 'tio2';
+  try {
+    var params = new URLSearchParams(location.search);
+    var qd = parseInt(params.get('d'), 10), qm = params.get('m');
+    if (qd >= 0 && qd <= MAX) range.value = qd;
+    if (qm && MATERIALS.hasOwnProperty(qm)) material = qm;
+  } catch (err) {}
+  function thickness() { return Math.min(MAX, Math.max(0, Math.round(+range.value || 0))); }
+  var urlTimer;
+  function keepInURL() {
+    clearTimeout(urlTimer);   // replaceState is rate-limited, so write once the drag settles
+    urlTimer = setTimeout(function () {
+      var search = '?d=' + thickness() + (material === 'tio2' ? '' : '&m=' + material);
+      try { history.replaceState(null, '', search + location.hash); } catch (err) {}
+    }, 250);
+  }
+
   function draw() {
+    var TABLE = tableFor(material);
     var w = Math.max(2, Math.round(strip.clientWidth * (window.devicePixelRatio || 1)));
     canvas.width = w; canvas.height = 1;
     var ctx = canvas.getContext('2d');
@@ -592,21 +790,126 @@ button.copy:hover { background: var(--ink); color: var(--bg); }
   }
   function css(rgb) { return 'rgb(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ')'; }
 
+  /* ---- Reflectance spectrum at the chosen thickness, against bare Si ---- */
+  var spec = document.getElementById('film-spectrum');
+  var svg = document.getElementById('spectrum-svg');
+  var tip = document.getElementById('spectrum-tip');
+  var keyFilm = document.getElementById('spectrum-key-film');
+  var SPEC_L = [];
+  for (var sl = 380; sl <= 780; sl += 4) SPEC_L.push(sl);
+  var BARE = SPEC_L.map(function (l) { return reflectance(l, 0, MATERIALS.tio2); });   // at 0 nm the film drops out
+  var R_TOP = 0.6;   // bare Si peaks near 55% at the violet end, and no film here reflects more
+  var specR = [], geom = null, hoverAt = -1;
+
+  function pct(r) { return (r * 100).toFixed(r < 0.1 ? 1 : 0) + '%'; }
+  function filmLabel() { var d = thickness(); return d ? d + ' nm ' + MATERIALS[material].html + ' on Si' : 'No film'; }
+
+  function drawSpectrum() {
+    if (!spec || !svg || spec.hidden) return;
+    var W = spec.clientWidth;
+    if (!W) return;
+    var d = thickness();
+    specR = SPEC_L.map(function (l) { return reflectance(l, d, MATERIALS[material]); });
+    var H = 144, L = 34, R = 6, T = 8, B = 26, pw = W - L - R, ph = H - T - B;
+    var x = function (l) { return L + (l - 380) / 400 * pw; };
+    var y = function (r) { return T + (1 - r / R_TOP) * ph; };
+    geom = { x: x, y: y, L: L, T: T, pw: pw, ph: ph, W: W };
+    var path = function (rs) {
+      return rs.map(function (r, i) { return (i ? 'L' : 'M') + x(SPEC_L[i]).toFixed(1) + ' ' + y(r).toFixed(1); }).join('');
+    };
+    var s = '';
+    [0, 0.2, 0.4, 0.6].forEach(function (r) {
+      s += '<line class="sp-grid" x1="' + L + '" x2="' + (L + pw) + '" y1="' + y(r) + '" y2="' + y(r) + '"/>' +
+           '<text class="sp-tick" x="' + (L - 6) + '" y="' + y(r) + '" dy="0.35em" text-anchor="end">' + Math.round(r * 100) + (r === R_TOP ? '%' : '') + '</text>';
+    });
+    [400, 500, 600, 700].forEach(function (l) {
+      s += '<text class="sp-tick" x="' + x(l) + '" y="' + (H - 6) + '" text-anchor="middle">' + l + (l === 700 ? ' nm' : '') + '</text>';
+    });
+    var lo = 0;
+    for (var i = 1; i < specR.length; i++) if (specR[i] < specR[lo]) lo = i;
+    s += '<path class="sp-line sp-si" d="' + path(BARE) + '"/><path class="sp-line sp-film" d="' + path(specR) + '"/>' +
+         '<circle class="sp-dot sp-film" r="4" cx="' + x(SPEC_L[lo]) + '" cy="' + y(specR[lo]) + '"/>' +
+         '<g class="sp-hover" visibility="hidden"><line class="sp-cross" y1="' + T + '" y2="' + (T + ph) + '"/>' +
+         '<circle class="sp-dot sp-si" r="4"/><circle class="sp-dot sp-film" r="4"/></g>';
+    svg.setAttribute('width', W); svg.setAttribute('height', H); svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    svg.innerHTML = s;
+
+    var lowest = 'lowest ' + pct(specR[lo]) + ' at ' + SPEC_L[lo] + ' nm';
+    if (keyFilm) keyFilm.innerHTML = filmLabel() + ', ' + lowest;
+    svg.setAttribute('aria-label', 'Reflectance from 380 to 780 nm of ' + (d ? d + ' nm of ' + MATERIALS[material].name + ' on silicon' : 'bare silicon') + ', ' + lowest + '.');
+    if (hoverAt >= 0) showAt(hoverAt);
+  }
+
+  /* Crosshair snaps to the nearest computed wavelength; the tooltip gives both curves there */
+  function showAt(i) {
+    var g = svg.querySelector('.sp-hover');
+    if (!g || !geom || !tip) return;
+    hoverAt = i;
+    var cx = geom.x(SPEC_L[i]);
+    var cross = g.querySelector('.sp-cross'), dotSi = g.querySelector('.sp-si'), dotFilm = g.querySelector('.sp-film');
+    cross.setAttribute('x1', cx); cross.setAttribute('x2', cx);
+    dotSi.setAttribute('cx', cx); dotSi.setAttribute('cy', geom.y(BARE[i]));
+    dotFilm.setAttribute('cx', cx); dotFilm.setAttribute('cy', geom.y(specR[i]));
+    g.setAttribute('visibility', 'visible');
+    tip.innerHTML = '<span>' + SPEC_L[i] + ' nm</span>' +
+      '<span><i class="key"></i><b>' + pct(specR[i]) + '</b><span>' + filmLabel() + '</span></span>' +
+      '<span><i class="key sp-si"></i><b>' + pct(BARE[i]) + '</b>Bare Si</span>';
+    tip.hidden = false;
+    var left = cx + 12;
+    if (left + tip.offsetWidth > geom.W) left = cx - 12 - tip.offsetWidth;
+    tip.style.left = Math.max(0, left) + 'px';
+  }
+  function hideTip() {
+    hoverAt = -1;
+    var g = svg && svg.querySelector('.sp-hover');
+    if (g) g.setAttribute('visibility', 'hidden');
+    if (tip) tip.hidden = true;
+  }
+  function tipFromPointer(e) {
+    if (!geom) return;
+    var rect = svg.getBoundingClientRect();
+    var f = Math.min(1, Math.max(0, (e.clientX - rect.left - geom.L) / geom.pw));
+    showAt(Math.round(f * (SPEC_L.length - 1)));
+  }
+  if (svg) {
+    svg.addEventListener('pointermove', tipFromPointer);
+    svg.addEventListener('pointerdown', tipFromPointer);
+    svg.addEventListener('pointerleave', function (e) { if (e.pointerType !== 'touch') hideTip(); });
+  }
+
   function apply() {
-    var d = Math.min(MAX, Math.max(0, Math.round(+range.value || 0)));
-    var rgb = TABLE[d];
+    var d = thickness(), mat = MATERIALS[material];
+    var rgb = tableFor(material)[d];
+    var cycles = mat.gpc ? Math.round(d / mat.gpc) : 0;
     strip.style.setProperty('--pos', (d / MAX * 100) + '%');
     root.style.setProperty('--film', css(rgb));
     root.style.setProperty('--film-mark', css(markColour(rgb)));
-    range.setAttribute('aria-valuetext', d + ' nanometres');
+    range.setAttribute('aria-valuetext', d + ' nanometres of ' + mat.name + (cycles ? ', about ' + cycles.toLocaleString('en-US') + ' ALD cycles' : ''));
     if (valueEl) valueEl.textContent = d + ' nm';
+    if (cyclesEl) {
+      cyclesEl.innerHTML = !d ? 'Bare silicon<span>no film yet</span>'
+        : !mat.gpc ? 'Thermal oxide<span>grown in a furnace, not by ALD</span>'
+        : '&asymp; ' + cycles.toLocaleString('en-US') + ' ALD cycles<span>at ' + mat.gpc + ' nm per cycle</span>';
+    }
+    drawSpectrum();
   }
+
+  function setMaterial(key) {
+    material = key;
+    matButtons.forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-material') === key ? 'true' : 'false'); });
+    draw();
+    apply();
+  }
+  matButtons.forEach(function (b) {
+    b.addEventListener('click', function () { setMaterial(b.getAttribute('data-material')); keepInURL(); });
+  });
 
   function fromPointer(e) {
     var rect = strip.getBoundingClientRect();
     var f = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
     range.value = Math.round(f * MAX);
     apply();
+    keepInURL();
   }
   var dragging = false;
   strip.addEventListener('pointerdown', function (e) {
@@ -620,18 +923,43 @@ button.copy:hover { background: var(--ink); color: var(--bg); }
   ['pointerup', 'pointercancel'].forEach(function (type) {
     strip.addEventListener(type, function () { dragging = false; });
   });
-  range.addEventListener('input', apply);
+  range.addEventListener('input', function () { apply(); keepInURL(); });
 
-  if ('ResizeObserver' in window) new ResizeObserver(draw).observe(strip);
-  else window.addEventListener('resize', draw);
-  if (window.matchMedia) {
-    var mq = window.matchMedia('(prefers-color-scheme: dark)');
-    if (mq.addEventListener) mq.addEventListener('change', apply);
-  }
+  var resized = function () { draw(); drawSpectrum(); };
+  if ('ResizeObserver' in window) {
+    var ro = new ResizeObserver(resized);
+    ro.observe(strip);
+    if (spec) ro.observe(spec);
+  } else window.addEventListener('resize', resized);
+  var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  if (mq && mq.addEventListener) mq.addEventListener('change', apply);
   if ('MutationObserver' in window) new MutationObserver(apply).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
 
-  draw();
-  apply();
+  if (matGroup) matGroup.hidden = false;
+  if (spec) spec.hidden = false;
+  setMaterial(material);
+
+  /* ---- Light / dark: follows the system until chosen; the choice holds across the site ---- */
+  var themeBtn = document.getElementById('theme-toggle');
+  if (themeBtn) {
+    var isDark = function () {
+      var t = root.getAttribute('data-theme');
+      return t ? t === 'dark' : !!(mq && mq.matches);
+    };
+    var showTheme = function () { themeBtn.setAttribute('aria-pressed', isDark() ? 'true' : 'false'); };
+    themeBtn.addEventListener('click', function () {
+      var next = isDark() ? 'light' : 'dark', system = mq && mq.matches ? 'dark' : 'light';
+      // picking what the system already shows clears the choice, so the page follows the system again
+      if (next === system) root.removeAttribute('data-theme'); else root.setAttribute('data-theme', next);
+      try {
+        if (next === system) localStorage.removeItem('wentaoz.theme'); else localStorage.setItem('wentaoz.theme', next);
+      } catch (err) {}
+      showTheme();
+    });
+    if (mq && mq.addEventListener) mq.addEventListener('change', showTheme);
+    showTheme();
+    themeBtn.hidden = false;
+  }
 
   /* ---- Copy address ---- */
   var copyBtn = document.getElementById('copy-address');
