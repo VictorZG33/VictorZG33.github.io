@@ -44,9 +44,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <title>Wentao Zhang</title>
-<!-- Only the widths and weights the page uses; the Chinese face is cut down to the three characters of 醉月历 -->
+<!-- Only the widths and weights the page uses; the Chinese face is cut down to the characters
+     of the tool cards' names, 醉月历 and 滚落线, so a new Chinese name needs adding to text= -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..700&family=STIX+Two+Text:ital,wght@0,400..600;1,400&display=swap">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700&text=%E9%86%89%E6%9C%88%E5%8E%86&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700&text=%E9%86%89%E6%9C%88%E5%8E%86%E6%BB%9A%E8%90%BD%E7%BA%BF&display=swap">
 <style>
 /* Layout: one left-aligned column on a two-track grid (section name | content).
    The only full-width object is the film colour strip under the name. */
@@ -304,7 +305,7 @@ a:focus-visible, button:focus-visible {
 .sp-dot.sp-film { fill: var(--ink); }
 .sp-dot.sp-si { fill: var(--ink-2); }
 .sp-cross { stroke: var(--ink-2); stroke-width: 1; shape-rendering: crispEdges; }
-.spectrum-tip {
+.spectrum-tip, .map-tip {
   position: absolute; top: 1.75rem; left: 0;
   display: grid; gap: 0.2rem;
   padding: 0.5rem 0.625rem;
@@ -318,8 +319,8 @@ a:focus-visible, button:focus-visible {
   white-space: nowrap;
   pointer-events: none;
 }
-.spectrum-tip > span { display: flex; align-items: center; gap: 0.5rem; }
-.spectrum-tip b { font-weight: 650; color: var(--ink); }
+.spectrum-tip > span, .map-tip > span { display: flex; align-items: center; gap: 0.5rem; }
+.spectrum-tip b, .map-tip b { font-weight: 650; color: var(--ink); }
 
 /* What I work on */
 .work { display: grid; gap: 1.5rem; }
@@ -449,6 +450,24 @@ button.copy {
 button.copy:hover { background: var(--ink); color: var(--bg); }
 .links { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; }
 
+/* Visitors: land as a lattice of dots, one disc per country sized by its visitors, in the film colour */
+.vm-total { font-family: var(--display); font-size: var(--ui); font-weight: 500; color: var(--ink-2); }
+.vm-total b { font-size: 1.375rem; font-weight: 650; color: var(--ink); font-variant-numeric: lining-nums; }
+.vmap { position: relative; }
+.vmap svg { display: block; width: 100%; height: auto; overflow: visible; touch-action: pan-y; }
+.vm-land { fill: none; stroke: var(--ink-2); stroke-opacity: 0.3; stroke-linecap: round; }
+.vm-dot { fill: var(--film-mark); fill-opacity: 0.85; stroke: var(--bg); stroke-width: 1.5; }
+.vm-dot.on { fill-opacity: 1; stroke: var(--ink); }
+.vm-top {
+  display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem;
+  font-family: var(--display);
+  font-size: var(--small);
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.vm-top b { font-weight: 650; color: var(--ink); }
+.vm-note { font-size: var(--ui); line-height: 1.55; color: var(--ink-2); }
+
 .foot {
   border-top: 1px solid var(--rule);
   padding-top: 1.25rem;
@@ -481,7 +500,7 @@ button.copy:hover { background: var(--ink); color: var(--bg); }
   .edu, .hobbies { gap: 0.75rem; }
   .row { grid-template-columns: 8rem minmax(0, 1fr); column-gap: 1.5rem; }
   .row h2 { padding-top: 0.28em; }
-  .theme-toggle, .copy, .material, .tabs, .moon, .film-cursor, .spectrum { display: none !important; }
+  .theme-toggle, .copy, .material, .tabs, .moon, .fl, .film-cursor, .spectrum, #visitors { display: none !important; }
   .hobbies .panel[hidden] { display: grid !important; }
   .panel::before { content: attr(data-title); font-family: var(--display); font-weight: 650; font-size: var(--ui); }
   .film-strip, .swatch { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -630,7 +649,7 @@ button.copy:hover { background: var(--ink); color: var(--bg); }
       <div class="panel" role="tabpanel" id="panel-skiing" aria-labelledby="tab-skiing" data-title="Skiing">
         <p>Winter weekends go to skiing.</p>
         <a class="fl" href="fallline/">
-          <span class="fl-head"><span class="fl-zh">滚落线</span><span class="fl-en">Fall Line</span></span>
+          <span class="fl-head"><span class="fl-zh" lang="zh-CN">滚落线</span><span class="fl-en">Fall Line</span></span>
           <span class="fl-live"><i class="fl-strip" aria-hidden="true"></i><span>Slope angle, 20° to 50°+</span></span>
           <span class="fl-desc">A 3D ski map I built after FATMAP went dark. It shades every slope by its angle and the way it faces, computed in your browser from open elevation data, draws runs and lifts for ski areas around the world, replays GPX tracks and keeps working offline on the mountain. In Chinese and English.</span>
           <span class="fl-cta">Open the map</span>
@@ -655,6 +674,19 @@ button.copy:hover { background: var(--ink); color: var(--bg); }
         <button class="copy" id="copy-address" type="button">Copy address</button>
       </div>
       <p class="links"><a href="https://scholar.google.com/citations?user=eYAOuJlZ_C8C&amp;hl=en">Google Scholar</a><a href="https://www.linkedin.com/in/wentao-zhang-yale/">LinkedIn</a><a href="https://lightcatalysis.yale.edu/">Hu group at Yale</a></p>
+    </div>
+  </section>
+
+  <section class="row" id="visitors" hidden>
+    <h2>Visitors</h2>
+    <div class="stack">
+      <p class="vm-total" id="vm-total"></p>
+      <div class="vmap" id="vm-map">
+        <svg id="vm-svg" role="img" aria-label="World map of visitors by country; the list below gives the numbers."></svg>
+        <div class="map-tip" id="vm-tip" hidden></div>
+      </div>
+      <ol class="vm-top" id="vm-top"></ol>
+      <p class="vm-note" id="vm-note"></p>
     </div>
   </section>
 
@@ -1072,7 +1104,152 @@ button.copy:hover { background: var(--ink); color: var(--bg); }
     updateMoon();
     setInterval(function () { if (!document.hidden) updateMoon(); }, 60000);
   }
+
+  /* ---- Visitors: the total from GoatCounter's public counter, and the map from visitors.json,
+     which .github/workflows/visitors.yml rebuilds each day from the GoatCounter API.
+     The section stays hidden until there is something to show. ---- */
+  var visitors = document.getElementById('visitors');
+  if (visitors && window.fetch) {
+    /* Land on a 2° grid from 84°N to 56°S, one bit per cell, row by row from the north-west;
+       sampled from Natural Earth (world-atlas land-50m) at each cell centre */
+    var LAND = { step: 2, top: 84, bottom: -56, cols: 180, rows: 70, bits: atob('AAAAAAAAHwAf/AAAAAAAAAAAAAAAAAAAAAAAAx37///+AAAAAEoABAAAAAAAAAAAAAIe8P///wAA8AAAAAA8AAAAAAAAAAAwAjw////4AAIAAAAAAHAAAAAAAAAAAKgvwAf//wAAAAADAAP/wAHIAAAAAADoj38AP/+gAAAAAEAH///MAAAAgBgAAfw3/gD/+gAAAAAEHe///+/9gBAP/6/nbcrwD/+AAAH/Ah7H////////4H//////g8H/gAAAf/6//f////////Mf/////9H4D4AeAA+ev///////////AP/////4A0B4AAAD5/////////////Af3////gHgA4AAAD5///////////LwAHgH///gHkAAAACG4/////////+AIAABAC///4D+AAAAGAx/////////4A4AAAABf///n/gAAAOCB/////////4A4AAAAAf///3/wAAAbH//////////9AgAAAAAP/////wAAAD///////////9AAAAAAAB////8YAAAB///////////8AAAAAAAD////8EAAAB///vv//////5AAAAAAAD////2AAAAB/f5fP//////wAAAAAAAD////gAAAAfxnwPP//////jAAAAAAAD///+AAAAAPCb3/n/////+AAAAAAAAD///8AAAAAfAJf/H////+ECAAAAAAAB///8AAAAAGDRf/n/////mMAAAAAAAA///8AAAAAH+Ai///////E8AAAAAAAAf//wAAAAAP/AA///////BgAAAAAAAAP//gAAAAAf/73///////gAAAAAAAAAD/AQAAAAAf//9/f/////gAAAAAAAAAF+AQAAAAB///+/n/////AAAAAAAAAAC+AAAAAAB///+fwH///+AAAAAAAAAAAeAwAAAAD////f/D///8gAAAAAAAAAAeGEAAAAD////v+B/j/AAAAAAAAAAAAPMAwAAAD////n+AfB+gAAAAAAAAAAAD8AAAAAD////34AeBfAgAAAAAAAAAAAPAAAAAH////3gAcAfAgAAAAAAAAAAADAAAAAD////6AAcAfggAAAAAAAAAAABBwAAAD////8wAMATAIAAAAAAAAAAAAr/AAAB/////gAIASAAAAAAAAAAAAAAH/gAAA/////gACAAAIAAAAAAAAAAAAH/8AAAYH///AAAAsGAAAAAAAAAAAAAH/+AAAAB//+AAAAUOAAAAAAAAAAAAAP/+AAAAB//8AAAAc+gAAAAAAAAAAAAP//gAAAD//4AAAAMeBgAAAAAAAAAAAP//8AAAB//wAAAAGdCuAAAAAAAAAAAf///AAAA//wAAAACAAHgAAAAAAAAAAP///gAAA//wAAAAB4AHwgAAAAAAAAAH///AAAA//wAAAAACIDQIAAAAAAAAAH//+AAAAf/wAAAAAAAAAAAAAAAAAAAD//+AAAA//wgAAAAABxAAAAAAAAAAAD//8AAAA//wgAAAAAHxgBAAAAAAAAAA//8AAAA//jgAAAAAf/gAAAAAAAAAAAf/8AAAA//DgAAAAAf/gAAAAAAAAAAAf/8AAAAf/DAAAAAD//4CAAAAAAAAAAf/wAAAAf/DAAAAAH//4AAAAAAAAAAAf/AAAAAf+DAAAAAH//8AAAAAAAAAAAf/AAAAAP8AAAAAAH//+AAAAAAAAAAA/+AAAAAP8AAAAAAH//+AAAAAAAAAAA/8AAAAAH4AAAAAAD//+AAAAAAAAAAA/8AAAAAHwAAAAAADwf8AAAAAAAAAAA/gAAAAAAAAAAAAACAP4AAAAAAAAAAB/wAAAAAAAAAAAAAAAD4AEAAAAAAAAB+AAAAAAAAAAAAAAAAAAAGAAAAAAAAB6AAAAAAAAAAAAAAAAAwAMAAAAAAAAA8AAAAAAAAAAAAAAAAAQAYAAAAAAAAB4AAAAAAAAAAAAAAAAAAAwAAAAAAAAB4AAAAAAAAAAAAAAAAAAAAAAAAAAAADwAAAAAAAAAACAAAAAAAAAAAAAAAAABgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA') };
+    var vmSvg = document.getElementById('vm-svg'), vmBox = document.getElementById('vm-map'), vmTip = document.getElementById('vm-tip');
+    var vmData = null, vmLive = 0, vmDots = [], vmOn = -1;
+
+    var fmtCount = function (n) { return n.toLocaleString('en-US'); };
+    var monthYear = function (day) {
+      try { return new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(day + 'T00:00:00Z')); }
+      catch (err) { return day; }
+    };
+    var longDate = function (day) {
+      try { return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(day + 'T00:00:00Z')); }
+      catch (err) { return day; }
+    };
+    var countries = function () {
+      return ((vmData && vmData.countries) || []).filter(function (c) { return c.count > 0; })
+        .sort(function (a, b) { return b.count - a.count; });
+    };
+
+    var drawMap = function () {
+      var list = countries(), W = vmBox.clientWidth;
+      if (visitors.hidden || !W) return;
+      var s = W / 360, pitch = LAND.step * s, H = Math.round((LAND.top - LAND.bottom) * s), d = '';
+      for (var j = 0; j < LAND.rows; j++) {
+        for (var i = 0; i < LAND.cols; i++) {
+          var k = j * LAND.cols + i;
+          if (LAND.bits.charCodeAt(k >> 3) & (128 >> (k & 7))) d += 'M' + ((i + 0.5) * pitch).toFixed(1) + ' ' + ((j + 0.5) * pitch).toFixed(1) + 'h0';
+        }
+      }
+      var max = list.length ? list[0].count : 1;
+      vmDots = list.map(function (c) {
+        return {
+          c: c,
+          x: (c.lon + 180) * s,
+          y: Math.min(H, Math.max(0, (LAND.top - c.lat) * s)),
+          r: 2.5 + 9.5 * Math.sqrt(c.count / max)   // area follows visitors; the busiest country gets 12px
+        };
+      });
+      var out = '<path class="vm-land" stroke-width="' + (pitch * 0.55).toFixed(2) + '" d="' + d + '"/>';
+      vmDots.forEach(function (p, n) {   // largest first, so small countries stay on top
+        out += '<circle class="vm-dot" data-n="' + n + '" cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="' + p.r.toFixed(1) + '"/>';
+      });
+      vmSvg.setAttribute('width', W); vmSvg.setAttribute('height', H); vmSvg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+      vmSvg.innerHTML = out;
+      vmOn = -1;
+      if (vmTip) vmTip.hidden = true;
+    };
+
+    var showVisitors = function () {
+      var list = countries(), total = Math.max(vmLive, (vmData && vmData.total) || 0);
+      if (!total && !list.length) return;
+      visitors.hidden = false;
+
+      var totalEl = document.getElementById('vm-total');
+      totalEl.textContent = '';
+      var b = document.createElement('b');
+      b.textContent = fmtCount(total);
+      totalEl.appendChild(b);
+      totalEl.appendChild(document.createTextNode(' ' + (total === 1 ? 'visitor' : 'visitors') +
+        (vmData && vmData.since ? ' since ' + monthYear(vmData.since) : '') +
+        (list.length ? ', from ' + list.length + (list.length === 1 ? ' country' : ' countries') : '') + '.'));
+
+      // the numbers behind the map, as text: the most frequent countries, then how many more
+      var top = document.getElementById('vm-top');
+      top.textContent = '';
+      list.slice(0, 8).forEach(function (c) {
+        var li = document.createElement('li'), n = document.createElement('b');
+        n.textContent = fmtCount(c.count);
+        li.appendChild(document.createTextNode(c.name + ' '));
+        li.appendChild(n);
+        top.appendChild(li);
+      });
+      if (list.length > 8) {
+        var more = document.createElement('li');
+        more.textContent = 'and ' + (list.length - 8) + ' more';
+        top.appendChild(more);
+      }
+      top.hidden = !list.length;
+      vmBox.hidden = !list.length;   // a count with no countries yet (before the first daily run) gets no empty map
+
+      document.getElementById('vm-note').textContent = 'Counted by GoatCounter, which sets no cookies and keeps no personal data. The map places visitors by country only' +
+        (vmData && vmData.updated ? ', and was last redrawn on ' + longDate(vmData.updated) : '') + '.';
+      drawMap();
+    };
+
+    /* Nearest disc within reach of the pointer gets the tooltip */
+    var mapTip = function (e) {
+      if (!vmDots.length) return;
+      var rect = vmSvg.getBoundingClientRect(), px = e.clientX - rect.left, py = e.clientY - rect.top, best = -1, bestD = Infinity;
+      vmDots.forEach(function (p, n) {
+        var dist = Math.sqrt((p.x - px) * (p.x - px) + (p.y - py) * (p.y - py));
+        if (dist < Math.max(16, p.r + 8) && dist < bestD) { best = n; bestD = dist; }
+      });
+      if (best === vmOn) return;
+      var prev = vmSvg.querySelector('.vm-dot.on');
+      if (prev) prev.classList.remove('on');
+      vmOn = best;
+      if (best < 0) { vmTip.hidden = true; return; }
+      var p = vmDots[best], el = vmSvg.querySelector('.vm-dot[data-n="' + best + '"]');
+      if (el) el.classList.add('on');
+      vmTip.textContent = '';
+      var row = document.createElement('span'), n = document.createElement('b');
+      n.textContent = fmtCount(p.c.count);
+      row.appendChild(n);
+      row.appendChild(document.createTextNode((p.c.count === 1 ? 'visitor from ' : 'visitors from ') + p.c.name));
+      vmTip.appendChild(row);
+      vmTip.hidden = false;
+      var left = p.x + p.r + 8;
+      if (left + vmTip.offsetWidth > vmBox.clientWidth) left = p.x - p.r - 8 - vmTip.offsetWidth;
+      vmTip.style.left = Math.max(0, left) + 'px';
+      vmTip.style.top = Math.max(0, p.y - vmTip.offsetHeight / 2) + 'px';
+    };
+    vmSvg.addEventListener('pointermove', mapTip);
+    vmSvg.addEventListener('pointerdown', mapTip);
+    vmSvg.addEventListener('pointerleave', function (e) {
+      if (e.pointerType === 'touch') return;
+      mapTip({ clientX: -1e6, clientY: -1e6 });
+    });
+    if ('ResizeObserver' in window) new ResizeObserver(drawMap).observe(vmBox);
+    else window.addEventListener('resize', drawMap);
+
+    fetch('visitors.json', { cache: 'no-cache' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) { vmData = d; showVisitors(); })
+      .catch(function () {});
+    // public counter: "Allow adding visitor counts on your website" in GoatCounter's settings; cached there for up to four hours
+    fetch('https://wentaoz.goatcounter.com/counter/TOTAL.json')
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        if (!d || d.count == null) return;
+        vmLive = parseInt(String(d.count).replace(/\D/g, ''), 10) || 0;
+        showVisitors();
+      })
+      .catch(function () {});
+  }
 })();
 </script>
+<!-- GoatCounter (https://www.goatcounter.com): counts visits without cookies. To leave your own visits out,
+     open https://wentaoz.com/#toggle-goatcounter once in each browser you use. -->
+<script data-goatcounter="https://wentaoz.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </body>
 </html>
