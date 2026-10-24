@@ -61,10 +61,17 @@ since = since || (previous && previous.since) || (total > 0 ? new Date().toISOSt
 
 // Location ids are ISO 3166-1 alpha-2 codes; centres from the world-countries dataset (mledoze/countries).
 const centres = JSON.parse(await readFile(new URL('country-centres.json', import.meta.url), 'utf8'));
-const countries = rows
-  .map((r) => ({ code: String(r.id || '').toUpperCase(), name: r.name, count: r.count }))
-  .filter((r) => r.count > 0 && centres[r.code])   // drops visits with no known country
-  .map((r) => ({ ...r, lat: centres[r.code][0], lon: centres[r.code][1] }));
+// The log lists what GoatCounter returned, country by country, and what stays off the map.
+console.log(`GoatCounter locations: ${rows.map((r) => `${JSON.stringify(r.id)} ${r.name} ×${r.count}`).join(', ') || 'none'}`);
+const countries = [];
+for (const r of rows) {
+  const code = String(r.id || '').slice(0, 2).toUpperCase();   // a region id such as US-CT still names its country
+  if (!(r.count > 0)) continue;
+  if (!centres[code]) { console.log(`  not on the map: ${JSON.stringify(r.id)} ${r.name} ×${r.count}`); continue; }
+  const seen = countries.find((c) => c.code === code);
+  if (seen) seen.count += r.count;
+  else countries.push({ code, name: r.name, count: r.count, lat: centres[code][0], lon: centres[code][1] });
+}
 
 const data = { since, total, countries };
 const same = previous && JSON.stringify({ since: previous.since, total: previous.total, countries: previous.countries }) === JSON.stringify(data);
