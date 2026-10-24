@@ -30,8 +30,11 @@ try {
 }
 
 // The API takes whole hours; without a start it would default to the last seven days.
-const end = new Date();
-end.setUTCHours(end.getUTCHours() + 1, 0, 0, 0);
+// The end is two days ahead because GoatCounter turns it into a date in the account's time
+// zone, while location stats are filed by UTC day: an end of "now" in New York at night is
+// still yesterday there, and the query then left out every visit made since midnight UTC.
+const end = new Date(Date.now() + 2 * 24 * 3600 * 1000);
+end.setUTCMinutes(0, 0, 0);
 const range = { start: START, end: end.toISOString().replace('.000Z', 'Z') };
 
 const rows = [];
