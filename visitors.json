@@ -2,5 +2,13 @@
  "updated": "2026-10-24",
  "since": "2026-10-23",
  "total": 3,
- "countries": []
+ "countries": [
+  {
+   "code": "US",
+   "name": "United States",
+   "count": 3,
+   "lat": 38,
+   "lon": -97
+  }
+ ]
 }
