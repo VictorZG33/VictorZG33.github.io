@@ -1,0 +1,1023 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="两清 All Square: a bill splitter by Wentao Zhang. Enter who is in, record each expense and who shares it, and get the settlement with the fewest transfers. Everything runs in the browser.">
+<meta property="og:title" content="两清 All Square">
+<meta property="og:description" content="两清 All Square: a bill splitter by Wentao Zhang. Enter who is in, record each expense and who shares it, and get the settlement with the fewest transfers. Everything runs in the browser.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://wentaoz.com/all-square/">
+<meta property="og:site_name" content="Wentao Zhang">
+<meta property="og:image" content="https://wentaoz.com/all-square/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="两清 All Square, settling a shared trip in the fewest transfers.">
+<meta name="twitter:card" content="summary_large_image">
+<script>
+/* Apply the theme picked with the Dark button (here or on the homepage) before first paint */
+(function () { try { var t = localStorage.getItem('wentaoz.theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {} })();
+</script>
+<link rel="canonical" href="https://wentaoz.com/all-square/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20fill%3D%22%23F3F1E9%22%2F%3E%3Crect%20x%3D%227%22%20y%3D%2210%22%20width%3D%2218%22%20height%3D%224%22%20fill%3D%22%23B3261E%22%2F%3E%3Crect%20x%3D%227%22%20y%3D%2218%22%20width%3D%2218%22%20height%3D%224%22%20fill%3D%22%232F6B4F%22%2F%3E%3C%2Fsvg%3E">
+<title>两清 All Square</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=STIX+Two+Text:ital,wght@0,400;1,400&display=swap">
+<!-- The Chinese serif is cut down to the characters of the name and the settlement headline
+     (两清, 最少…笔转账就能两清, 不用转账，已经两清), so new wording there needs adding to text= -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&text=%E4%B8%A4%E6%B8%85%E6%9C%80%E5%B0%91%E7%AC%94%E8%BD%AC%E8%B4%A6%E5%B0%B1%E8%83%BD%E4%B8%8D%E7%94%A8%E5%B7%B2%E7%BB%8F%EF%BC%8C&display=swap">
+<style>
+/* Layout: one 720px column like a page of a ledger. Three numbered steps run down it, and the settlement
+   is the hero once there is something to settle. Red ink for money owed, green for money coming back. */
+:root {
+  --bg: #F3F1E9;            /* ledger paper */
+  --surface: #FBFAF6;
+  --fg: #1C211D;
+  --muted: #646B63;
+  --rule: #DAD7CB;
+  --rule-strong: #A3A094;
+  --green: #2F6B4F;         /* ledger-cloth green: money coming back */
+  --green-soft: #DCE8DF;
+  --red: #B3261E;           /* red ink: money owed */
+  --red-soft: #F3DCD8;
+  --font-cjk: "Noto Serif SC", "Songti SC", "STSong", "Source Han Serif SC", "SimSun", serif;
+  --font-latin: "STIX Two Text", "STIXGeneral", Cambria, "Times New Roman", serif;
+  --font-body: "IBM Plex Sans", -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121613; --surface: #1A201C; --fg: #E5E8E1; --muted: #9AA297; --rule: #2B322D; --rule-strong: #4E5850;
+    --green: #79C29C; --green-soft: #1E3328; --red: #F0806F; --red-soft: #3A2220;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121613; --surface: #1A201C; --fg: #E5E8E1; --muted: #9AA297; --rule: #2B322D; --rule-strong: #4E5850;
+  --green: #79C29C; --green-soft: #1E3328; --red: #F0806F; --red-soft: #3A2220;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+.page {
+  max-width: 720px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 56px;
+}
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+
+/* home link back to wentaoz.com */
+.home { display: inline-block; margin-bottom: 8px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); text-decoration: none; }
+.home:hover, .home:focus-visible { color: var(--fg); }
+
+/* header */
+.top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--rule-strong); }
+.brand { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.brand .name { font-family: var(--font-cjk); font-weight: 900; font-size: 20px; letter-spacing: 0.04em; }
+.brand .name-latin { font-family: var(--font-latin); font-style: italic; font-size: 20px; }
+.eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+.tools { display: flex; align-items: center; gap: 8px; flex: none; }
+.theme {
+  appearance: none; border: 1px solid var(--rule-strong); border-radius: 999px; background: transparent; color: var(--muted);
+  font: 500 12px/1 var(--font-body); padding: 7px 11px; cursor: pointer; letter-spacing: 0.04em;
+}
+.theme[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.lang { display: inline-flex; border: 1px solid var(--rule-strong); border-radius: 999px; overflow: hidden; flex: none; }
+.lang button {
+  appearance: none; border: 0; background: transparent; color: var(--muted); font: 500 12px/1 var(--font-body);
+  padding: 7px 11px; cursor: pointer; letter-spacing: 0.04em;
+}
+.lang button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.banner { margin: 16px 0 0; padding: 10px 14px; border-radius: 8px; background: var(--green-soft); font-size: 14.5px; }
+
+/* the three steps */
+.step { padding-block: 32px 4px; }
+.step-h { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; font-size: 19px; font-weight: 600; line-height: 1.3; }
+.step-h .no {
+  display: inline-grid; place-items: center; flex: none; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--fg); color: var(--bg); font: 500 13px/1 var(--font-mono);
+}
+.step.locked .step-h { color: var(--muted); }
+.step.locked .step-h .no { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1.5px var(--rule-strong); }
+.step-h .count { font: 400 13px/1 var(--font-mono); color: var(--muted); margin-left: 2px; }
+.locked-note { margin: 0; font-size: 14.5px; color: var(--muted); }
+.hint { margin: 8px 0 0; font-size: 13px; color: var(--muted); }
+.msg { margin: 8px 0 0; font-size: 14px; }
+.msg:empty { display: none; }
+.msg.bad { color: var(--red); }
+
+input[type="text"], select {
+  min-width: 0; min-height: 44px; padding: 10px 12px; font-size: 16px; line-height: 1.3;
+  background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 8px;
+}
+input[type="text"]::placeholder { color: var(--muted); opacity: 0.8; }
+.btn {
+  appearance: none; min-height: 44px; padding: 10px 16px; border: 1px solid var(--rule-strong); border-radius: 8px;
+  background: var(--surface); font-size: 15px; font-weight: 500; line-height: 1.2; white-space: nowrap; cursor: pointer;
+}
+.btn:hover { border-color: var(--fg); }
+.btn.primary { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.link-btn {
+  appearance: none; border: 0; background: none; padding: 4px 2px; cursor: pointer;
+  font-size: 13.5px; font-weight: 500; color: var(--muted);
+  text-decoration: underline; text-decoration-color: var(--rule-strong); text-underline-offset: 3px;
+}
+.link-btn:hover { color: var(--fg); }
+.link-btn.sure { color: var(--red); text-decoration-color: currentColor; }
+
+/* step 1: names */
+.add-row { display: flex; gap: 8px; }
+.add-row input { flex: 1 1 auto; }
+.people { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.person {
+  display: inline-flex; align-items: center; gap: 2px; max-width: 100%;
+  padding: 3px 3px 3px 13px; border: 1px solid var(--rule-strong); border-radius: 999px; background: var(--surface);
+  font-weight: 500;
+}
+.person span { overflow-wrap: anywhere; }
+.person button {
+  appearance: none; flex: none; width: 30px; height: 30px; border: 0; border-radius: 50%; background: none;
+  color: var(--muted); font-size: 18px; line-height: 1; cursor: pointer;
+}
+.person button:hover { background: var(--rule); color: var(--fg); }
+
+/* step 2: the expense form, then the ledger */
+.form { display: grid; gap: 18px; padding: 16px; background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; }
+.form.editing { border-color: var(--green); box-shadow: inset 0 0 0 1px var(--green); }
+.editing-note { margin: -4px 0 0; font-size: 13.5px; font-weight: 500; color: var(--green); overflow-wrap: anywhere; }
+.fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+@media (max-width: 520px) { .fields { grid-template-columns: minmax(0, 1fr); } }
+.field { display: grid; gap: 6px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.label { display: block; padding: 0; font-size: 13px; font-weight: 500; color: var(--muted); }
+fieldset.field { display: block; }
+fieldset.field > .label { margin-bottom: 8px; }
+.field input[type="text"] { width: 100%; background: var(--bg); }
+.amount-box { display: flex; }
+.amount-box select { flex: none; border-radius: 8px 0 0 8px; border-right: 0; background: var(--bg); font-family: var(--font-mono); cursor: pointer; }
+.amount-box input[type="text"] { border-radius: 0 8px 8px 0; font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { position: relative; display: inline-flex; max-width: 100%; }
+.chip input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.chip span {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 7px 14px;
+  border: 1px solid var(--rule-strong); border-radius: 999px; font-size: 15px; line-height: 1.3; color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.chip:hover span { border-color: var(--fg); }
+.chip input:checked + span { background: var(--fg); border-color: var(--fg); color: var(--bg); }
+.chip.sharer input:checked + span { background: var(--green-soft); border-color: var(--green); color: var(--fg); }
+.chip.sharer input:checked + span::before { content: "✓"; font-size: 13px; font-weight: 600; color: var(--green); }
+.chip input:focus-visible + span { outline: 2px solid var(--green); outline-offset: 2px; }
+.share-foot { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; margin-top: 10px; }
+.calc { margin: 0; font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.calc.bad { color: var(--red); }
+.form-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+.list-h {
+  margin: 28px 0 0; padding-bottom: 8px; border-bottom: 1px solid var(--rule-strong);
+  font-size: 13px; font-weight: 500; color: var(--muted); font-variant-numeric: tabular-nums;
+}
+.ledger { list-style: none; margin: 0; padding: 0; counter-reset: entry; }
+.entry {
+  display: grid; grid-template-columns: 2em minmax(0, 1fr) auto; column-gap: 10px; row-gap: 2px;
+  padding: 12px 0; border-bottom: 1px solid var(--rule);
+}
+.entry::before {
+  counter-increment: entry; content: counter(entry, decimal-leading-zero);
+  grid-row: span 2; padding-top: 3px; font: 400 12px/1.4 var(--font-mono); color: var(--muted);
+}
+.entry.is-editing { background: var(--green-soft); box-shadow: -8px 0 0 var(--green-soft), 8px 0 0 var(--green-soft); }
+.entry-what { font-weight: 600; overflow-wrap: anywhere; }
+.entry-what.untitled { font-weight: 400; color: var(--muted); }
+.entry-amt { font-family: var(--font-mono); font-weight: 500; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.entry-meta { font-size: 13.5px; color: var(--muted); overflow-wrap: anywhere; }
+.entry-actions { display: flex; gap: 12px; justify-content: flex-end; align-items: start; }
+
+/* step 3: the settlement */
+.verdict { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 12px; margin: 0 0 18px; line-height: 1; color: var(--fg); }
+.verdict .v-num { font-family: var(--font-mono); font-weight: 500; font-size: clamp(72px, 20vw, 128px); line-height: 0.9; color: var(--green); font-variant-numeric: tabular-nums; }
+.verdict .v-pre, .verdict .v-post { font-size: clamp(22px, 6vw, 32px); line-height: 1.2; }
+.lang-zh .verdict .v-pre, .lang-zh .verdict .v-post { font-family: var(--font-cjk); font-weight: 900; letter-spacing: 0.02em; }
+.lang-en .verdict .v-pre, .lang-en .verdict .v-post { font-family: var(--font-latin); }
+.lang-en .verdict .v-post { flex: 1 1 10em; }
+.verdict.done .v-post { font-size: clamp(30px, 8vw, 44px); color: var(--green); }
+.transfers { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--rule-strong); }
+.transfer {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 12px;
+  padding: 14px 0; border-bottom: 1px solid var(--rule);
+}
+.transfer .who { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; min-width: 0; font-size: 18px; font-weight: 600; }
+.transfer .who > span { overflow-wrap: anywhere; min-width: 0; }
+.transfer .from { color: var(--red); }
+.transfer .to { color: var(--green); }
+.transfer .arrow { font-family: var(--font-mono); font-weight: 400; color: var(--muted); }
+.transfer .amt { font-family: var(--font-mono); font-size: 20px; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.note { margin: 12px 0 0; font-size: 13.5px; color: var(--muted); max-width: 60ch; }
+.share { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 18px; }
+.share .msg { margin: 0; flex: 1 1 100%; }
+
+.tally { overflow-x: auto; }   /* very large sums scroll here rather than widen the page */
+.balances { width: 100%; margin: 0; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.balances th, .balances td { padding: 9px 0 9px 10px; border-bottom: 1px solid var(--rule); text-align: right; vertical-align: baseline; }
+.balances th:first-child, .balances td:first-child { padding-left: 0; text-align: left; }
+.balances thead th { padding-block: 0 8px; font: 500 12px/1.3 var(--font-body); color: var(--muted); border-bottom-color: var(--rule-strong); }
+.balances tbody th { min-width: 4.5em; font-weight: 500; overflow-wrap: anywhere; }
+.balances td { font-family: var(--font-mono); font-size: 14px; white-space: nowrap; }
+.balances .pos { color: var(--green); font-weight: 500; }
+.balances .neg { color: var(--red); font-weight: 500; }
+.balances .zero { color: var(--muted); }
+.balances caption { caption-side: bottom; text-align: left; padding-top: 10px; font-size: 13.5px; color: var(--muted); }
+.tally-h { margin: 32px 0 10px; font-size: 13px; font-weight: 500; color: var(--muted); }
+@media (max-width: 400px) { .balances th, .balances td { padding-left: 6px; } .balances td { font-size: 12.5px; } }
+
+/* method */
+details { border-top: 1px solid var(--rule); margin-top: 36px; }
+summary { cursor: pointer; padding: 16px 0; font-weight: 600; font-size: 15px; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; font-family: var(--font-mono); color: var(--muted); font-size: 18px; }
+details[open] summary::after { content: "–"; }
+.method { padding: 0 0 18px; font-size: 14.5px; max-width: 62ch; }
+.method p { margin: 0 0 12px; }
+.method .k { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); }
+footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--rule-strong); font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; }
+footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 15px; color: var(--fg); }
+.lang-zh footer .sig { font-family: var(--font-cjk); font-style: normal; font-weight: 900; }
+footer .link-btn { margin-left: auto; }
+.nojs { margin: 22px 0 0; font-size: 17px; max-width: 34em; }
+</style>
+<noscript><style>.tools, .step, details, footer { display: none; }</style></noscript>
+</head>
+<body>
+<div class="page lang-zh" id="page">
+  <header class="top">
+    <div>
+      <a class="home" href="../">← wentaoz.com</a>
+      <div class="brand"><span class="name" lang="zh-CN">两清</span><span class="name-latin" lang="en">All Square</span></div>
+      <div class="eyebrow" id="eyebrow"></div>
+    </div>
+    <div class="tools">
+      <button type="button" class="theme" id="btn-theme" aria-pressed="false" hidden></button>
+      <div class="lang" role="group" aria-label="Language">
+        <button type="button" id="btn-zh" aria-pressed="true" lang="zh-CN">中文</button>
+        <button type="button" id="btn-en" aria-pressed="false" lang="en">EN</button>
+      </div>
+    </div>
+  </header>
+
+  <noscript><p class="nojs">两清在你的浏览器里算账，需要 JavaScript。请开启后刷新页面。<br><span lang="en">All Square does its sums in your browser and needs JavaScript. Turn it on and reload.</span></p></noscript>
+  <p class="banner" id="banner" role="status" hidden></p>
+
+  <section class="step" id="step-people" aria-labelledby="h-people">
+    <h2 class="step-h"><span class="no" aria-hidden="true">1</span><span id="h-people"></span><span class="count" id="people-count"></span></h2>
+    <form class="add-row" id="people-form" novalidate>
+      <label class="sr" for="name-input" id="name-label"></label>
+      <input type="text" id="name-input" autocomplete="off" autocapitalize="words" enterkeyhint="done" aria-describedby="name-hint">
+      <button type="submit" class="btn" id="name-add"></button>
+    </form>
+    <p class="hint" id="name-hint"></p>
+    <p class="msg" id="people-msg" role="status"></p>
+    <ul class="people" id="people"></ul>
+  </section>
+
+  <section class="step" id="step-spend" aria-labelledby="h-spend">
+    <h2 class="step-h"><span class="no" aria-hidden="true">2</span><span id="h-spend"></span></h2>
+    <p class="locked-note" id="spend-locked"></p>
+    <div id="spend-body">
+      <form class="form" id="spend-form" novalidate>
+        <p class="editing-note" id="editing-note" hidden></p>
+        <div class="fields">
+          <div class="field">
+            <label class="label" for="what-input" id="what-label"></label>
+            <input type="text" id="what-input" maxlength="60" autocomplete="off" enterkeyhint="next">
+          </div>
+          <div class="field">
+            <label class="label" for="amount-input" id="amount-label"></label>
+            <div class="amount-box">
+              <select id="cur"></select>
+              <input type="text" id="amount-input" inputmode="decimal" autocomplete="off" placeholder="0.00" enterkeyhint="done">
+            </div>
+          </div>
+        </div>
+        <fieldset class="field">
+          <legend class="label" id="payer-label"></legend>
+          <div class="chips" id="payer-chips"></div>
+        </fieldset>
+        <fieldset class="field">
+          <legend class="label" id="parts-label"></legend>
+          <div class="chips" id="parts-chips"></div>
+          <div class="share-foot">
+            <p class="calc" id="parts-calc" aria-live="polite"></p>
+            <button type="button" class="link-btn" id="parts-all"></button>
+          </div>
+        </fieldset>
+        <div class="form-actions">
+          <button type="submit" class="btn primary" id="spend-submit"></button>
+          <button type="button" class="btn" id="spend-cancel" hidden></button>
+        </div>
+        <p class="msg" id="spend-msg" role="status"></p>
+      </form>
+      <h3 class="list-h" id="list-h"></h3>
+      <ol class="ledger" id="ledger"></ol>
+    </div>
+  </section>
+
+  <section class="step" id="step-settle" aria-labelledby="h-settle">
+    <h2 class="step-h"><span class="no" aria-hidden="true">3</span><span id="h-settle"></span></h2>
+    <p class="locked-note" id="settle-locked"></p>
+    <div id="settle-body">
+      <p class="verdict" id="verdict"></p>
+      <ol class="transfers" id="transfers"></ol>
+      <p class="note" id="approx-note"></p>
+      <div class="share">
+        <button type="button" class="btn primary" id="copy-text"></button>
+        <button type="button" class="btn" id="copy-link"></button>
+        <p class="msg" id="share-msg" role="status"></p>
+      </div>
+      <h3 class="tally-h" id="tally-h"></h3>
+      <div class="tally"><table class="balances" id="balances"></table></div>
+    </div>
+  </section>
+
+  <details id="method-box">
+    <summary id="method-h"></summary>
+    <div class="method" id="method"></div>
+  </details>
+
+  <footer>
+    <span class="sig" id="foot-sig"></span>
+    <span id="foot-note"></span>
+    <button type="button" class="link-btn" id="reset"></button>
+  </footer>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var CURRENCIES = ['¥', '$', '€', '£'];
+  var MAX_PEOPLE = 50, MAX_NAME = 24, MAX_WHAT = 60, MAX_EXPENSES = 500, MAX_CENTS = 1e10;
+  var EXACT = 20;   // the exact search tries every subset of up to this many people: 2^20 of them
+  var KEY = 'allsquare.ledger', LANG_KEY = 'allsquare.lang';
+
+  var I18N = {
+    zh: {
+      eyebrow: '多人分账 · 每笔自选谁来平分 · 转账次数最少',
+      theme: '深色',
+      hPeople: '都有谁', hSpend: '每一笔花销', hSettle: '怎么还钱',
+      count: function (n) { return n + ' 人'; },
+      nameLabel: '名字', namePh: '输入名字', nameAdd: '添加',
+      nameHint: '按回车添加。好几个人可以一次输入，用逗号或顿号隔开。',
+      dup: function (names) { return names.join('、') + ' 已经在名单里了。'; },
+      full: '最多 ' + MAX_PEOPLE + ' 个人。',
+      inUse: function (name, n) { return name + ' 还在 ' + n + ' 笔账里，先把这几笔改掉才能删。'; },
+      remove: function (name) { return '删除 ' + name; },
+      needTwo: '先在上面加至少两个人。',
+      whatLabel: '花在哪', whatPh: '晚饭、打车、住宿…',
+      amountLabel: '金额', curLabel: '币种',
+      payerLabel: '谁付的', partsLabel: '谁来平分',
+      all: '全选', none: '全不选',
+      ways: function (k) { return k + ' 人平分'; },
+      each: function (k, m, even) { return k + ' 人平分，每人' + (even ? ' ' : '约 ') + m; },
+      nobody: '还没勾人',
+      add: '记下这笔', save: '保存修改', cancel: '取消',
+      editing: function (i, w) { return '正在修改第 ' + i + ' 笔' + (w ? '：' + w : ''); },
+      added: function (w, m) { return '记下了：' + w + ' ' + m; },
+      saved: function (w, m) { return '改好了：' + w + ' ' + m; },
+      badAmount: '金额写一个正数就行，最多两位小数，比如 88 或 35.5。',
+      noParts: '至少勾一个人来平分。',
+      tooMany: '一本账最多记 ' + MAX_EXPENSES + ' 笔。',
+      listH: function (n, m) { return '已记 ' + n + ' 笔，合计 ' + m; },
+      untitled: '未写名目',
+      line: function (payer, who, all, each, even) { return payer + ' 付 · ' + who + (all ? '' : ' ') + '平分，每人' + (even ? ' ' : '约 ') + each; },
+      everyone: function (k) { return '全员 ' + k + ' 人'; },
+      sep: '、',
+      edit: '改', del: '删', sure: '确定删？',
+      editOf: function (w) { return '修改 ' + w; }, delOf: function (w) { return '删除 ' + w; },
+      settleLocked: '记下第一笔花销，这里就会给出还钱方案。',
+      verdict: function (n, exact) { return n ? { pre: exact ? '最少' : '', num: n, post: '笔转账就能两清' } : { post: '不用转账，已经两清' }; },
+      pays: '转给',
+      transferLine: function (a, b, m) { return a + ' 转给 ' + b + ' ' + m; },
+      approx: '有钱要收付的人超过 ' + EXACT + ' 个，这里改用逐对配平，转账次数可能比最少多几笔。',
+      copyText: '复制结果', copyLink: '复制分享链接',
+      copied: '已复制，可以直接粘贴到群里。', linkCopied: '链接已复制。朋友打开就能看到这本账。',
+      tallyH: '每个人的账', cols: ['', '付了', '应摊', '结余'],
+      tallyNote: '结余 = 付了 − 应摊。正数等着收钱，负数要付钱。',
+      summary: function (n, k, m) { return '两清 · ' + n + ' 人 · ' + k + ' 笔 · 合计 ' + m; },
+      summaryNone: '不用转账，已经两清。',
+      details: '账目明细：',
+      methodH: '怎么算的',
+      method:
+        '<p><span class="k">平分</span><br>每一笔由付款人先垫上，再由勾选的人平分。金额按「分」计算；除不尽时，零头一人一分地分出去，付款人也在平分名单里的话先算付款人，所以每个人之间最多差一分钱，加起来和总额一分不差。</p>' +
+        '<p><span class="k">结余</span><br>每个人的结余 = 自己垫付的钱 − 自己应摊的钱。正数等着收钱，负数要往外付，所有人加起来正好是零。</p>' +
+        '<p><span class="k">最少转账</span><br>结余不为零的有 n 个人时，n − 1 笔转账一定够：每次让欠得最多的人还给被欠得最多的人，每笔至少结清一个人。想更少，只能把这 n 个人分成几组，每组的结余加起来恰好为零，各组内部自己结清：分得出 k 组，就只要 n − k 笔，任何方案都不可能更少。页面在所有分法里找组数最多的一种：先把结余正好相抵的两个人配成一对，剩下的人在 ' + EXACT + ' 个以内时用动态规划穷举所有子集，保证转账次数最少；超过 ' + EXACT + ' 个时改用逐对配平，可能多出几笔。</p>' +
+        '<p><span class="k">数据</span><br>账本只存在这台设备的浏览器里，不会上传。「复制分享链接」把整本账写进链接 # 后面的部分，这部分浏览器不会发给服务器。朋友打开链接，看到的是同一本账，也可以接着记，但之后各记各的，不会同步。</p>',
+      footSig: '两清', footNote: '亲兄弟，明算账。',
+      reset: '清空重来', resetAsk: '清空所有名字和账目？清掉就找不回来了。',
+      linkAsk: '打开链接里的账本？这台设备上现在的账会被替换。',
+      linkBad: '这个链接里的账读不出来，可能复制得不完整。',
+      linkOpened: '已打开链接里的账本。之后的改动只留在这台设备上，不会同步给别人。'
+    },
+    en: {
+      eyebrow: 'Shared expenses · pick who splits each one · fewest transfers',
+      theme: 'Dark',
+      hPeople: 'Who’s in', hSpend: 'Expenses', hSettle: 'Settle up',
+      count: function (n) { return n + (n === 1 ? ' person' : ' people'); },
+      nameLabel: 'Name', namePh: 'Type a name', nameAdd: 'Add',
+      nameHint: 'Press Enter to add. To add several at once, separate them with commas.',
+      dup: function (names) { return names.join(', ') + (names.length > 1 ? ' are' : ' is') + ' already on the list.'; },
+      full: 'Up to ' + MAX_PEOPLE + ' people.',
+      inUse: function (name, n) { return name + ' is in ' + n + (n > 1 ? ' expenses; change those' : ' expense; change it') + ' first.'; },
+      remove: function (name) { return 'Remove ' + name; },
+      needTwo: 'Add at least two people above first.',
+      whatLabel: 'What for', whatPh: 'Dinner, taxi, lodging…',
+      amountLabel: 'Amount', curLabel: 'Currency',
+      payerLabel: 'Paid by', partsLabel: 'Split equally between',
+      all: 'Select all', none: 'Clear all',
+      ways: function (k) { return 'Split ' + k + (k === 1 ? ' way' : ' ways'); },
+      each: function (k, m, even) { return 'Split ' + k + (k === 1 ? ' way, ' : ' ways, ') + (even ? '' : 'about ') + m + ' each'; },
+      nobody: 'Nobody ticked yet',
+      add: 'Add expense', save: 'Save changes', cancel: 'Cancel',
+      editing: function (i, w) { return 'Editing expense ' + i + (w ? ': ' + w : ''); },
+      added: function (w, m) { return 'Added: ' + w + ' ' + m; },
+      saved: function (w, m) { return 'Saved: ' + w + ' ' + m; },
+      badAmount: 'Enter a positive amount with at most two decimals, such as 88 or 35.5.',
+      noParts: 'Tick at least one person to split it.',
+      tooMany: 'A ledger holds up to ' + MAX_EXPENSES + ' expenses.',
+      listH: function (n, m) { return n + (n === 1 ? ' expense, ' : ' expenses, ') + m + ' in all'; },
+      untitled: 'Untitled',
+      line: function (payer, who, all, each, even) { return payer + ' paid · split by ' + who + ', ' + (even ? '' : 'about ') + each + ' each'; },
+      everyone: function (k) { return 'all ' + k; },
+      sep: ', ',
+      edit: 'Edit', del: 'Delete', sure: 'Sure?',
+      editOf: function (w) { return 'Edit ' + w; }, delOf: function (w) { return 'Delete ' + w; },
+      settleLocked: 'Add the first expense and the plan for paying back appears here.',
+      verdict: function (n, exact) { return n ? { pre: exact ? 'Just' : '', num: n, post: (n === 1 ? 'transfer' : 'transfers') + ' and you’re all square' } : { post: 'Nothing to transfer: you’re already all square.' }; },
+      pays: 'pays',
+      transferLine: function (a, b, m) { return a + ' pays ' + b + ' ' + m; },
+      approx: 'More than ' + EXACT + ' people have money to pay or receive, so the page matched them greedily; a plan with a few fewer transfers may exist.',
+      copyText: 'Copy summary', copyLink: 'Copy share link',
+      copied: 'Copied. Paste it into the group chat.', linkCopied: 'Link copied. Whoever opens it sees this ledger.',
+      tallyH: 'Everyone’s tally', cols: ['', 'Paid', 'Share', 'Balance'],
+      tallyNote: 'Balance = paid − share. Positive gets paid back; negative pays.',
+      summary: function (n, k, m) { return 'All Square · ' + n + ' people · ' + k + (k === 1 ? ' expense' : ' expenses') + ' · ' + m + ' in all'; },
+      summaryNone: 'Nothing to transfer: everyone is already square.',
+      details: 'Details: ',
+      methodH: 'How it works',
+      method:
+        '<p><span class="k">Splitting</span><br>Whoever paid fronts the money, and the people ticked share it equally. Amounts are kept in cents; when they don’t divide evenly the leftover cents go out one each, to the payer first if they are sharing, so no two shares differ by more than a cent and they add up to the total exactly.</p>' +
+        '<p><span class="k">Balances</span><br>Each person’s balance is what they paid minus their share. A positive balance is owed money, a negative one owes it, and together they sum to zero.</p>' +
+        '<p><span class="k">Fewest transfers</span><br>With n people whose balances aren’t zero, n − 1 transfers always suffice: have the largest debtor pay the largest creditor, and every transfer settles at least one person. The only way to do better is to split the n people into groups whose balances each sum to zero and settle each group on its own: k groups need n − k transfers, and no plan can use fewer. The page looks for the split with the most groups. It first pairs off people whose balances cancel exactly, then, for up to ' + EXACT + ' people left, tries every subset by dynamic programming, which guarantees the minimum. Beyond ' + EXACT + ' it falls back to greedy matching, which may use a few more.</p>' +
+        '<p><span class="k">Your data</span><br>The ledger lives only in this browser on this device; nothing is uploaded. Copy share link writes the whole ledger into the part of the link after #, which browsers never send to a server. Whoever opens the link sees the same ledger and can keep adding to it, but from then on each copy is separate; nothing syncs.</p>',
+      footSig: 'All Square', footNote: 'Short accounts make long friends.',
+      reset: 'Start over', resetAsk: 'Clear every name and expense? This can’t be undone.',
+      linkAsk: 'Open the ledger in this link? It replaces the one on this device.',
+      linkBad: 'The ledger in this link couldn’t be read; it may have been cut off when copied.',
+      linkOpened: 'Opened the ledger from the link. Changes from here on stay on this device and don’t sync.'
+    }
+  };
+
+  // ---------- state ----------
+  // people and expenses carry ids that live only in this page; saved and shared copies use list positions
+  var state = {
+    lang: 'zh', cur: '¥', people: [], expenses: [], nextId: 1,
+    editing: null,   // id of the expense loaded into the form
+    payer: null,     // the form's payer
+    parts: null,     // the form's sharers, in list order; null means everyone
+    confirmDel: null
+  };
+  try {
+    var savedLang = localStorage.getItem(LANG_KEY);
+    if (savedLang === 'zh' || savedLang === 'en') state.lang = savedLang;
+    else state.lang = (navigator.language || 'zh').toLowerCase().indexOf('zh') === 0 ? 'zh' : 'en';
+  } catch (e) { state.lang = 'zh'; }
+  state.cur = state.lang === 'zh' ? '¥' : '$';
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function cleanName(s) { return typeof s === 'string' ? s.replace(/\s+/g, ' ').trim().slice(0, MAX_NAME) : ''; }
+  function person(id) { for (var i = 0; i < state.people.length; i++) if (state.people[i].id === id) return state.people[i]; return null; }
+  function nameOf(id) { var p = person(id); return p ? p.name : '?'; }
+  function expense(id) { for (var i = 0; i < state.expenses.length; i++) if (state.expenses[i].id === id) return state.expenses[i]; return null; }
+  function uses(id) { return state.expenses.filter(function (e) { return e.payer === id || e.parts.indexOf(id) >= 0; }).length; }
+  function money(c, signed) {
+    var s = (Math.abs(c) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return (c < 0 ? '−' : signed && c > 0 ? '+' : '') + state.cur + s;
+  }
+  function plain(c) { return c % 100 ? (c / 100).toFixed(2) : String(c / 100); }
+
+  /* Amount typed by hand -> whole cents. Takes full-width digits, a 。 for the point, thousands commas,
+     a currency sign, and 12,50 for 12.50; anything else, or more than two decimals, is NaN. */
+  function parseAmount(s) {
+    s = String(s).replace(/[０-９．]/g, function (c) { return String.fromCharCode(c.charCodeAt(0) - 0xFEE0); })
+      .replace(/。/g, '.').replace(/[\s¥￥$€£]/g, '');
+    if (/^\d+[,，]\d{1,2}$/.test(s)) s = s.replace(/[,，]/, '.');
+    s = s.replace(/[,，]/g, '');
+    if (!/^(\d+(\.\d{0,2})?|\.\d{1,2})$/.test(s)) return NaN;
+    var c = Math.round(parseFloat(s) * 100);
+    return c > 0 && c <= MAX_CENTS ? c : NaN;
+  }
+
+  // ---------- the arithmetic ----------
+  /* Each sharer's part of an expense in cents. Leftover cents go out one each: to the payer first if
+     they share, then round the others from a place that moves with the expense's position in the list. */
+  function shares(e, index) {
+    var k = e.parts.length, base = Math.floor(e.cents / k), left = e.cents - base * k, start = index % k;
+    var order = e.parts.slice(start).concat(e.parts.slice(0, start)), at = order.indexOf(e.payer), out = {};
+    if (at > 0) { order.splice(at, 1); order.unshift(e.payer); }
+    order.forEach(function (id, i) { out[id] = base + (i < left ? 1 : 0); });
+    return out;
+  }
+  function tally() {
+    var t = {};
+    state.people.forEach(function (p) { t[p.id] = { paid: 0, share: 0 }; });
+    state.expenses.forEach(function (e, i) {
+      t[e.payer].paid += e.cents;
+      var s = shares(e, i);
+      for (var id in s) t[id].share += s[id];
+    });
+    return t;
+  }
+
+  /* Split balances (whole cents, summing to zero) into as many zero-sum groups as possible.
+     best[m] is the most zero-sum groups the people in bitmask m can form among themselves. */
+  function zeroSumGroups(v) {
+    var n = v.length, full = (1 << n) - 1;
+    var sum = new Float64Array(full + 1), best = new Int8Array(full + 1), m, r, low;
+    for (m = 1; m <= full; m++) {
+      low = m & -m;
+      sum[m] = sum[m ^ low] + v[31 - Math.clz32(low)];
+      var b = 0;
+      for (r = m; r; r &= r - 1) { var x = best[m ^ (r & -r)]; if (x > b) b = x; }
+      best[m] = b + (sum[m] === 0 ? 1 : 0);
+    }
+    // walk back down one person at a time; each time the remainder sums to zero, a group is closed off
+    var groups = [], mask = full, top = full;
+    while (mask) {
+      var want = best[mask] - (sum[mask] === 0 ? 1 : 0);
+      for (r = mask; r; r &= r - 1) { low = r & -r; if (best[mask ^ low] === want) break; }
+      mask ^= low;
+      if (sum[mask] === 0) {
+        var g = [];
+        for (var i = 0; i < n; i++) if ((top ^ mask) & (1 << i)) g.push(i);
+        groups.push(g);
+        top = mask;
+      }
+    }
+    return groups;
+  }
+  // within a zero-sum group, the largest debtor pays the largest creditor until all are square: at most size − 1 transfers
+  function settleGroup(g, out) {
+    var debt = [], cred = [];
+    g.forEach(function (x) { (x.v < 0 ? debt : cred).push({ x: x, v: Math.abs(x.v) }); });
+    var big = function (a, b) { return b.v - a.v || a.x.i - b.x.i; };
+    while (debt.length && cred.length) {
+      debt.sort(big); cred.sort(big);
+      var d = debt[0], c = cred[0], m = Math.min(d.v, c.v);
+      out.push({ from: d.x, to: c.x, cents: m });
+      d.v -= m; c.v -= m;
+      if (!d.v) debt.shift();
+      if (!c.v) cred.shift();
+    }
+  }
+  var settleMemo = { key: null, value: null };
+  function settle(t) {
+    var list = [];
+    state.people.forEach(function (p, i) { var v = t[p.id].paid - t[p.id].share; if (v) list.push({ id: p.id, i: i, v: v }); });
+    var key = list.map(function (x) { return x.id + ':' + x.i + ':' + x.v; }).join(',');
+    if (key === settleMemo.key) return settleMemo.value;
+    var transfers = [], waiting = {}, rest = [], exact = true;
+    // two people whose balances cancel exactly settle with each other; some fewest-transfer plan always does
+    list.forEach(function (x) {
+      var q = waiting[-x.v];
+      if (q && q.length) { var y = q.shift(); y.paired = x.paired = true; settleGroup([y, x], transfers); }
+      else (waiting[x.v] = waiting[x.v] || []).push(x);
+    });
+    list.forEach(function (x) { if (!x.paired) rest.push(x); });
+    if (rest.length <= EXACT) {
+      zeroSumGroups(rest.map(function (x) { return x.v; })).forEach(function (g) {
+        settleGroup(g.map(function (i) { return rest[i]; }), transfers);
+      });
+    } else {
+      exact = false;
+      settleGroup(rest, transfers);
+    }
+    transfers.sort(function (a, b) { return a.from.i - b.from.i || a.to.i - b.to.i; });
+    settleMemo = { key: key, value: { transfers: transfers, exact: exact } };
+    return settleMemo.value;
+  }
+
+  // ---------- saving and sharing ----------
+  // stored and shared as {v, c: currency, p: [names], e: [[what, cents, payer, [sharers]]]}, people by position
+  function toData() {
+    var at = {};
+    state.people.forEach(function (p, i) { at[p.id] = i; });
+    return {
+      v: 1, c: state.cur,
+      p: state.people.map(function (p) { return p.name; }),
+      e: state.expenses.map(function (e) { return [e.what, e.cents, at[e.payer], e.parts.map(function (id) { return at[id]; })]; })
+    };
+  }
+  // reads a saved or shared ledger, which may come from anywhere, so every field is checked; null if anything is off
+  function fromData(d) {
+    if (!d || d.v !== 1 || !Array.isArray(d.p) || !Array.isArray(d.e) || d.p.length > MAX_PEOPLE || d.e.length > MAX_EXPENSES) return null;
+    var people = [], seen = {}, id = 1, i;
+    for (i = 0; i < d.p.length; i++) {
+      var name = cleanName(d.p[i]), low = name.toLowerCase();
+      if (!name || seen['~' + low]) return null;
+      seen['~' + low] = true;
+      people.push({ id: id++, name: name });
+    }
+    var at = function (j) { return typeof j === 'number' && j % 1 === 0 && j >= 0 && j < people.length ? people[j] : null; };
+    var expenses = [];
+    for (i = 0; i < d.e.length; i++) {
+      var e = d.e[i];
+      if (!Array.isArray(e) || e.length !== 4 || typeof e[0] !== 'string' || !Array.isArray(e[3]) || !e[3].length) return null;
+      var cents = e[1], payer = at(e[2]), used = {};
+      if (typeof cents !== 'number' || cents % 1 !== 0 || cents <= 0 || cents > MAX_CENTS || !payer) return null;
+      for (var j = 0; j < e[3].length; j++) {
+        var q = at(e[3][j]);
+        if (!q || used[q.id]) return null;
+        used[q.id] = true;
+      }
+      expenses.push({
+        id: id++, what: e[0].replace(/\s+/g, ' ').trim().slice(0, MAX_WHAT), cents: cents, payer: payer.id,
+        parts: people.filter(function (p) { return used[p.id]; }).map(function (p) { return p.id; })
+      });
+    }
+    return { cur: CURRENCIES.indexOf(d.c) >= 0 ? d.c : null, people: people, expenses: expenses, nextId: id };
+  }
+  function adopt(l) {
+    state.people = l.people; state.expenses = l.expenses; state.nextId = l.nextId;
+    if (l.cur) state.cur = l.cur;
+    state.editing = null; state.payer = null; state.parts = null; state.confirmDel = null;
+  }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(toData())); } catch (e) {} }
+
+  function toBase64url(str) {
+    var bytes = new TextEncoder().encode(str), bin = '';
+    for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  function fromBase64url(s) {
+    var bin = atob(s.replace(/-/g, '+').replace(/_/g, '/')), bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+  }
+  function shareLink() { return location.href.split('#')[0] + '#d=' + toBase64url(JSON.stringify(toData())); }
+
+  // a shared link carries the whole ledger after #d=; opening it loads that ledger, after asking if it would replace another
+  function openLink() {
+    var h = location.hash;
+    if (h.indexOf('#d=') !== 0) return;
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+    var T = I18N[state.lang], l = null;
+    try { l = fromData(JSON.parse(fromBase64url(h.slice(3)))); } catch (e) {}
+    if (!l) { banner(T.linkBad); return; }
+    var mine = JSON.stringify(toData());
+    var had = { people: state.people, expenses: state.expenses, nextId: state.nextId, cur: state.cur };
+    adopt(l);
+    if ((had.people.length || had.expenses.length) && JSON.stringify(toData()) !== mine && !window.confirm(T.linkAsk)) {
+      adopt(had);
+      return;
+    }
+    $('what-input').value = ''; $('amount-input').value = '';
+    save();
+    banner(T.linkOpened);
+  }
+  function banner(text) { $('banner').textContent = text; $('banner').hidden = !text; }
+
+  function copy(text, done) {
+    var fallback = function () {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.top = '0'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      if (ok) done(); else window.prompt('', text);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback);
+    else fallback();
+  }
+
+  // ---------- render ----------
+  var timers = {};
+  function say(id, text, bad, ms) {
+    var el = $(id);
+    el.textContent = text || '';
+    el.classList.toggle('bad', !!bad);
+    clearTimeout(timers[id]);
+    if (ms) timers[id] = setTimeout(function () { el.textContent = ''; }, ms);
+  }
+  function setText(id, text) { $(id).textContent = text; }
+
+  function renderStatic() {
+    var T = I18N[state.lang];
+    $('page').className = 'page lang-' + state.lang;
+    document.documentElement.lang = state.lang === 'zh' ? 'zh-CN' : 'en';
+    $('btn-zh').setAttribute('aria-pressed', state.lang === 'zh');
+    $('btn-en').setAttribute('aria-pressed', state.lang === 'en');
+    setText('btn-theme', T.theme);
+    setText('eyebrow', T.eyebrow);
+    setText('h-people', T.hPeople); setText('h-spend', T.hSpend); setText('h-settle', T.hSettle);
+    setText('name-label', T.nameLabel); $('name-input').placeholder = T.namePh;
+    setText('name-add', T.nameAdd); setText('name-hint', T.nameHint);
+    setText('spend-locked', T.needTwo);
+    setText('what-label', T.whatLabel); $('what-input').placeholder = T.whatPh;
+    setText('amount-label', T.amountLabel); $('cur').setAttribute('aria-label', T.curLabel);
+    $('cur').innerHTML = CURRENCIES.map(function (c) { return '<option' + (c === state.cur ? ' selected' : '') + '>' + c + '</option>'; }).join('');
+    setText('payer-label', T.payerLabel); setText('parts-label', T.partsLabel);
+    setText('spend-cancel', T.cancel);
+    setText('settle-locked', T.settleLocked);
+    setText('copy-text', T.copyText); setText('copy-link', T.copyLink);
+    setText('tally-h', T.tallyH);
+    setText('method-h', T.methodH); $('method').innerHTML = T.method;
+    setText('foot-sig', T.footSig); setText('foot-note', T.footNote); setText('reset', T.reset);
+  }
+
+  function renderPeople() {
+    var T = I18N[state.lang], n = state.people.length;
+    setText('people-count', n ? '· ' + T.count(n) : '');
+    $('people').innerHTML = state.people.map(function (p) {
+      return '<li class="person"><span>' + esc(p.name) + '</span><button type="button" data-remove="' + p.id + '" aria-label="' + esc(T.remove(p.name)) + '">×</button></li>';
+    }).join('');
+  }
+
+  function formParts() { return state.parts || state.people.map(function (p) { return p.id; }); }
+  function renderForm() {
+    var T = I18N[state.lang], open = state.people.length >= 2 || state.expenses.length > 0;
+    $('step-spend').classList.toggle('locked', !open);
+    $('spend-locked').hidden = open;
+    $('spend-body').hidden = !open;
+    if (!open) return;
+    if (!person(state.payer)) state.payer = state.people.length ? state.people[0].id : null;
+    var parts = formParts();
+    $('payer-chips').innerHTML = state.people.map(function (p) {
+      return '<label class="chip"><input type="radio" name="payer" value="' + p.id + '"' + (p.id === state.payer ? ' checked' : '') + '><span>' + esc(p.name) + '</span></label>';
+    }).join('');
+    $('parts-chips').innerHTML = state.people.map(function (p) {
+      return '<label class="chip sharer"><input type="checkbox" value="' + p.id + '"' + (parts.indexOf(p.id) >= 0 ? ' checked' : '') + '><span>' + esc(p.name) + '</span></label>';
+    }).join('');
+    var e = state.editing && expense(state.editing);
+    $('spend-form').classList.toggle('editing', !!e);
+    $('editing-note').hidden = !e;
+    if (e) setText('editing-note', T.editing(state.expenses.indexOf(e) + 1, e.what));
+    setText('spend-submit', e ? T.save : T.add);
+    $('spend-cancel').hidden = !e;
+    renderPreview();
+  }
+  // the line under the sharers: how many split it and, once there is an amount, what each pays
+  function renderPreview() {
+    var T = I18N[state.lang], parts = formParts(), k = parts.length, c = parseAmount($('amount-input').value);
+    setText('parts-all', k === state.people.length ? T.none : T.all);
+    var el = $('parts-calc');
+    el.classList.toggle('bad', !k);
+    if (!k) el.textContent = T.nobody;
+    else if (c > 0) el.textContent = T.each(k, money(Math.floor(c / k)), c % k === 0);
+    else el.textContent = T.ways(k);
+  }
+
+  function renderLedger() {
+    var T = I18N[state.lang], n = state.expenses.length;
+    $('list-h').hidden = !n;
+    if (!n) { $('ledger').innerHTML = ''; return; }
+    var total = state.expenses.reduce(function (a, e) { return a + e.cents; }, 0);
+    setText('list-h', T.listH(n, money(total)));
+    $('ledger').innerHTML = state.expenses.map(function (e, i) {
+      var s = shares(e, i), lo = Infinity, hi = 0;
+      e.parts.forEach(function (id) { lo = Math.min(lo, s[id]); hi = Math.max(hi, s[id]); });
+      var all = e.parts.length === state.people.length;
+      var who = all ? T.everyone(e.parts.length) : e.parts.map(nameOf).join(T.sep);
+      var what = e.what || T.untitled, sure = state.confirmDel === e.id;
+      return '<li class="entry' + (state.editing === e.id ? ' is-editing' : '') + '">' +
+        '<span class="entry-what' + (e.what ? '' : ' untitled') + '">' + esc(what) + '</span>' +
+        '<span class="entry-amt">' + esc(money(e.cents)) + '</span>' +
+        '<span class="entry-meta">' + esc(T.line(nameOf(e.payer), who, all, money(lo), lo === hi)) + '</span>' +
+        '<span class="entry-actions">' +
+          '<button type="button" class="link-btn" data-edit="' + e.id + '" aria-label="' + esc(T.editOf(what)) + '">' + esc(T.edit) + '</button>' +
+          '<button type="button" class="link-btn' + (sure ? ' sure' : '') + '" data-del="' + e.id + '" aria-label="' + esc(sure ? T.sure : T.delOf(what)) + '">' + esc(sure ? T.sure : T.del) + '</button>' +
+        '</span></li>';
+    }).join('');
+  }
+
+  function renderSettle() {
+    var T = I18N[state.lang], open = state.expenses.length > 0;
+    $('step-settle').classList.toggle('locked', !open);
+    $('settle-locked').hidden = open;
+    $('settle-body').hidden = !open;
+    if (!open) return;
+    var t = tally(), r = settle(t), n = r.transfers.length, v = T.verdict(n, r.exact);
+    $('verdict').classList.toggle('done', !n);
+    $('verdict').innerHTML = (v.pre ? '<span class="v-pre">' + esc(v.pre) + '</span>' : '') +
+      (v.num ? '<b class="v-num">' + v.num + '</b>' : '') + '<span class="v-post">' + esc(v.post) + '</span>';
+    $('transfers').hidden = !n;
+    $('transfers').innerHTML = r.transfers.map(function (x) {
+      return '<li class="transfer"><span class="who"><span class="from">' + esc(nameOf(x.from.id)) + '</span>' +
+        '<span class="arrow" aria-hidden="true">→</span><span class="sr">' + esc(T.pays) + '</span>' +
+        '<span class="to">' + esc(nameOf(x.to.id)) + '</span></span><span class="amt">' + esc(money(x.cents)) + '</span></li>';
+    }).join('');
+    $('approx-note').hidden = r.exact;
+    setText('approx-note', T.approx);
+
+    var rows = state.people.map(function (p) {
+      var x = t[p.id], b = x.paid - x.share;
+      return '<tr><th scope="row">' + esc(p.name) + '</th><td>' + esc(money(x.paid)) + '</td><td>' + esc(money(x.share)) + '</td>' +
+        '<td class="' + (b > 0 ? 'pos' : b < 0 ? 'neg' : 'zero') + '">' + esc(money(b, true)) + '</td></tr>';
+    }).join('');
+    $('balances').innerHTML = '<caption>' + esc(T.tallyNote) + '</caption><thead><tr>' +
+      T.cols.map(function (c, i) { return '<th scope="col">' + (i ? esc(c) : '<span class="sr">' + esc(T.nameLabel) + '</span>') + '</th>'; }).join('') +
+      '</tr></thead><tbody>' + rows + '</tbody>';
+  }
+
+  function render() { renderStatic(); renderPeople(); renderForm(); renderLedger(); renderSettle(); }
+  function commit() { save(); render(); }
+
+  // ---------- events ----------
+  $('btn-zh').addEventListener('click', function () { setLang('zh'); });
+  $('btn-en').addEventListener('click', function () { setLang('en'); });
+  function setLang(l) {
+    state.lang = l;
+    try { localStorage.setItem(LANG_KEY, l); } catch (e) {}
+    ['people-msg', 'spend-msg', 'share-msg'].forEach(function (id) { say(id, ''); });
+    banner('');
+    render();
+  }
+
+  // light / dark: follows the system until chosen; the choice is shared with the homepage
+  var root = document.documentElement;
+  var mqDark = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  function isDark() { var t = root.getAttribute('data-theme'); return t ? t === 'dark' : !!(mqDark && mqDark.matches); }
+  function showTheme() { $('btn-theme').setAttribute('aria-pressed', isDark() ? 'true' : 'false'); }
+  $('btn-theme').addEventListener('click', function () {
+    var next = isDark() ? 'light' : 'dark', system = mqDark && mqDark.matches ? 'dark' : 'light';
+    // picking what the system already shows clears the choice, so the page follows the system again
+    if (next === system) root.removeAttribute('data-theme'); else root.setAttribute('data-theme', next);
+    try {
+      if (next === system) localStorage.removeItem('wentaoz.theme'); else localStorage.setItem('wentaoz.theme', next);
+    } catch (e) {}
+    showTheme();
+  });
+  if (mqDark && mqDark.addEventListener) mqDark.addEventListener('change', showTheme);
+  showTheme();
+  $('btn-theme').hidden = false;
+
+  // step 1: names, several at once when separated by commas
+  $('people-form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var T = I18N[state.lang], input = $('name-input');
+    var names = input.value.split(/[,，、;；\n]+/).map(cleanName).filter(Boolean);
+    if (!names.length) { input.focus(); return; }
+    var dups = [], full = false;
+    names.forEach(function (name) {
+      var low = name.toLowerCase();
+      if (state.people.some(function (p) { return p.name.toLowerCase() === low; })) { if (dups.indexOf(name) < 0) dups.push(name); return; }
+      if (state.people.length >= MAX_PEOPLE) { full = true; return; }
+      state.people.push({ id: state.nextId++, name: name });
+    });
+    input.value = '';
+    say('people-msg', (dups.length ? T.dup(dups) : '') + (full ? (dups.length ? ' ' : '') + T.full : ''), true);
+    commit();
+  });
+  $('people').addEventListener('click', function (ev) {
+    var b = ev.target.closest('[data-remove]');
+    if (!b) return;
+    var T = I18N[state.lang], id = +b.getAttribute('data-remove'), p = person(id), n = uses(id);
+    if (!p) return;
+    if (n) { say('people-msg', T.inUse(p.name, n), true); return; }
+    state.people = state.people.filter(function (x) { return x.id !== id; });
+    if (state.parts) state.parts = state.parts.filter(function (x) { return x !== id; });
+    say('people-msg', '');
+    commit();
+    $('name-input').focus();
+  });
+
+  // step 2: the form
+  $('cur').addEventListener('change', function () { state.cur = $('cur').value; commit(); });
+  $('amount-input').addEventListener('input', renderPreview);
+  $('payer-chips').addEventListener('change', function (ev) { state.payer = +ev.target.value; });
+  $('parts-chips').addEventListener('change', function () {
+    var on = {};
+    [].forEach.call($('parts-chips').querySelectorAll('input:checked'), function (x) { on[x.value] = true; });
+    state.parts = state.people.filter(function (p) { return on[p.id]; }).map(function (p) { return p.id; });
+    renderPreview();
+  });
+  $('parts-all').addEventListener('click', function () {
+    state.parts = formParts().length === state.people.length ? [] : null;
+    renderForm();
+  });
+  function clearForm() {
+    state.editing = null; state.parts = null;
+    $('what-input').value = ''; $('amount-input').value = '';
+  }
+  $('spend-form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var T = I18N[state.lang], cents = parseAmount($('amount-input').value), parts = formParts();
+    if (!(cents > 0)) { say('spend-msg', T.badAmount, true); $('amount-input').focus(); return; }
+    if (!parts.length) { say('spend-msg', T.noParts, true); return; }
+    if (!person(state.payer)) return;
+    var what = $('what-input').value.replace(/\s+/g, ' ').trim().slice(0, MAX_WHAT);
+    var e = state.editing && expense(state.editing), msg;
+    if (e) {
+      e.what = what; e.cents = cents; e.payer = state.payer; e.parts = parts.slice();
+      msg = T.saved(what || T.untitled, money(cents));
+    } else {
+      if (state.expenses.length >= MAX_EXPENSES) { say('spend-msg', T.tooMany, true); return; }
+      state.expenses.push({ id: state.nextId++, what: what, cents: cents, payer: state.payer, parts: parts.slice() });
+      msg = T.added(what || T.untitled, money(cents));
+    }
+    clearForm();
+    commit();
+    say('spend-msg', msg, false, 4000);
+    $('what-input').focus();
+  });
+  $('spend-cancel').addEventListener('click', function () {
+    clearForm();
+    say('spend-msg', '');
+    renderForm(); renderLedger();
+    $('what-input').focus();
+  });
+
+  // edit loads an expense into the form; delete asks once more on the same button
+  var delTimer;
+  $('ledger').addEventListener('click', function (ev) {
+    var b = ev.target.closest('[data-edit], [data-del]');
+    if (!b) return;
+    if (b.hasAttribute('data-edit')) {
+      var e = expense(+b.getAttribute('data-edit'));
+      if (!e) return;
+      state.editing = e.id; state.payer = e.payer; state.parts = e.parts.slice(); state.confirmDel = null;
+      $('what-input').value = e.what; $('amount-input').value = plain(e.cents);
+      say('spend-msg', '');
+      renderForm(); renderLedger();
+      $('spend-form').scrollIntoView({ block: 'start' });
+      $('amount-input').focus({ preventScroll: true });
+      return;
+    }
+    var id = +b.getAttribute('data-del');
+    clearTimeout(delTimer);
+    if (state.confirmDel !== id) {
+      state.confirmDel = id;
+      renderLedger();
+      var again = $('ledger').querySelector('[data-del="' + id + '"]');
+      if (again) again.focus();
+      delTimer = setTimeout(function () { state.confirmDel = null; renderLedger(); }, 4000);
+      return;
+    }
+    var at = state.expenses.indexOf(expense(id));
+    state.expenses = state.expenses.filter(function (x) { return x.id !== id; });
+    state.confirmDel = null;
+    if (state.editing === id) clearForm();
+    commit();
+    // focus moves to the entry that took its place, or the one before, or back to the form
+    var left = $('ledger').querySelectorAll('[data-del]');
+    (left[Math.min(at, left.length - 1)] || $('what-input')).focus();
+  });
+
+  // step 3: copy the plan or a link to the whole ledger
+  $('copy-text').addEventListener('click', function () {
+    var T = I18N[state.lang], r = settle(tally());
+    var total = state.expenses.reduce(function (a, e) { return a + e.cents; }, 0);
+    var lines = [T.summary(state.people.length, state.expenses.length, money(total))];
+    if (r.transfers.length) r.transfers.forEach(function (x) { lines.push(T.transferLine(nameOf(x.from.id), nameOf(x.to.id), money(x.cents))); });
+    else lines.push(T.summaryNone);
+    lines.push(T.details + shareLink());
+    copy(lines.join('\n'), function () { say('share-msg', T.copied, false, 4000); });
+  });
+  $('copy-link').addEventListener('click', function () {
+    var T = I18N[state.lang];
+    copy(shareLink(), function () { say('share-msg', T.linkCopied, false, 4000); });
+  });
+
+  $('reset').addEventListener('click', function () {
+    if (!state.people.length && !state.expenses.length) return;
+    if (!window.confirm(I18N[state.lang].resetAsk)) return;
+    state.people = []; state.expenses = []; state.nextId = 1; state.payer = null; state.confirmDel = null;
+    clearForm();
+    ['people-msg', 'spend-msg', 'share-msg'].forEach(function (id) { say(id, ''); });
+    banner('');
+    commit();
+    $('name-input').focus();
+  });
+
+  // ---------- boot ----------
+  try { var stored = localStorage.getItem(KEY); if (stored) { var l = fromData(JSON.parse(stored)); if (l) adopt(l); } } catch (e) {}
+  render();
+  openLink();   // after the first render, so a question about replacing the ledger isn't asked over a blank page
+  render();
+  window.addEventListener('hashchange', function () { if (location.hash.indexOf('#d=') === 0) { openLink(); render(); } });
+})();
+</script>
+<!-- GoatCounter: counts visits without cookies; the totals feed the visitor map on the homepage.
+     It reports the path only, never the #d= part that carries a shared ledger. -->
+<script data-goatcounter="https://wentaoz.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>
