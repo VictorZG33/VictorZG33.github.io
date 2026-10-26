@@ -14,19 +14,35 @@ const OUT = 'visitors.json';
 const token = process.env.GOATCOUNTER_TOKEN;
 if (!token) throw new Error('GOATCOUNTER_TOKEN is not set');
 
+// GoatCounter answers 404 to the first request from a key that has gone more than a day since
+// its "last used" time was updated, which is the request that updates it, and serves the next
+// request normally. Daily runs keep landing on that request, so a 404 is tried again.
 async function get(path, params = {}) {
   const url = new URL(API + path);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, String(v));
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } });
-  if (!res.ok) throw new Error(`GET ${path}: HTTP ${res.status} ${(await res.text()).slice(0, 300)}`);
-  return res.json();
+  for (let attempt = 1; ; attempt++) {
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } });
+    if (res.ok) return res.json();
+    const body = (await res.text()).slice(0, 300);
+    if (res.status === 404 && attempt < 3) {
+      console.log(`GET ${path}: HTTP 404, trying again in ${5 * attempt} s`);
+      await new Promise((resolve) => setTimeout(resolve, 5000 * attempt));
+      continue;
+    }
+    const err = new Error(`GET ${path}: HTTP ${res.status} ${body}`);
+    err.status = res.status;
+    throw err;
+  }
 }
 
-// /me needs no particular permission, so a failure here is about the key itself.
+// /me needs no particular permission, so a 401 or 403 here is about the key itself.
 try {
   await get('/me');
 } catch (err) {
-  throw new Error(`GoatCounter did not accept the API key; check the GOATCOUNTER_TOKEN secret. ${err.message}`);
+  if (err.status === 401 || err.status === 403) {
+    throw new Error(`GoatCounter did not accept the API key; check the GOATCOUNTER_TOKEN secret. ${err.message}`);
+  }
+  throw err;
 }
 
 // The API takes whole hours; without a start it would default to the last seven days.
