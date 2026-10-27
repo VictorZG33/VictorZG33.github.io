@@ -1,0 +1,1361 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="挥杆镜 Swing Mirror: upload a video of your golf swing and get it measured in your browser, with the four key positions, your tempo and what to work on. An optional AI coach adds a written lesson.">
+<meta property="og:title" content="挥杆镜 Swing Mirror">
+<meta property="og:description" content="Upload a video of your golf swing and get it measured in your browser: the four key positions, your tempo and what to work on, with an optional AI coach.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://wentaoz.com/golf/">
+<meta property="og:site_name" content="Wentao Zhang">
+<meta property="og:image" content="https://wentaoz.com/golf/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="挥杆镜 Swing Mirror, a golf swing traced at address, top, impact and finish.">
+<meta name="twitter:card" content="summary_large_image">
+<script>
+/* Apply the theme picked with the Dark button (here or on the homepage) before first paint */
+(function () { try { var t = localStorage.getItem('wentaoz.theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {} })();
+</script>
+<link rel="canonical" href="https://wentaoz.com/golf/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20fill%3D%22%231F6B45%22%2F%3E%3Cpath%20d%3D%22M11%206v20%22%20stroke%3D%22%23F4F3EE%22%20stroke-width%3D%222.5%22%2F%3E%3Cpath%20d%3D%22M12%206l11%204-11%204z%22%20fill%3D%22%23E2B04A%22%2F%3E%3Ccircle%20cx%3D%2222%22%20cy%3D%2224%22%20r%3D%223%22%20fill%3D%22%23F4F3EE%22%2F%3E%3C%2Fsvg%3E">
+<title>挥杆镜 Swing Mirror</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one column like a scorecard. Upload, then the swing (player, the four key frames, tempo,
+   findings), then the optional AI coach. Fairway green for good, sand for things to watch, flag red
+   for things to fix. Everything on the video is drawn in a bright line with a dark edge so it reads
+   on grass and on sky. */
+:root {
+  --bg: #F4F3EE;
+  --surface: #FFFFFF;
+  --fg: #17201A;
+  --muted: #5B675F;
+  --rule: #DCDDD3;
+  --rule-strong: #A6AC9F;
+  --green: #1F6B45;  --green-soft: #DDEBE1;
+  --sand: #8A5D0B;   --sand-soft: #F4E8C8;
+  --flag: #B3261E;   --flag-soft: #F6DEDA;
+  --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --body: "IBM Plex Sans", -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F1511; --surface: #18201B; --fg: #E4E9E3; --muted: #98A69C; --rule: #27312A; --rule-strong: #4A564E;
+    --green: #74C79A; --green-soft: #1A3125; --sand: #E2B04A; --sand-soft: #352B16; --flag: #F2897C; --flag-soft: #3C2220;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0F1511; --surface: #18201B; --fg: #E4E9E3; --muted: #98A69C; --rule: #27312A; --rule-strong: #4A564E;
+  --green: #74C79A; --green-soft: #1A3125; --sand: #E2B04A; --sand-soft: #352B16; --flag: #F2897C; --flag-soft: #3C2220;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--body); font-size: 16px; line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+.page {
+  max-width: 760px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 56px;
+}
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+a { color: inherit; text-decoration-color: var(--green); text-underline-offset: 3px; }
+
+/* header */
+.home { display: inline-block; margin-bottom: 8px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); text-decoration: none; }
+.home:hover, .home:focus-visible { color: var(--fg); }
+.top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--rule-strong); }
+.brand { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.brand .name { font-weight: 700; font-size: 21px; letter-spacing: 0.06em; }
+.brand .name-latin { font-family: var(--display); font-stretch: 112%; font-weight: 700; font-size: 20px; letter-spacing: -0.01em; }
+.eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+.tools { display: flex; align-items: center; gap: 8px; flex: none; }
+.pill {
+  appearance: none; border: 1px solid var(--rule-strong); border-radius: 999px; background: transparent; color: var(--muted);
+  font: 500 12px/1 var(--body); padding: 7px 11px; cursor: pointer; letter-spacing: 0.04em;
+}
+.pill[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.lang { display: inline-flex; border: 1px solid var(--rule-strong); border-radius: 999px; overflow: hidden; flex: none; }
+.lang button { appearance: none; border: 0; background: transparent; color: var(--muted); font: 500 12px/1 var(--body); padding: 7px 11px; cursor: pointer; letter-spacing: 0.04em; }
+.lang button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+
+/* intro: the swing traced at its four positions */
+.hero { display: grid; gap: 14px; padding-block: 28px 4px; }
+.lead { margin: 0; font-size: clamp(19px, 3.6vw, 23px); line-height: 1.4; font-weight: 500; max-width: 34em; }
+.lead-sub { margin: 0; color: var(--muted); max-width: 40em; }
+.trace { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 6px 0 0; padding: 0; list-style: none; }
+.trace li { display: grid; gap: 4px; justify-items: center; }
+.trace svg { width: 100%; height: auto; max-height: 160px; }
+.trace .bone { stroke: var(--fg); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+.trace .club { stroke: var(--green); stroke-width: 1.5; stroke-linecap: round; }
+.trace .ball { fill: var(--surface); stroke: var(--muted); stroke-width: 0.8; }
+.trace .headdot { fill: var(--fg); }
+.trace .ground { stroke: var(--rule-strong); stroke-width: 1.5; }
+.trace span { font: 500 11px/1.2 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+
+/* steps */
+.step { padding-block: 34px 4px; }
+.step-h { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; font-size: 19px; font-weight: 600; line-height: 1.3; }
+.step-h .no {
+  display: inline-grid; place-items: center; flex: none; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--fg); color: var(--bg); font: 500 13px/1 var(--mono);
+}
+.hint { margin: 8px 0 0; font-size: 13.5px; color: var(--muted); }
+.msg { margin: 10px 0 0; font-size: 14.5px; }
+.msg:empty { display: none; }
+.msg.bad { color: var(--flag); }
+
+.drop {
+  display: grid; justify-items: center; gap: 6px; padding: 28px 16px; text-align: center; cursor: pointer;
+  background: var(--surface); border: 1.5px dashed var(--rule-strong); border-radius: 14px;
+}
+.drop:hover, .drop.over { border-color: var(--green); background: var(--green-soft); }
+.drop:focus-within { outline: 2px solid var(--green); outline-offset: 2px; }
+.drop .big { font-size: 17px; font-weight: 600; }
+.drop .small { font-size: 13.5px; color: var(--muted); }
+.drop svg { width: 34px; height: 34px; color: var(--green); }
+.drop.busy { pointer-events: none; opacity: 0.55; }
+
+.opts { display: flex; flex-wrap: wrap; gap: 14px 28px; margin-top: 16px; }
+.opt { margin: 0; padding: 0; border: 0; min-width: 0; }
+.opt legend { padding: 0; margin-bottom: 8px; font-size: 13px; font-weight: 500; color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { position: relative; display: inline-flex; }
+.chip input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.chip span {
+  display: inline-flex; align-items: center; min-height: 38px; padding: 7px 14px;
+  border: 1px solid var(--rule-strong); border-radius: 999px; font-size: 14.5px; line-height: 1.3; color: var(--muted);
+}
+.chip:hover span { border-color: var(--fg); }
+.chip input:checked + span { background: var(--fg); border-color: var(--fg); color: var(--bg); }
+.chip input:focus-visible + span { outline: 2px solid var(--green); outline-offset: 2px; }
+
+.tips { margin: 18px 0 0; padding: 14px 16px; border-radius: 12px; background: var(--surface); border: 1px solid var(--rule); font-size: 14.5px; }
+.tips h3 { margin: 0 0 6px; font-size: 14px; font-weight: 600; }
+.tips ul { margin: 0; padding-left: 1.2em; }
+.tips li + li { margin-top: 3px; }
+
+.progress { margin-top: 18px; }
+.bar { height: 6px; border-radius: 3px; background: var(--rule); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--green); border-radius: 3px; transition: width 0.15s linear; }
+.progress-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-top: 8px; font-size: 14px; color: var(--muted); }
+.progress-row .btn { min-height: 34px; padding: 6px 12px; font-size: 13.5px; }
+
+.btn {
+  appearance: none; min-height: 44px; padding: 10px 16px; border: 1px solid var(--rule-strong); border-radius: 8px;
+  background: var(--surface); font-size: 15px; font-weight: 500; line-height: 1.2; cursor: pointer;
+}
+.btn:hover { border-color: var(--fg); }
+.btn.primary { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.btn:disabled { opacity: 0.5; cursor: default; }
+
+/* the player */
+.viewer { display: grid; gap: 10px; }
+.stage { position: relative; justify-self: center; max-width: 100%; line-height: 0; background: #000; border-radius: 10px; overflow: hidden; }
+.stage video { display: block; max-width: 100%; max-height: 68vh; width: auto; height: auto; }
+.stage canvas { position: absolute; left: 0; top: 0; pointer-events: none; }
+.scan { position: absolute; left: 10px; bottom: 10px; padding: 4px 9px; border-radius: 6px; background: rgba(0, 0, 0, 0.62); color: #fff; font: 500 12px/1.4 var(--mono); }
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.controls input[type="range"] { flex: 1 1 200px; accent-color: var(--green); min-height: 32px; }
+.controls .time { font: 400 13px/1 var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; min-width: 7.5em; }
+.controls select { min-height: 38px; padding: 6px 8px; border: 1px solid var(--rule-strong); border-radius: 8px; background: var(--surface); font-size: 14px; }
+.ctl { appearance: none; min-height: 38px; padding: 6px 14px; border: 1px solid var(--rule-strong); border-radius: 8px; background: var(--surface); font-size: 14px; font-weight: 500; cursor: pointer; }
+.ctl:hover { border-color: var(--fg); }
+.ctl[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.jumps { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.detected { margin: 6px 0 0; font-size: 14px; color: var(--muted); }
+.detected b { color: var(--fg); font-weight: 600; }
+.note { margin: 10px 0 0; padding: 10px 14px; border-radius: 8px; background: var(--sand-soft); font-size: 14px; }
+
+/* key frames */
+.frames { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 22px 0 0; padding: 0; list-style: none; }
+@media (max-width: 560px) { .frames { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.frames figure { margin: 0; display: grid; gap: 6px; }
+.frames canvas { width: 100%; height: auto; border-radius: 8px; background: #000; display: block; }
+.frames button { appearance: none; padding: 0; border: 0; background: none; cursor: pointer; border-radius: 8px; display: block; width: 100%; }
+.frames figcaption { display: flex; justify-content: space-between; gap: 6px; font-size: 13px; }
+.frames figcaption b { font-weight: 600; }
+.frames figcaption span { font-family: var(--mono); color: var(--muted); font-size: 12px; }
+.legend { margin: 8px 0 0; font-size: 12.5px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.legend i { display: inline-block; width: 18px; height: 0; vertical-align: middle; margin-right: 6px; border-top: 3px solid #C9B21F; }
+.legend i.ref { border-top: 2px dashed #2A9FD0; }
+
+/* tempo */
+.tempo { margin-top: 30px; padding: 18px 16px; background: var(--surface); border: 1px solid var(--rule); border-radius: 14px; }
+.tempo-h { margin: 0; font-size: 13px; font-weight: 500; color: var(--muted); }
+.tempo-num { margin: 4px 0 0; font-family: var(--display); font-stretch: 112%; font-weight: 700; font-size: clamp(44px, 12vw, 64px); line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.tempo-num small { font-size: 0.42em; font-weight: 600; color: var(--muted); letter-spacing: 0; margin-left: 0.3em; }
+.tbar { display: flex; gap: 2px; margin-top: 14px; height: 14px; }
+.tbar i { display: block; height: 100%; border-radius: 4px; }
+.tbar .b { background: var(--green); }
+.tbar .d { background: var(--fg); }
+.tlabels { display: flex; justify-content: space-between; gap: 12px; margin-top: 6px; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tempo-text { margin: 10px 0 0; font-size: 14.5px; max-width: 60ch; }
+
+/* findings */
+.find-h { margin: 32px 0 4px; font-size: 16px; font-weight: 600; }
+.summary { margin: 0 0 8px; font-size: 14px; color: var(--muted); }
+.findings { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--rule-strong); }
+.finding { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--rule); }
+.badge {
+  display: inline-flex; align-items: center; gap: 5px; align-self: start; margin-top: 1px; padding: 3px 9px 3px 4px;
+  border-radius: 999px; font-size: 12.5px; font-weight: 600; white-space: nowrap;
+}
+.badge::before { content: ""; display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; color: var(--surface); font: 700 11px/18px var(--body); text-align: center; }
+.badge.fix { background: var(--flag-soft); color: var(--flag); } .badge.fix::before { content: "!"; background: var(--flag); }
+.badge.watch { background: var(--sand-soft); color: var(--sand); } .badge.watch::before { content: "~"; background: var(--sand); }
+.badge.good { background: var(--green-soft); color: var(--green); } .badge.good::before { content: "✓"; background: var(--green); }
+.badge.info { background: var(--rule); color: var(--muted); } .badge.info::before { content: "i"; background: var(--muted); }
+.f-title { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 12px; font-weight: 600; }
+.f-val { font-family: var(--mono); font-size: 13.5px; font-weight: 500; color: var(--muted); font-variant-numeric: tabular-nums; }
+.f-body { margin: 4px 0 0; font-size: 14.5px; }
+.f-tip { margin: 6px 0 0; font-size: 14px; color: var(--muted); }
+.f-tip b { color: var(--fg); font-weight: 600; }
+.f-jump { appearance: none; border: 0; background: none; padding: 2px 0; margin-top: 4px; font-size: 13px; color: var(--green); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+
+/* coach */
+.coach-intro { margin: 0 0 14px; font-size: 15px; max-width: 62ch; }
+.coach-form { display: grid; gap: 14px; padding: 16px; background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; }
+.field { display: grid; gap: 6px; }
+.label { font-size: 13px; font-weight: 500; color: var(--muted); }
+textarea, input[type="password"], input[type="text"] {
+  width: 100%; min-height: 44px; padding: 10px 12px; font-size: 16px; line-height: 1.4;
+  background: var(--bg); border: 1px solid var(--rule-strong); border-radius: 8px;
+}
+textarea { min-height: 76px; resize: vertical; }
+.check { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.check input { width: 18px; height: 18px; accent-color: var(--green); }
+.coach-out { margin-top: 18px; font-size: 15.5px; line-height: 1.65; }
+.coach-out:empty { display: none; }
+.coach-out h4 { margin: 18px 0 6px; font-size: 16px; }
+.coach-out h4:first-child { margin-top: 0; }
+.coach-out p { margin: 0 0 10px; }
+.coach-out ul, .coach-out ol { margin: 0 0 10px; padding-left: 1.3em; }
+.coach-out li + li { margin-top: 4px; }
+.coach-meta { margin: 6px 0 0; font: 400 12.5px/1.5 var(--mono); color: var(--muted); }
+.coach-meta:empty { display: none; }
+.thinking { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 14.5px; }
+.thinking::before { content: ""; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--rule-strong); border-top-color: var(--green); animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .thinking::before { animation: none; } .bar i { transition: none; } }
+
+/* method */
+details { border-top: 1px solid var(--rule); margin-top: 40px; }
+summary { cursor: pointer; padding: 16px 0; font-weight: 600; font-size: 15px; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; font-family: var(--mono); color: var(--muted); font-size: 18px; }
+details[open] summary::after { content: "–"; }
+.method { padding: 0 0 18px; font-size: 14.5px; max-width: 62ch; }
+.method p { margin: 0 0 12px; }
+.method .k { font-family: var(--mono); font-size: 12.5px; color: var(--muted); }
+footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--rule-strong); font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; }
+footer .sig { font-family: var(--display); font-stretch: 112%; font-weight: 700; font-size: 15px; color: var(--fg); }
+.lang-zh footer .sig { font-family: var(--body); letter-spacing: 0.06em; }
+.nojs { margin: 22px 0 0; font-size: 17px; max-width: 34em; }
+</style>
+<noscript><style>.tools, .step, details, footer { display: none; }</style></noscript>
+</head>
+<body>
+<div class="page lang-zh" id="page">
+  <header class="top">
+    <div>
+      <a class="home" href="../">← wentaoz.com</a>
+      <div class="brand"><span class="name" lang="zh-CN">挥杆镜</span><span class="name-latin" lang="en">Swing Mirror</span></div>
+      <div class="eyebrow" id="eyebrow"></div>
+    </div>
+    <div class="tools">
+      <button type="button" class="pill" id="btn-theme" aria-pressed="false" hidden></button>
+      <div class="lang" role="group" aria-label="Language">
+        <button type="button" id="btn-zh" aria-pressed="true" lang="zh-CN">中文</button>
+        <button type="button" id="btn-en" aria-pressed="false" lang="en">EN</button>
+      </div>
+    </div>
+  </header>
+
+  <noscript><p class="nojs">挥杆镜在你的浏览器里分析视频，需要 JavaScript。请开启后刷新页面。<br><span lang="en">Swing Mirror analyses the video in your browser and needs JavaScript. Turn it on and reload.</span></p></noscript>
+
+  <section class="hero">
+    <p class="lead" id="lead"></p>
+    <p class="lead-sub" id="lead-sub"></p>
+    <ol class="trace" id="trace" aria-hidden="true"></ol>
+  </section>
+
+  <section class="step" id="step-upload" aria-labelledby="h-upload">
+    <h2 class="step-h"><span class="no" aria-hidden="true">1</span><span id="h-upload"></span></h2>
+    <label class="drop" id="drop" for="file">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="13" height="14" rx="2"/><path d="M15.5 10l6-3.5v11l-6-3.5"/></svg>
+      <span class="big" id="drop-big"></span>
+      <span class="small" id="drop-small"></span>
+      <input type="file" id="file" accept="video/*" class="sr">
+    </label>
+    <div class="opts">
+      <fieldset class="opt">
+        <legend id="hand-label"></legend>
+        <div class="chips">
+          <label class="chip"><input type="radio" name="hand" value="right" checked><span id="hand-right"></span></label>
+          <label class="chip"><input type="radio" name="hand" value="left"><span id="hand-left"></span></label>
+        </div>
+      </fieldset>
+      <fieldset class="opt">
+        <legend id="view-label"></legend>
+        <div class="chips">
+          <label class="chip"><input type="radio" name="view" value="auto" checked><span id="view-auto"></span></label>
+          <label class="chip"><input type="radio" name="view" value="face"><span id="view-face"></span></label>
+          <label class="chip"><input type="radio" name="view" value="dtl"><span id="view-dtl"></span></label>
+        </div>
+      </fieldset>
+    </div>
+    <div class="tips"><h3 id="tips-h"></h3><ul id="tips"></ul></div>
+    <div class="progress" id="progress" hidden>
+      <div class="bar"><i id="bar"></i></div>
+      <div class="progress-row"><span id="progress-text" role="status"></span><button type="button" class="btn" id="cancel"></button></div>
+    </div>
+    <p class="msg" id="upload-msg" role="alert"></p>
+  </section>
+
+  <section class="step" id="step-result" aria-labelledby="h-result" hidden>
+    <h2 class="step-h"><span class="no" aria-hidden="true">2</span><span id="h-result"></span></h2>
+    <div class="viewer">
+      <div class="stage" id="stage">
+        <video id="video" playsinline muted preload="auto"></video>
+        <canvas id="overlay"></canvas>
+        <span class="scan" id="scan" hidden></span>
+      </div>
+      <div class="controls" id="controls">
+        <button type="button" class="ctl" id="play"></button>
+        <label class="sr" for="seek" id="seek-label"></label>
+        <input type="range" id="seek" min="0" max="1000" step="1" value="0">
+        <span class="time" id="time"></span>
+        <label class="sr" for="speed" id="speed-label"></label>
+        <select id="speed"><option value="0.25">0.25×</option><option value="0.5" selected>0.5×</option><option value="1">1×</option></select>
+        <button type="button" class="ctl" id="bones" aria-pressed="true"></button>
+      </div>
+      <div class="jumps" id="jumps"></div>
+    </div>
+    <p class="detected" id="detected"></p>
+    <p class="note" id="notes" hidden></p>
+
+    <ol class="frames" id="frames"></ol>
+    <p class="legend" id="legend"></p>
+
+    <div class="tempo" id="tempo">
+      <p class="tempo-h" id="tempo-h"></p>
+      <p class="tempo-num" id="tempo-num"></p>
+      <div class="tbar" id="tbar" aria-hidden="true"><i class="b"></i><i class="d"></i></div>
+      <div class="tlabels"><span id="t-back"></span><span id="t-down"></span></div>
+      <p class="tempo-text" id="tempo-text"></p>
+      <p class="tempo-text f-tip" id="tempo-tip" hidden></p>
+    </div>
+
+    <h3 class="find-h" id="find-h"></h3>
+    <p class="summary" id="summary"></p>
+    <ul class="findings" id="findings"></ul>
+  </section>
+
+  <section class="step" id="step-coach" aria-labelledby="h-coach" hidden>
+    <h2 class="step-h"><span class="no" aria-hidden="true">3</span><span id="h-coach"></span></h2>
+    <p class="coach-intro" id="coach-intro"></p>
+    <form class="coach-form" id="coach-form" novalidate>
+      <div class="field">
+        <label class="label" for="notes-input" id="notes-label"></label>
+        <textarea id="notes-input" maxlength="600"></textarea>
+      </div>
+      <div class="field" id="key-box">
+        <label class="label" for="key-input" id="key-label"></label>
+        <input type="password" id="key-input" autocomplete="off" spellcheck="false" placeholder="sk-ant-…">
+        <label class="check"><input type="checkbox" id="key-keep"><span id="key-keep-label"></span></label>
+        <p class="hint" id="key-hint"></p>
+      </div>
+      <div><button type="submit" class="btn primary" id="coach-go"></button></div>
+      <p class="msg" id="coach-msg" role="alert"></p>
+    </form>
+    <div class="coach-out" id="coach-out" aria-live="polite"></div>
+    <p class="coach-meta" id="coach-meta"></p>
+  </section>
+
+  <details id="method-box">
+    <summary id="method-h"></summary>
+    <div class="method" id="method"></div>
+  </details>
+
+  <footer>
+    <span class="sig" id="foot-sig"></span>
+    <span id="foot-note"></span>
+  </footer>
+</div>
+
+<script type="module">
+import { analyzeSwing, BONES } from './swing.js';
+
+// ---------- settings ----------
+// The AI coach. With COACH_ENDPOINT empty, visitors paste their own Anthropic API key and the page
+// calls Claude directly. Set it to the address of the Worker in workers/golf-coach to let everyone
+// use the site's key instead (the Worker keeps the key secret).
+const COACH_ENDPOINT = '';
+const SDK = 'https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.133.0';
+const PRICE = { input: 4, output: 20 };   // US$ per million tokens for the coach model (Claude Opus 5.5)
+
+const MP = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.1.0';
+const POSE_MODEL = 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task';
+const MAX_SECONDS = 30;     // longer clips are refused: trim to the swing
+const MAX_SAMPLES = 450;    // frames analysed per clip: 30 per second up to 15 s, fewer after that
+const DETECT_SIZE = 640;    // frames are scaled to this long side before the pose model sees them
+const PHASES = ['address', 'top', 'impact', 'finish'];
+const LANG_KEY = 'golf.lang', KEY_KEY = 'golf.apiKey';
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+// ---------- words ----------
+const r0 = (v) => Math.round(Math.abs(v));
+const I18N = {
+  zh: {
+    eyebrow: '高尔夫挥杆分析 · 视频不离开你的设备 · 可选 AI 教练',
+    theme: '深色',
+    lead: '上传一段挥杆视频，看看自己的准备、上杆顶点、击球和收杆。',
+    leadSub: '姿态识别在你的浏览器里运行，视频不会上传。它会标出四个关键位置，量出节奏、头和髋的移动、身体角度，并告诉你先改什么。想要更具体的点评，可以再请 AI 教练看看这四帧。',
+    phase: { address: '准备', top: '上杆顶点', impact: '击球', finish: '收杆' },
+    hUpload: '上传挥杆视频',
+    dropBig: '选择或拖入一段视频', dropSmall: 'MP4 或 MOV，3–20 秒，只拍一次挥杆',
+    handLabel: '惯用手', handRight: '右手', handLeft: '左手',
+    viewLabel: '拍摄角度', viewAuto: '自动识别', viewFace: '正面', viewDtl: '侧后方（沿目标线）',
+    tipsH: '怎么拍，结果最准',
+    tips: [
+      '手机固定（三脚架或靠在包上），整段视频不要移动、不要缩放。',
+      '全身都在画面里，头顶和脚下都留一点空，最好连杆头一起拍进去。',
+      '正面：站在你正前方，镜头对着胸口；侧后方：站在你身后，沿着目标线拍。镜头大约在腰的高度。',
+      '从准备姿势前 1 秒开始录，到收杆停住后 1 秒结束。用慢动作拍也可以。',
+    ],
+    loadingModel: '正在加载姿态识别模型（第一次大约 20 MB）…',
+    reading: '正在读取视频…',
+    scanning: (i, n) => `正在识别第 ${i} / ${n} 帧`,
+    capturing: '正在截取关键帧…',
+    cancel: '取消', cancelled: '已取消。',
+    tooLong: (s) => `视频有 ${s} 秒，太长了。请剪到只含一次挥杆（30 秒以内）。`,
+    badVideo: '浏览器读不了这个视频。iPhone 拍的 HEVC 视频在部分浏览器里打不开：换 Safari，或在相册里把视频导出为「兼容性最佳」后再试。',
+    notVideo: '这不是视频文件。',
+    modelFail: '姿态识别模型加载失败，请检查网络后刷新页面再试。',
+    errors: {
+      no_person: '视频里没有稳定地识别到一个人。请确认全身（含头和脚）都在画面里、光线足够、画面里只有你一个人。',
+      no_swing: '没找到一次完整的挥杆（准备 → 上杆 → 击球）。请上传一段完整的全挥杆；推杆和小切杆暂时分析不了。',
+      starts_late: '视频开头已经在上杆了。请从准备姿势开始录，开拍后停 1 秒再挥杆。',
+      too_short: '视频太短，至少要包含一次完整挥杆。',
+    },
+    hResult: '分析结果',
+    play: '播放', pause: '暂停', seekLabel: '进度', speedLabel: '播放速度', bones: '骨架',
+    detected: (v, hand, auto) => `识别为 <b>${v}</b>${auto ? '（自动）' : ''} · <b>${hand}</b>。点下面的关键帧可以跳到那一刻。`,
+    viewName: { face: '正面', dtl: '侧后方' },
+    handName: { right: '右手球员', left: '左手球员' },
+    camMoved: '画面在挥杆中有移动，已经用脚的位置做了校正；下次把手机固定住，结果会更准。',
+    camLost: '画面在挥杆中移动太多（或者脚没拍清楚），头和髋的位置这几项没法可靠地量，所以没有列出。下次把手机固定住，拍全双脚。',
+    slowmo: '这段视频像是慢动作，所以秒数比实际慢，但上杆和下杆的时间比例仍然可信。',
+    noFinish: '视频在收杆前就结束了，收杆相关的项目没有分析。',
+    handHint: (h) => h === 'left' ? '画面里看起来是左手球员，如果是，请在上面「惯用手」选左手。' : '画面里看起来是右手球员，如果是，请在上面「惯用手」选右手。',
+    legend: ['当前骨架', '准备时的位置（参考线）'],
+    tempoH: '节奏：上杆 : 下杆',
+    tBack: (s) => `上杆 ${s}`, tDown: (s) => `下杆 ${s}`,
+    sec: (x) => `${x.toFixed(2)} 秒`,
+    findH: '发现',
+    summary: (fix, watch, good) => [fix && `${fix} 项需要改`, watch && `${watch} 项值得留意`, good && `${good} 项做得不错`].filter(Boolean).join(' · ') + '。',
+    status: { fix: '需要改', watch: '留意', good: '不错', info: '参考' },
+    see: (p) => `看「${p}」这一帧`,
+    tipLabel: '练习：',
+    hCoach: 'AI 教练点评（可选）',
+    coachIntro: 'AI 教练（Claude）会看上面四个关键帧和测量结果，写一份具体的点评：最该先改的两三件事、为什么、怎么练。只有这四张截图和数字会发出去，视频本身不会。',
+    notesLabel: '补充说明（可选）：差点、常见失误、用的什么杆…',
+    notesPh: '比如：差点 18，一号木经常右曲，这是 7 号铁。',
+    keyLabel: '你的 Anthropic API key',
+    keyKeep: '在这台设备上记住',
+    keyHint: '没有 key？在 console.anthropic.com 注册并充值后创建一个。key 只存在你的浏览器里，直接发给 Anthropic，不经过本站。每次点评大约花 0.05–0.10 美元。',
+    coachGo: '让 AI 教练看看', coachAgain: '再点评一次',
+    needKey: '请先填你的 API key（以 sk-ant- 开头）。',
+    coachLoading: '正在加载…',
+    coachThinking: 'AI 教练正在看你的四个关键帧…',
+    coachErr: {
+      401: 'API key 无效或已被停用，请检查后再试。',
+      403: '这个 API key 没有权限调用这个模型。',
+      429: '请求太频繁或额度已用完，过一会儿再试。',
+      529: 'AI 服务现在很忙，过一会儿再试。',
+      net: '连不上 AI 服务，请检查网络后再试。',
+      other: (m) => `点评失败：${m}`,
+    },
+    refusal: 'AI 拒绝了这次请求，换个说明再试一次。',
+    truncated: '（点评太长被截断了。）',
+    usage: (i, o, c) => `本次用量：输入 ${i} tokens，输出 ${o} tokens，约 $${c}`,
+    methodH: '怎么分析的',
+    method:
+      '<p><span class="k">姿态识别</span><br>页面用 Google 的 MediaPipe 姿态模型，在你的浏览器里逐帧找出 33 个身体关键点（头、肩、肘、腕、髋、膝、踝、脚）。视频和这些点都只在你的设备上，不会上传。模型看不到球杆和球。</p>' +
+      '<p><span class="k">找关键位置</span><br>双手先升到髋部以上很高的位置（上杆），再落回最低点（击球），然后再升起（收杆）。上杆顶点取双手最高的时刻；击球取下杆中双手最低的时刻；准备取上杆开始前最静止的一段；收杆取双手升到最高处的时刻。节奏 = 从起杆到顶点的时间 ÷ 从顶点到击球的时间，职业球员大多接近 3 : 1。</p>' +
+      '<p><span class="k">测量</span><br>所有测量都相对于准备姿势：头和髋往哪个方向移动了多少、身体前倾和侧倾的角度变了多少。厘米数按普通成年人的身材比例换算（正面按两肩间距约 36 cm，侧面按躯干约 48 cm），只是估计。如果画面在挥杆中移动，会用双脚的位置来校正。判断好坏的界线是给业余球员的常见经验值，不是绝对标准。</p>' +
+      '<p><span class="k">局限</span><br>这是二维的估计：身体转动、遮挡和模糊都会让点位不准，侧后方拍摄时前侧手臂常被挡住。它适合发现明显的问题和对比前后变化，代替不了教练当面看。</p>' +
+      '<p><span class="k">AI 教练</span><br>点「让 AI 教练看看」时，四张关键帧（缩小成最长 1024 像素的 JPEG）、测量结果和你的补充说明会发给 Anthropic 的 Claude 模型，由它写点评。用你自己的 API key 时，请求从你的浏览器直接发给 Anthropic，费用记在你的账上。</p>',
+    footSig: '挥杆镜', footNote: '练习场上的第二双眼睛。',
+    f: {
+      tempo: {
+        title: '节奏（上杆 : 下杆）', value: (m) => `${m.value.toFixed(1)} : 1`,
+        good: () => '接近职业球员常见的 3 : 1，上杆从容、下杆果断。保持住。',
+        low: () => '上杆相对下杆太快了，常见的是起杆太急，身体还没转到位就开始下杆，击球点和方向都会不稳。',
+        high: () => '上杆相对下杆偏慢，或者在顶点停顿太久，下杆容易变成手臂发力。',
+        tipLow: '数拍子挥杆：上杆默数「一、二、三」到顶点，「四」击球。用节拍器慢速做 10 次，再正常挥 10 次。',
+        tipHigh: '让上杆连续不停，到顶点时下半身先开始向目标移动，手臂跟着落下。半挥杆 10 次找节奏。',
+      },
+      headHeight: {
+        title: '击球时头的高度',
+        value: (m) => m.status === 'good' ? `变化约 ${r0(m.value)} cm` : m.dir === 'up' ? `抬高约 ${r0(m.value)} cm` : `下沉约 ${r0(m.value)} cm`,
+        good: () => '从准备到击球，头的高度基本没变，身体的高度保持得好。',
+        up: () => '击球时头比准备时高了，身体在下杆中站了起来，容易打薄、打顶，也会让杆头离开挥杆轨迹。',
+        down: () => '击球时头比准备时低了，身体往下压，容易打厚（先打到地）。',
+        tipUp: '下杆时想「胸口一直对着球、保持膝盖弯曲」直到击球后。可以请朋友在你头顶上方伸一根球杆，挥杆时头不碰它、也不离开它。慢速 15 次。',
+        tipDown: '准备时膝盖微屈即可，不要蹲太低；下杆想「胸口向上、向目标转」而不是往下砸。',
+      },
+      headSway: {
+        title: '上杆时头的左右移动',
+        value: (m) => m.dir === 'toward' ? `向目标侧约 ${r0(m.value)} cm` : `约 ${r0(m.value)} cm`,
+        good: () => '上杆时头横向移动不大，转身以转动为主。',
+        away: () => '上杆时头向远离目标的一侧晃动得较多（俗称「sway」），转身变成了平移，下杆得先把身体移回来，击球点容易不稳。',
+        toward: () => '上杆时头反而向目标侧移动（反向重心），重心留在前脚，下杆时常常反过来倒向后脚，容易打厚或右曲。',
+        tipAway: '上杆想「背转向目标」，而不是「往右挪」。对着镜子或在头的外侧立一根球杆做参照，慢速上杆 20 次，头不碰杆。',
+        tipToward: '上杆时让重心进入后脚的脚跟内侧，后侧膝盖保持弯曲不外翻。慢速上杆停在顶点 2 秒，确认重心在后脚。',
+      },
+      headImpact: {
+        title: '击球时头的位置', value: (m) => m.value < 1 ? '在原位或靠后' : `向目标侧约 ${r0(m.value)} cm`,
+        good: () => '击球时头留在准备时的位置或稍后，「头在球后」做得好。',
+        bad: () => '击球时头比准备时更靠近目标，上半身抢在前面冲向球，容易出杆低、拉左或切球。',
+        tip: '击球后再让头随身体转起来。在前脚前方地上放一枚硬币，击球时眼睛还留在球的位置，看到杆头扫过后再抬头。',
+      },
+      hipSway: {
+        title: '上杆时髋部横移', value: (m) => `约 ${r0(m.value)} cm`,
+        good: () => '上杆时髋部基本在原地转动，没有明显横移。',
+        bad: () => '上杆时髋部向远离目标的一侧横移（髋部 sway），转动变成了滑动，力量和稳定性都会打折扣。',
+        tip: '在后侧髋外面立一根球杆或放一把椅子做「墙」，上杆时髋部转动但不碰到它。慢速 20 次，再正常挥。',
+      },
+      hipShift: {
+        title: '击球时髋部向目标移动', value: (m) => m.value <= 0 ? `向后约 ${r0(m.value)} cm` : `约 ${r0(m.value)} cm`,
+        good: () => '击球时髋部移向目标侧，重心转移到位。',
+        back: () => '击球时髋部几乎没有移向目标，重心留在后脚（hanging back），容易打厚、打薄，或者右手翻转打出左曲。',
+        slide: () => '击球时髋部向目标滑动太多，转动不够，杆面容易打开，出右或切球。',
+        tipBack: '踏步练习：上杆到顶点时，前脚向目标方向踩一小步，然后下杆击球。10 次后再正常挥，找「先移后转」的感觉。',
+        tipSlide: '下杆想「前侧髋往后转开」而不是往前推。在前脚外侧立一根球杆，击球时髋部不超过它。',
+      },
+      spineTilt: {
+        title: '准备时脊柱侧倾', value: (m) => `${Math.round(m.value)}°`,
+        good: () => '准备时上身稍向远离目标一侧倾斜，在正常范围（铁杆约 5°，一号木约 10° 左右）。',
+        toward: () => '准备时上身向目标一侧倾斜，上杆容易形成反向重心，下杆角度过陡。',
+        much: () => '准备时上身向后倾斜过多，容易打厚，或者把重心一直留在后脚。',
+        tipToward: '准备时让后手自然低于前手，后肩随之略低；检查球位是否太靠后。',
+        tipMuch: '检查球位是否太靠前；准备时胸骨大约在球的稍后方即可。',
+      },
+      finishBalance: {
+        title: '收杆时的重心', value: (m) => `${Math.round(m.value)}%`,
+        good: () => '收杆时髋部已经移到前脚上方，重心完全转移过去了。',
+        bad: () => '收杆时髋部停在两脚之间，重心没有完全转移到前脚，收杆不稳，力量也没完全送出去。',
+        tip: '每次挥杆后保持收杆 3 秒：后脚只剩脚尖着地，皮带扣对着目标。站不稳就说明重心还没过去。',
+      },
+      spineAddress: {
+        title: '准备时身体前倾', value: (m) => `${Math.round(m.value)}°`,
+        good: () => '准备时身体前倾的角度在常见范围（约 30°–45°）。',
+        upright: () => '准备姿势偏直立，手臂没有足够空间，下杆时更容易起身。',
+        bent: () => '准备时前倾太多，背部负担大，下杆时容易起身或失去平衡。',
+        tipUpright: '从髋关节折叠：双手放在大腿根，臀部向后推，上身随之前倾，膝盖微屈，手臂自然垂在肩下。',
+        tipBent: '站得离球近一点，胸口抬起，膝盖微屈，让手臂自然垂下而不是去够球。',
+      },
+      spineKeep: {
+        title: '击球时保持前倾',
+        value: (m) => m.status === 'good' ? `变化约 ${r0(m.value)}°` : m.dir === 'up' ? `起身约 ${r0(m.value)}°` : `压低约 ${r0(m.value)}°`,
+        good: () => '从准备到击球，身体前倾的角度基本保持住了。',
+        up: () => '击球时身体比准备时直立了，也就是「起身」或「提前伸展」（early extension）。手臂失去空间，常见打薄、打到杆跟，或者靠手腕翻转救球。',
+        down: () => '击球时身体比准备时压得更低，容易打厚。',
+        tipUp: '靠墙练习：背对墙站好准备姿势，臀部轻贴墙。上杆后侧臀部贴墙，下杆前侧臀部转回去贴墙，直到击球都不离开。慢速 15 次。',
+        tipDown: '下杆想「胸口向上、向目标转」，击球后让身体自然站起来。',
+      },
+      earlyExt: {
+        title: '击球时髋部往球的方向冲', value: (m) => `约 ${r0(m.value)} cm`,
+        good: () => '击球时髋部没有明显往球的方向冲，保持了手臂下来的空间。',
+        bad: () => '击球时髋部向球的方向推了出去（提前伸展），手臂被挤得没有空间，容易打薄、打到杆跟或左右乱飞。',
+        tip: '在臀部后方立一根球杆（插在地上或请人扶着），准备时臀部轻碰它；下杆到击球时，臀部一直保持碰着它。慢速 15 次。',
+      },
+      headToBall: {
+        title: '击球时头往球的方向冲', value: (m) => `约 ${r0(m.value)} cm`,
+        good: () => '击球时头没有往球的方向冲，重心稳定。',
+        bad: () => '击球时头向球的方向移动了，身体往前扑，失去平衡和手臂的空间。',
+        tip: '准备时重心放在脚掌中部，不要压在脚尖；下杆时想「臀部往后坐」来平衡上半身。',
+      },
+      leadArm: {
+        title: '上杆顶点前侧手臂', value: (m) => `约 ${Math.round(m.value)}°`,
+        good: () => '上杆顶点时前侧手臂比较伸直，挥杆弧线宽，击球点更稳定。',
+        bad: () => '上杆顶点时前侧手臂弯得比较多，弧线变短，击球点更难稳定。不一定是错误，柔韧性也会影响。（二维估计，手臂被身体挡住时不准。）',
+        tip: '上杆时想「双手离头远一点」保持宽度；宁可上杆短一点，也让前侧手臂保持舒展。',
+      },
+      backswing: {
+        title: '上杆幅度', value: () => '',
+        full: () => '上杆顶点时双手高过肩膀，是完整的上杆。',
+        three: () => '上杆顶点时双手大约和肩齐平，约四分之三挥杆。',
+        short: () => '上杆顶点时双手低于肩膀，上杆比较短；如果打的是全挥杆，可以检查肩部转动是否充分。',
+      },
+    },
+  },
+  en: {
+    eyebrow: 'Golf swing analysis · the video stays on your device · optional AI coach',
+    theme: 'Dark',
+    lead: 'Upload a video of your golf swing and see your address, top, impact and finish.',
+    leadSub: 'Pose tracking runs in your browser and the video is never uploaded. It marks the four key positions, measures your tempo, how your head and hips move and the angles of your body, and tells you what to work on first. For a more specific lesson, ask the AI coach to look at the four frames.',
+    phase: { address: 'Address', top: 'Top', impact: 'Impact', finish: 'Finish' },
+    hUpload: 'Upload a swing',
+    dropBig: 'Choose or drop a video', dropSmall: 'MP4 or MOV, 3–20 seconds, one swing',
+    handLabel: 'You swing', handRight: 'Right-handed', handLeft: 'Left-handed',
+    viewLabel: 'Camera angle', viewAuto: 'Detect', viewFace: 'Face-on', viewDtl: 'Down the line',
+    tipsH: 'Filming for the best result',
+    tips: [
+      'Keep the phone still (a tripod, or propped on your bag), with no panning or zooming.',
+      'Get your whole body in frame with a little room above your head and below your feet, ideally the club head too.',
+      'Face-on: stand in front of the player, camera at their chest. Down the line: stand behind them, along the target line. Hold the phone at about hip height.',
+      'Start recording a second before address and stop a second after you hold the finish. Slow motion is fine.',
+    ],
+    loadingModel: 'Loading the pose model (about 20 MB the first time)…',
+    reading: 'Reading the video…',
+    scanning: (i, n) => `Tracking frame ${i} of ${n}`,
+    capturing: 'Capturing the key frames…',
+    cancel: 'Cancel', cancelled: 'Cancelled.',
+    tooLong: (s) => `The video is ${s} seconds long. Trim it to the one swing, under 30 seconds.`,
+    badVideo: 'Your browser can’t read this video. iPhone HEVC videos don’t open in every browser: try Safari, or export the video as “Most Compatible” first.',
+    notVideo: 'That isn’t a video file.',
+    modelFail: 'The pose model didn’t load. Check your connection and reload the page.',
+    errors: {
+      no_person: 'No one was tracked steadily in the video. Make sure your whole body, head to feet, is in frame, the light is good and you’re the only person in it.',
+      no_swing: 'No complete swing was found (address, backswing, impact). Upload one full swing; putts and short chips can’t be analysed yet.',
+      starts_late: 'The video starts in the middle of the backswing. Start recording at address and wait a second before you swing.',
+      too_short: 'The video is too short to hold a full swing.',
+    },
+    hResult: 'Your swing',
+    play: 'Play', pause: 'Pause', seekLabel: 'Position', speedLabel: 'Playback speed', bones: 'Skeleton',
+    detected: (v, hand, auto) => `Read as <b>${v}</b>${auto ? ' (detected)' : ''} · <b>${hand}</b>. Tap a key frame below to jump to it.`,
+    viewName: { face: 'face-on', dtl: 'down the line' },
+    handName: { right: 'right-handed', left: 'left-handed' },
+    camMoved: 'The picture moved during the swing, so positions were corrected using your feet. Keep the phone still next time for a cleaner read.',
+    camLost: 'The picture moved too much during the swing (or your feet weren’t clear), so head and hip positions couldn’t be measured reliably and are left out. Keep the phone still and your feet in frame next time.',
+    slowmo: 'This looks like slow motion, so the seconds are stretched, but the ratio of backswing to downswing still holds.',
+    noFinish: 'The video ends before the finish, so the finish wasn’t analysed.',
+    handHint: (h) => h === 'left' ? 'This looks like a left-handed swing. If it is, pick Left-handed above.' : 'This looks like a right-handed swing. If it is, pick Right-handed above.',
+    legend: ['Skeleton now', 'Where you were at address (reference)'],
+    tempoH: 'Tempo: backswing to downswing',
+    tBack: (s) => `Backswing ${s}`, tDown: (s) => `Downswing ${s}`,
+    sec: (x) => `${x.toFixed(2)} s`,
+    findH: 'Findings',
+    summary: (fix, watch, good) => [fix && `${fix} to fix`, watch && `${watch} to watch`, good && `${good} looking good`].filter(Boolean).join(' · ') + '.',
+    status: { fix: 'Fix', watch: 'Watch', good: 'Good', info: 'Note' },
+    see: (p) => `See the ${p.toLowerCase()} frame`,
+    tipLabel: 'Drill: ',
+    hCoach: 'AI coach (optional)',
+    coachIntro: 'The AI coach (Claude) looks at the four key frames and the measurements and writes you a specific lesson: the two or three things to change first, why, and how to practise them. Only those four stills and the numbers are sent, never the video.',
+    notesLabel: 'Anything to add (optional): handicap, usual miss, club…',
+    notesPh: 'For example: 18 handicap, slice my driver, this was a 7-iron.',
+    keyLabel: 'Your Anthropic API key',
+    keyKeep: 'Remember it on this device',
+    keyHint: 'No key? Sign up at console.anthropic.com, add credit and create one. The key stays in your browser and goes straight to Anthropic, never through this site. Each lesson costs about US$0.05–0.10.',
+    coachGo: 'Ask the AI coach', coachAgain: 'Ask again',
+    needKey: 'Enter your API key first (it starts with sk-ant-).',
+    coachLoading: 'Loading…',
+    coachThinking: 'The AI coach is looking at your four key frames…',
+    coachErr: {
+      401: 'The API key is invalid or has been disabled. Check it and try again.',
+      403: 'This API key isn’t allowed to use this model.',
+      429: 'Too many requests, or the credit has run out. Try again in a while.',
+      529: 'The AI service is busy right now. Try again in a while.',
+      net: 'Couldn’t reach the AI service. Check your connection and try again.',
+      other: (m) => `The lesson failed: ${m}`,
+    },
+    refusal: 'The AI declined this request. Change your note and try again.',
+    truncated: '(The lesson ran too long and was cut off.)',
+    usage: (i, o, c) => `This lesson: ${i} tokens in, ${o} tokens out, about $${c}`,
+    methodH: 'How it works',
+    method:
+      '<p><span class="k">Pose tracking</span><br>The page runs Google’s MediaPipe pose model in your browser and finds 33 body points (head, shoulders, elbows, wrists, hips, knees, ankles, feet) in every frame. The video and the points stay on your device. The model doesn’t see the club or the ball.</p>' +
+      '<p><span class="k">Finding the positions</span><br>Your hands rise well above your hips (the backswing), drop to their lowest point (impact), and rise again (the finish). The top is when the hands hang highest; impact is when they are lowest on the way down; address is the stillest moment before the backswing starts; the finish is when the hands reach the top of the follow-through. Tempo is the time from takeaway to the top divided by the time from the top to impact. Most tour players are close to 3 : 1.</p>' +
+      '<p><span class="k">Measurements</span><br>Everything is measured against your address position: which way and how far your head and hips moved, how your forward bend and side tilt changed. Centimetres are scaled from typical adult proportions (about 36 cm between the shoulders face-on, about 48 cm of trunk down the line), so they are estimates. If the picture moves during the swing, your feet are used to correct for it. The lines between good and bad are common rules of thumb for amateurs, not hard limits.</p>' +
+      '<p><span class="k">Limits</span><br>This is a 2D estimate: turning, overlapping limbs and blur all throw the points off, and down the line the lead arm is often hidden. It is good at spotting obvious faults and comparing before and after, not at replacing a coach on the range.</p>' +
+      '<p><span class="k">The AI coach</span><br>When you ask the AI coach, the four key frames (as JPEGs at most 1024 pixels long), the measurements and your note go to Anthropic’s Claude model, which writes the lesson. With your own API key the request goes from your browser straight to Anthropic and is billed to your account.</p>',
+    footSig: 'Swing Mirror', footNote: 'A second pair of eyes on the range.',
+    f: {
+      tempo: {
+        title: 'Tempo (backswing : downswing)', value: (m) => `${m.value.toFixed(1)} : 1`,
+        good: () => 'Close to the 3 : 1 most tour players swing at: an unhurried backswing and a decisive downswing. Keep it.',
+        low: () => 'Your backswing is quick for your downswing. Usually the takeaway is rushed and the downswing starts before the turn is finished, which costs contact and direction.',
+        high: () => 'Your backswing is slow for your downswing, or you pause at the top, which tends to turn the downswing into an arms-only move.',
+        tipLow: 'Count it: “one, two, three” to the top and “four” at impact. Ten slow swings to a metronome, then ten at normal speed.',
+        tipHigh: 'Keep the backswing moving without a stop, and let the lower body start towards the target as you reach the top. Ten half swings to find the rhythm.',
+      },
+      headHeight: {
+        title: 'Head height at impact',
+        value: (m) => m.status === 'good' ? `${r0(m.value)} cm change` : m.dir === 'up' ? `up about ${r0(m.value)} cm` : `down about ${r0(m.value)} cm`,
+        good: () => 'Your head stayed at about the same height from address to impact: you kept your height.',
+        up: () => 'Your head was higher at impact than at address: you stood up on the way down. That leads to thin and topped shots and pulls the club off its path.',
+        down: () => 'Your head was lower at impact than at address: you dipped, which leads to fat shots.',
+        tipUp: 'Feel your chest stay over the ball and your knees stay flexed until after impact. Have a friend hold a club just above your head and swing without touching it or pulling away. Fifteen slow swings.',
+        tipDown: 'Use only a little knee flex at address, and feel your chest turn up and through rather than down at the ball.',
+      },
+      headSway: {
+        title: 'Head movement on the backswing',
+        value: (m) => m.dir === 'toward' ? `${r0(m.value)} cm towards the target` : `about ${r0(m.value)} cm`,
+        good: () => 'Your head moved little on the backswing: you turned rather than slid.',
+        away: () => 'Your head swayed away from the target on the backswing. The turn became a slide, so you have to move back before you can hit, and contact suffers.',
+        toward: () => 'Your head moved towards the target on the backswing (a reverse pivot). Your weight stays forward going back and then falls back on the way down, which leads to fat shots and slices.',
+        tipAway: 'Feel your back turn to the target rather than shifting away. Use a mirror, or stand a club just outside your head, and make twenty slow backswings without touching it.',
+        tipToward: 'Let your weight move into the inside of your trail heel on the way back, with the trail knee staying flexed. Hold the top for two seconds and check where your weight is.',
+      },
+      headImpact: {
+        title: 'Head position at impact', value: (m) => m.value < 1 ? 'at or behind address' : `${r0(m.value)} cm towards the target`,
+        good: () => 'At impact your head was where it started or a little behind: “head behind the ball”, done well.',
+        bad: () => 'At impact your head was nearer the target than at address: the upper body lunged at the ball, which leads to low pulls and slices.',
+        tip: 'Let the head turn with the body only after impact. Put a coin on the ground just ahead of the ball and keep your eyes on the ball until you see the club sweep through.',
+      },
+      hipSway: {
+        title: 'Hip slide on the backswing', value: (m) => `about ${r0(m.value)} cm`,
+        good: () => 'Your hips turned in place on the backswing without sliding.',
+        bad: () => 'Your hips slid away from the target on the backswing (a hip sway). The turn became a slide, which costs power and consistency.',
+        tip: 'Stand a club or a chair just outside your trail hip as a wall and turn without bumping it. Twenty slow backswings, then full swings.',
+      },
+      hipShift: {
+        title: 'Hips towards the target at impact', value: (m) => m.value <= 0 ? `${r0(m.value)} cm back` : `about ${r0(m.value)} cm`,
+        good: () => 'At impact your hips had moved towards the target: your weight transferred.',
+        back: () => 'At impact your hips had barely moved towards the target: you hung back on the trail foot, which leads to fat and thin shots, or flipping the hands into a hook.',
+        slide: () => 'At impact your hips had slid too far towards the target without turning, which leaves the face open: pushes and slices.',
+        tipBack: 'Step drill: as you reach the top, step your lead foot towards the target, then swing through. Ten of those, then normal swings, feeling shift then turn.',
+        tipSlide: 'Feel the lead hip turn back and away rather than push forward. Stand a club outside your lead foot and don’t let your hip pass it.',
+      },
+      spineTilt: {
+        title: 'Spine tilt at address', value: (m) => `${Math.round(m.value)}°`,
+        good: () => 'At address your upper body tilts slightly away from the target, in the normal range (about 5° with irons, around 10° with a driver).',
+        toward: () => 'At address your upper body leans towards the target, which sets up a reverse pivot and a steep downswing.',
+        much: () => 'At address your upper body leans well back, which leads to fat shots or weight stuck on the trail side.',
+        tipToward: 'Let your trail hand sit lower than your lead hand so the trail shoulder drops naturally, and check the ball isn’t too far back.',
+        tipMuch: 'Check the ball isn’t too far forward; your sternum only needs to be just behind the ball.',
+      },
+      finishBalance: {
+        title: 'Weight at the finish', value: (m) => `${Math.round(m.value)}%`,
+        good: () => 'At the finish your hips were over your lead foot: the weight went all the way through.',
+        bad: () => 'At the finish your hips were still between your feet: the weight didn’t get all the way to the lead foot, so the finish is unstable and some power stays behind.',
+        tip: 'Hold every finish for three seconds, trail foot up on its toe and belt buckle facing the target. If you can’t hold it, the weight hasn’t got there.',
+      },
+      spineAddress: {
+        title: 'Forward bend at address', value: (m) => `${Math.round(m.value)}°`,
+        good: () => 'Your forward bend at address is in the usual range (about 30° to 45°).',
+        upright: () => 'You stand quite upright at address. Your arms have little room, and standing up on the way down becomes more likely.',
+        bent: () => 'You bend over a lot at address, which loads your back and makes standing up or losing balance more likely.',
+        tipUpright: 'Hinge from the hips: hands on the creases of your thighs, push your seat back and let your chest tip forward, knees softly flexed, arms hanging below your shoulders.',
+        tipBent: 'Stand a little closer, lift your chest, flex your knees slightly and let your arms hang rather than reach.',
+      },
+      spineKeep: {
+        title: 'Holding your posture to impact',
+        value: (m) => m.status === 'good' ? `${r0(m.value)}° change` : m.dir === 'up' ? `${r0(m.value)}° more upright` : `${r0(m.value)}° lower`,
+        good: () => 'You kept your forward bend from address to impact.',
+        up: () => 'At impact you were more upright than at address: standing up, or early extension. Your arms lose their room, which leads to thin shots, heel strikes and saving the shot with the hands.',
+        down: () => 'At impact you were bent over more than at address, which leads to fat shots.',
+        tipUp: 'Wall drill: set up with your seat lightly touching a wall behind you. Going back, the trail cheek stays on the wall; coming down, turn the lead cheek back to the wall and keep it there through impact. Fifteen slow swings.',
+        tipDown: 'Feel your chest turn up and towards the target on the way down, and let your body rise naturally after impact.',
+      },
+      earlyExt: {
+        title: 'Hips moving towards the ball', value: (m) => `about ${r0(m.value)} cm`,
+        good: () => 'Your hips didn’t push towards the ball by impact, so your arms kept their room.',
+        bad: () => 'Your hips pushed towards the ball by impact (early extension), crowding your arms. That leads to thin shots, heel strikes and shots going both ways.',
+        tip: 'Stand a club upright behind your seat (pushed into the ground or held by a friend) so you touch it at address, and keep touching it through impact. Fifteen slow swings.',
+      },
+      headToBall: {
+        title: 'Head moving towards the ball', value: (m) => `about ${r0(m.value)} cm`,
+        good: () => 'Your head didn’t move towards the ball by impact: you stayed balanced.',
+        bad: () => 'Your head moved towards the ball by impact: you fell forward, losing balance and room for your arms.',
+        tip: 'Set your weight over the middle of your feet, not your toes, and feel your seat stay back to balance your upper body on the way down.',
+      },
+      leadArm: {
+        title: 'Lead arm at the top', value: (m) => `about ${Math.round(m.value)}°`,
+        good: () => 'Your lead arm is fairly straight at the top: a wide arc and steadier contact.',
+        bad: () => 'Your lead arm bends quite a lot at the top, which shortens the arc and makes contact harder to repeat. It isn’t always a fault, and flexibility plays a part. (A 2D estimate; it is unreliable when your body hides the arm.)',
+        tip: 'Feel your hands stay far from your head on the way back for width. A slightly shorter backswing with a fuller lead arm is a good trade.',
+      },
+      backswing: {
+        title: 'Length of backswing', value: () => '',
+        full: () => 'Your hands are above your shoulders at the top: a full backswing.',
+        three: () => 'Your hands are about level with your shoulders at the top: roughly a three-quarter swing.',
+        short: () => 'Your hands are below your shoulders at the top: a short backswing. If this was meant as a full swing, check that your shoulders turn fully.',
+      },
+    },
+  },
+};
+
+// The words for one measurement: { title, value, body, tip }
+function describe(m, T) {
+  const F = T.f[m.id], s = m.status;
+  const out = { title: F.title, value: F.value(m), body: '', tip: '' };
+  switch (m.id) {
+    case 'tempo':
+      if (s === 'good') out.body = F.good();
+      else if (m.value < 3) { out.body = F.low(); out.tip = F.tipLow; } else { out.body = F.high(); out.tip = F.tipHigh; }
+      break;
+    case 'headHeight':
+      if (s === 'good') out.body = F.good();
+      else if (m.dir === 'up') { out.body = F.up(); out.tip = F.tipUp; } else { out.body = F.down(); out.tip = F.tipDown; }
+      break;
+    case 'headSway':
+      if (s === 'good') out.body = F.good();
+      else if (m.dir === 'toward') { out.body = F.toward(); out.tip = F.tipToward; } else { out.body = F.away(); out.tip = F.tipAway; }
+      break;
+    case 'hipShift':
+      if (s === 'good') out.body = F.good();
+      else if (m.dir === 'slide') { out.body = F.slide(); out.tip = F.tipSlide; } else { out.body = F.back(); out.tip = F.tipBack; }
+      break;
+    case 'spineTilt':
+      if (s === 'good') out.body = F.good();
+      else if (m.dir === 'toward') { out.body = F.toward(); out.tip = F.tipToward; } else { out.body = F.much(); out.tip = F.tipMuch; }
+      break;
+    case 'spineAddress':
+      if (s === 'good') out.body = F.good();
+      else if (m.dir === 'upright') { out.body = F.upright(); out.tip = F.tipUpright; } else { out.body = F.bent(); out.tip = F.tipBent; }
+      break;
+    case 'spineKeep':
+      if (s === 'good') out.body = F.good();
+      else if (m.dir === 'up') { out.body = F.up(); out.tip = F.tipUp; } else { out.body = F.down(); out.tip = F.tipDown; }
+      break;
+    case 'backswing':
+      out.body = F[m.dir]();
+      break;
+    default:
+      if (s === 'good') out.body = F.good(); else { out.body = F.bad(); out.tip = F.tip; }
+  }
+  return out;
+}
+
+// ---------- state ----------
+const state = {
+  lang: 'zh', hand: 'right', view: 'auto',
+  file: null, url: '', frames: null, W: 0, H: 0, result: null, crop: null,
+  stills: {},          // phase -> canvas of the cropped frame, without drawings
+  busy: false, abort: null, bones: true, coachBusy: false,
+};
+try {
+  const saved = localStorage.getItem(LANG_KEY);
+  state.lang = saved === 'zh' || saved === 'en' ? saved : (navigator.language || 'zh').toLowerCase().startsWith('zh') ? 'zh' : 'en';
+} catch (e) { state.lang = 'zh'; }
+
+const video = $('video'), overlay = $('overlay');
+
+// ---------- static text ----------
+function setText(id, text) { $(id).textContent = text; }
+function renderStatic() {
+  const T = I18N[state.lang];
+  $('page').className = 'page lang-' + state.lang;
+  document.documentElement.lang = state.lang === 'zh' ? 'zh-CN' : 'en';
+  $('btn-zh').setAttribute('aria-pressed', state.lang === 'zh');
+  $('btn-en').setAttribute('aria-pressed', state.lang === 'en');
+  setText('btn-theme', T.theme);
+  setText('eyebrow', T.eyebrow); setText('lead', T.lead); setText('lead-sub', T.leadSub);
+  setText('h-upload', T.hUpload); setText('drop-big', T.dropBig); setText('drop-small', T.dropSmall);
+  setText('hand-label', T.handLabel); setText('hand-right', T.handRight); setText('hand-left', T.handLeft);
+  setText('view-label', T.viewLabel); setText('view-auto', T.viewAuto); setText('view-face', T.viewFace); setText('view-dtl', T.viewDtl);
+  setText('tips-h', T.tipsH);
+  $('tips').innerHTML = T.tips.map((t) => `<li>${esc(t)}</li>`).join('');
+  setText('cancel', T.cancel);
+  setText('h-result', T.hResult); setText('seek-label', T.seekLabel); setText('speed-label', T.speedLabel); setText('bones', T.bones);
+  setText('tempo-h', T.tempoH); setText('find-h', T.findH);
+  setText('h-coach', T.hCoach); setText('coach-intro', T.coachIntro);
+  setText('notes-label', T.notesLabel); $('notes-input').placeholder = T.notesPh;
+  setText('key-label', T.keyLabel); setText('key-keep-label', T.keyKeep); setText('key-hint', T.keyHint);
+  setText('method-h', T.methodH); $('method').innerHTML = T.method;
+  setText('foot-sig', T.footSig); setText('foot-note', T.footNote);
+  $('legend').innerHTML = `<span><i></i>${esc(T.legend[0])}</span><span><i class="ref"></i>${esc(T.legend[1])}</span>`;
+  renderTrace();
+  showPlay();
+  renderCoachButton();
+  if (state.result) renderResult();
+}
+
+// The intro picture: one real swing (tracked down the line) as stick figures at its four positions.
+// Points are MediaPipe landmarks 0, 11–16 and 23–32 in that order, in a 100-unit box; the club and
+// the ball are drawn in, since the pose model doesn't see them.
+const TRACE_IDS = [0, 11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32];
+const TRACE = {
+  address: { pts: [[65,32],[57,34],[57,37],[56,45],[57,49],[57,55],[59,59],[46,53],[44,55],[53,68],[52,70],[51,82],[49,88],[49,84],[47,91],[59,84],[57,92]], club: [[58,57],[79,91]] },
+  top: { pts: [[68,33],[60,37],[55,33],[51,34],[51,32],[45,27],[45,25],[48,55],[44,54],[58,68],[53,70],[51,82],[49,88],[49,84],[47,91],[57,87],[56,92]], club: [[45,26],[68,21]] },
+  impact: { pts: [[64,35],[56,33],[54,36],[57,44],[53,49],[60,54],[60,56],[47,52],[47,54],[50,66],[54,69],[48,81],[52,87],[46,83],[48,89],[53,84],[57,92]], club: [[60,55],[77,91]] },
+  finish: { pts: [[58,27],[46,31],[59,35],[40,28],[53,29],[42,18],[46,20],[42,56],[50,56],[44,71],[51,71],[46,86],[54,87],[46,88],[55,88],[47,89],[55,92]], club: [[44,19],[69,29]] },
+};
+function renderTrace() {
+  const T = I18N[state.lang];
+  $('trace').innerHTML = PHASES.map((p) => {
+    const at = {}; TRACE_IDS.forEach((k, i) => { at[k] = TRACE[p].pts[i]; });
+    const d = BONES.map(([a, b]) => `M${at[a][0]} ${at[a][1]}L${at[b][0]} ${at[b][1]}`).join('');
+    const [h, c] = TRACE[p].club;
+    const ball = p === 'finish' ? '' : `<circle class="ball" cx="82" cy="92" r="1.8"/>`;
+    return `<li><svg viewBox="30 10 60 86"><path class="ground" d="M32 94H88"/>${ball}<path class="club" d="M${h[0]} ${h[1]}L${c[0]} ${c[1]}"/>` +
+      `<path class="bone" d="${d}"/><circle class="headdot" cx="${at[0][0]}" cy="${at[0][1]}" r="4.2"/></svg><span>${esc(T.phase[p])}</span></li>`;
+  }).join('');
+}
+
+// ---------- language and theme ----------
+$('btn-zh').addEventListener('click', () => setLang('zh'));
+$('btn-en').addEventListener('click', () => setLang('en'));
+function setLang(l) {
+  state.lang = l;
+  try { localStorage.setItem(LANG_KEY, l); } catch (e) {}
+  renderStatic();
+}
+const root = document.documentElement;
+const mqDark = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+const isDark = () => { const t = root.getAttribute('data-theme'); return t ? t === 'dark' : !!(mqDark && mqDark.matches); };
+const showTheme = () => $('btn-theme').setAttribute('aria-pressed', isDark() ? 'true' : 'false');
+$('btn-theme').addEventListener('click', () => {
+  const next = isDark() ? 'light' : 'dark', system = mqDark && mqDark.matches ? 'dark' : 'light';
+  // picking what the system already shows clears the choice, so the page follows the system again
+  if (next === system) root.removeAttribute('data-theme'); else root.setAttribute('data-theme', next);
+  try { if (next === system) localStorage.removeItem('wentaoz.theme'); else localStorage.setItem('wentaoz.theme', next); } catch (e) {}
+  showTheme();
+});
+if (mqDark && mqDark.addEventListener) mqDark.addEventListener('change', showTheme);
+showTheme();
+$('btn-theme').hidden = false;
+
+// ---------- the pose model ----------
+let landmarker = null, tsBase = 0;
+async function loadModel() {
+  if (landmarker) return landmarker;
+  const { FilesetResolver, PoseLandmarker } = await import(`${MP}/vision_bundle.mjs`);
+  const fileset = await FilesetResolver.forVisionTasks(`${MP}/wasm`);
+  const make = (delegate) => PoseLandmarker.createFromOptions(fileset, {
+    baseOptions: { modelAssetPath: POSE_MODEL, delegate }, runningMode: 'VIDEO', numPoses: 1,
+  });
+  try { landmarker = await make('GPU'); } catch (e) { landmarker = await make('CPU'); }
+  return landmarker;
+}
+
+// Seek and wait until the new frame is actually on screen; a seek that never reports back
+// doesn't hang the run.
+function seekTo(t) {
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = () => { if (!done) { done = true; clearTimeout(guard); resolve(); } };
+    const guard = setTimeout(finish, 2000);
+    video.addEventListener('seeked', () => {
+      if (video.requestVideoFrameCallback) { video.requestVideoFrameCallback(() => finish()); setTimeout(finish, 150); }
+      else finish();
+    }, { once: true });
+    video.currentTime = t;
+  });
+}
+
+// ---------- upload ----------
+const drop = $('drop');
+$('file').addEventListener('change', () => { const f = $('file').files[0]; $('file').value = ''; if (f) start(f); });
+['dragenter', 'dragover'].forEach((e) => drop.addEventListener(e, (ev) => { ev.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach((e) => drop.addEventListener(e, (ev) => { ev.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', (ev) => { const f = ev.dataTransfer && ev.dataTransfer.files[0]; if (f) start(f); });
+document.querySelectorAll('input[name="hand"]').forEach((r) => r.addEventListener('change', () => { state.hand = r.value; reanalyze(); }));
+document.querySelectorAll('input[name="view"]').forEach((r) => r.addEventListener('change', () => { state.view = r.value; reanalyze(); }));
+$('cancel').addEventListener('click', () => { if (state.abort) state.abort.aborted = true; });
+
+function say(id, text, bad) { const el = $(id); el.textContent = text || ''; el.classList.toggle('bad', !!bad); }
+function progress(frac, text) {
+  $('progress').hidden = frac === null;
+  if (frac !== null) { $('bar').style.width = `${Math.round(frac * 100)}%`; setText('progress-text', text); }
+}
+
+async function start(file) {
+  if (state.busy) return;
+  const T = I18N[state.lang];
+  say('upload-msg', '');
+  if (file.type && !file.type.startsWith('video/')) { say('upload-msg', T.notVideo, true); return; }
+  state.busy = true; drop.classList.add('busy');
+  const job = state.abort = { aborted: false };
+  try {
+    progress(0, T.loadingModel);
+    let lm;
+    try { lm = await loadModel(); } catch (e) { throw new Error(T.modelFail); }
+
+    progress(0, T.reading);
+    if (state.url) URL.revokeObjectURL(state.url);
+    state.url = URL.createObjectURL(file);
+    state.result = null; state.stills = {};
+    $('step-result').hidden = false; $('step-coach').hidden = true;
+    ['frames', 'findings', 'summary', 'detected'].forEach((id) => { $(id).innerHTML = ''; });
+    $('tempo').hidden = true; $('notes').hidden = true; $('controls').hidden = true; $('jumps').hidden = true; $('legend').hidden = true;
+    clearCoach();
+    video.pause();
+    video.src = state.url;
+    await new Promise((resolve, reject) => {
+      video.onloadeddata = resolve;
+      video.onerror = () => reject(new Error(T.badVideo));
+    });
+    if (!video.videoWidth || !isFinite(video.duration)) throw new Error(T.badVideo);
+    if (video.duration > MAX_SECONDS + 0.5) throw new Error(T.tooLong(Math.round(video.duration)));
+    try { await video.play(); video.pause(); } catch (e) {}   // lets iOS decode frames for seeking
+    sizeOverlay();
+
+    // Track the pose frame by frame
+    const W = video.videoWidth, H = video.videoHeight, dur = video.duration;
+    const fps = Math.min(30, MAX_SAMPLES / dur), n = Math.max(2, Math.floor(dur * fps));
+    const sc = Math.min(1, DETECT_SIZE / Math.max(W, H));
+    const work = document.createElement('canvas');
+    work.width = Math.round(W * sc); work.height = Math.round(H * sc);
+    const wctx = work.getContext('2d');
+    const frames = [];
+    $('scan').hidden = false;
+    for (let i = 0; i < n; i++) {
+      if (job.aborted) throw new Error(T.cancelled);
+      const t = Math.min(i / fps, dur - 0.02);
+      await seekTo(t);
+      wctx.drawImage(video, 0, 0, work.width, work.height);
+      tsBase += 34;   // the model wants timestamps that only ever increase, across videos too
+      const res = lm.detectForVideo(work, tsBase);
+      const pose = res.landmarks && res.landmarks[0];
+      frames.push({ t, lm: pose ? pose.map((q) => [q.x * W, q.y * H, q.visibility == null ? 1 : q.visibility]) : null });
+      drawLive(frames[i].lm);
+      if (i % 2 === 0 || i === n - 1) {
+        const text = T.scanning(i + 1, n);
+        progress((i + 1) / n, text); setText('scan', text);
+      }
+    }
+    $('scan').hidden = true;
+    state.frames = frames; state.W = W; state.H = H;
+
+    const result = analyzeSwing(frames, { hand: state.hand, view: state.view });
+    if (!result.ok) throw new Error(T.errors[result.error] || T.errors.no_swing);
+    progress(1, T.capturing);
+    state.result = result;
+    state.crop = cropBox(result);
+    await captureStills(result);
+    await seekTo(result.times.address);
+    progress(null);
+    renderResult();
+    $('controls').hidden = false; $('jumps').hidden = false; $('legend').hidden = false;
+    $('step-coach').hidden = false;
+    drawOverlay();
+  } catch (e) {
+    progress(null);
+    $('scan').hidden = true;
+    if (!state.result) { $('step-result').hidden = true; }
+    say('upload-msg', e.message || String(e), true);
+  } finally {
+    state.busy = false; drop.classList.remove('busy'); state.abort = null;
+  }
+}
+
+// Re-run the measurements (not the tracking) when the hand or the camera angle is changed
+function reanalyze() {
+  if (!state.frames || state.busy) return;
+  const r = analyzeSwing(state.frames, { hand: state.hand, view: state.view });
+  if (!r.ok) return;
+  state.result = r;
+  renderResult(); drawOverlay(); clearCoach();
+}
+
+// The region the key frames show: the body at the four positions, with room for the club
+function cropBox(r) {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  const at = PHASES.map((p) => r.phases[p]).filter((i) => i !== null).map((i) => r.lm[i]);
+  for (const pts of at) for (const k of [0, 11, 12, 15, 16, 23, 24, 27, 28]) {
+    x0 = Math.min(x0, pts[k][0]); x1 = Math.max(x1, pts[k][0]); y0 = Math.min(y0, pts[k][1]); y1 = Math.max(y1, pts[k][1]);
+  }
+  const m = r.trunk;
+  x0 -= 1.3 * m; x1 += 1.3 * m; y0 -= 0.9 * m; y1 += 0.35 * m;
+  // a 3:4 portrait box around that, inside the frame
+  let w = x1 - x0, h = y1 - y0;
+  if (w / h > 3 / 4) h = w * 4 / 3; else w = h * 3 / 4;
+  w = Math.min(w, state.W); h = Math.min(h, state.H);
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  const x = Math.max(0, Math.min(state.W - w, cx - w / 2)), y = Math.max(0, Math.min(state.H - h, cy - h / 2));
+  return { x, y, w, h };
+}
+
+async function captureStills(r) {
+  const c = state.crop, sc = Math.min(1, 900 / Math.max(c.w, c.h));
+  for (const p of PHASES) {
+    const i = r.phases[p];
+    if (i === null) continue;
+    await seekTo(state.frames[i].t);
+    const cv = document.createElement('canvas');
+    cv.width = Math.round(c.w * sc); cv.height = Math.round(c.h * sc);
+    cv.getContext('2d').drawImage(video, c.x, c.y, c.w, c.h, 0, 0, cv.width, cv.height);
+    state.stills[p] = cv;
+  }
+}
+
+// ---------- drawing ----------
+// Drawn over the video: a bright line with a dark edge reads on grass and on sky
+const VIDEO_INK = '#F7E35A', VIDEO_REF = '#5FD4FF';
+function drawBones(ctx, pts, map, lw) {
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  for (const [w, color] of [[lw + 3, 'rgba(0,0,0,0.55)'], [lw, VIDEO_INK]]) {
+    ctx.strokeStyle = color; ctx.lineWidth = w;
+    ctx.beginPath();
+    for (const [a, b] of BONES) { const p = map(pts[a]), q = map(pts[b]); ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); }
+    ctx.stroke();
+  }
+  const hd = map(pts[0]);
+  ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.beginPath(); ctx.arc(hd[0], hd[1], lw * 2.2 + 1.5, 0, 7); ctx.fill();
+  ctx.fillStyle = VIDEO_INK; ctx.beginPath(); ctx.arc(hd[0], hd[1], lw * 2.2, 0, 7); ctx.fill();
+}
+// Address reference lines: face-on, where the head and hips were; down the line, the spine and the hips
+function drawRefs(ctx, r, i, map, lw, height) {
+  const shift = r.refs.camAt[i] || 0;
+  const at = (p) => map([p[0] + shift, p[1]]);
+  ctx.save();
+  ctx.setLineDash([lw * 3, lw * 2.5]); ctx.lineCap = 'butt';
+  const lines = [];
+  if (r.view === 'face') {
+    const h = at(r.refs.head), hp = at(r.refs.hip);
+    lines.push([[h[0], 0], [h[0], height]], [[hp[0], 0], [hp[0], height]]);
+  } else {
+    const hp = at(r.refs.hip), sh = at(r.refs.shoulders), hd = at(r.refs.head);
+    const dx = sh[0] - hp[0], dy = sh[1] - hp[1];
+    lines.push([[hp[0] - dx * 0.3, hp[1] - dy * 0.3], [hp[0] + dx * 1.6, hp[1] + dy * 1.6]], [[hp[0], hp[1] - dy * 0.2], [hp[0], height]], [[hd[0] - 3 * Math.abs(dx), hd[1]], [hd[0] + 3 * Math.abs(dx), hd[1]]]);
+  }
+  for (const [w, color] of [[lw + 2, 'rgba(0,0,0,0.45)'], [lw, VIDEO_REF]]) {
+    ctx.strokeStyle = color; ctx.lineWidth = w; ctx.beginPath();
+    for (const [a, b] of lines) { ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); }
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function sizeOverlay() {
+  const rect = video.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  overlay.style.width = rect.width + 'px'; overlay.style.height = rect.height + 'px';
+  overlay.width = Math.round(rect.width * dpr); overlay.height = Math.round(rect.height * dpr);
+}
+new ResizeObserver(() => { sizeOverlay(); drawOverlay(); }).observe(video);
+
+function videoMap() {
+  const sx = overlay.width / (video.videoWidth || 1), sy = overlay.height / (video.videoHeight || 1);
+  return (p) => [p[0] * sx, p[1] * sy];
+}
+function drawLive(pts) {
+  const ctx = overlay.getContext('2d');
+  ctx.clearRect(0, 0, overlay.width, overlay.height);
+  if (pts) drawBones(ctx, pts, videoMap(), Math.max(2, overlay.width / 260));
+}
+function nearestFrame(t) {
+  const f = state.frames; if (!f || !f.length) return -1;
+  let lo = 0, hi = f.length - 1;
+  while (lo < hi) { const m = (lo + hi) >> 1; if (f[m].t < t) lo = m + 1; else hi = m; }
+  return lo > 0 && Math.abs(f[lo - 1].t - t) < Math.abs(f[lo].t - t) ? lo - 1 : lo;
+}
+function drawOverlay() {
+  const ctx = overlay.getContext('2d');
+  ctx.clearRect(0, 0, overlay.width, overlay.height);
+  const r = state.result;
+  if (!r) return;
+  const i = nearestFrame(video.currentTime), map = videoMap(), lw = Math.max(2, overlay.width / 260);
+  drawRefs(ctx, r, i, map, Math.max(1.5, lw * 0.7), overlay.height);
+  if (state.bones) drawBones(ctx, r.lm[i], map, lw);
+}
+
+function drawCard(cv, p) {
+  const r = state.result, still = state.stills[p], c = state.crop, i = r.phases[p];
+  cv.width = still.width; cv.height = still.height;
+  const ctx = cv.getContext('2d');
+  ctx.drawImage(still, 0, 0);
+  const s = still.width / c.w, map = (q) => [(q[0] - c.x) * s, (q[1] - c.y) * s], lw = Math.max(2, still.width / 150);
+  drawRefs(ctx, r, i, map, Math.max(1.5, lw * 0.75), still.height);
+  drawBones(ctx, r.lm[i], map, lw);
+}
+
+// ---------- the player ----------
+let raf = 0;
+function loop() { drawOverlay(); showTime(); raf = video.paused ? 0 : requestAnimationFrame(loop); }
+function showPlay() { const T = I18N[state.lang]; setText('play', video.paused ? T.play : T.pause); }
+function showTime() {
+  const d = video.duration || 0, t = video.currentTime || 0;
+  setText('time', `${t.toFixed(2)} / ${d.toFixed(2)} s`);
+  if (!seeking) $('seek').value = d ? Math.round(t / d * 1000) : 0;
+}
+let seeking = false;
+$('play').addEventListener('click', () => { if (video.paused) { if (video.ended) video.currentTime = 0; video.play(); } else video.pause(); });
+video.addEventListener('play', () => { showPlay(); if (!raf && !state.busy) raf = requestAnimationFrame(loop); });
+video.addEventListener('pause', () => { showPlay(); drawOverlay(); showTime(); });
+video.addEventListener('seeked', () => { if (!state.busy) { drawOverlay(); showTime(); } });
+$('seek').addEventListener('input', () => { seeking = true; video.pause(); video.currentTime = ($('seek').value / 1000) * (video.duration || 0); });
+$('seek').addEventListener('change', () => { seeking = false; });
+$('speed').addEventListener('change', () => { video.playbackRate = +$('speed').value; });
+video.playbackRate = 0.5;
+video.addEventListener('loadeddata', () => { video.playbackRate = +$('speed').value; });
+$('bones').addEventListener('click', () => { state.bones = !state.bones; $('bones').setAttribute('aria-pressed', state.bones); drawOverlay(); });
+function jump(p) {
+  const r = state.result; if (!r || r.phases[p] === null) return;
+  video.pause(); video.currentTime = state.frames[r.phases[p]].t;
+  $('stage').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+// ---------- results ----------
+function renderResult() {
+  const T = I18N[state.lang], r = state.result;
+  $('detected').innerHTML = T.detected(T.viewName[r.view], T.handName[state.hand], state.view === 'auto');
+  const notes = [];
+  if (r.camera.lost) notes.push(T.camLost); else if (r.camera.moved) notes.push(T.camMoved);
+  if (r.tempo.slowmo) notes.push(T.slowmo);
+  if (r.phases.finish === null) notes.push(T.noFinish);
+  if (r.handGuess !== state.hand) notes.push(T.handHint(r.handGuess));
+  $('notes').hidden = !notes.length; $('notes').textContent = notes.join(' ');
+
+  $('jumps').innerHTML = PHASES.filter((p) => r.phases[p] !== null)
+    .map((p) => `<button type="button" class="ctl" data-jump="${p}">${esc(T.phase[p])} <span class="sr">${esc(T.sec(r.times[p]))}</span></button>`).join('');
+
+  $('frames').innerHTML = PHASES.filter((p) => state.stills[p])
+    .map((p) => `<li><figure><button type="button" data-jump="${p}" aria-label="${esc(T.phase[p])}"><canvas data-card="${p}"></canvas></button><figcaption><b>${esc(T.phase[p])}</b><span>${esc(T.sec(r.times[p]))}</span></figcaption></figure></li>`).join('');
+  document.querySelectorAll('[data-card]').forEach((cv) => drawCard(cv, cv.getAttribute('data-card')));
+
+  // tempo
+  const tp = r.tempo, tm = r.metrics.find((m) => m.id === 'tempo');
+  $('tempo').hidden = false;
+  $('tempo-num').innerHTML = `${tp.ratio.toFixed(1)}<small>: 1</small>`;
+  const bars = $('tbar').children, tot = tp.back + tp.down;
+  bars[0].style.flex = String(tp.back / tot); bars[1].style.flex = String(tp.down / tot);
+  setText('t-back', T.tBack(T.sec(tp.back))); setText('t-down', T.tDown(T.sec(tp.down)));
+  const td = describe(tm, T);
+  setText('tempo-text', td.body);
+  $('tempo-tip').hidden = !td.tip;
+  $('tempo-tip').innerHTML = td.tip ? `<b>${esc(T.tipLabel)}</b>${esc(td.tip)}` : '';
+
+  // findings; tempo has its own panel above
+  const list = r.metrics.filter((m) => m.id !== 'tempo');
+  const count = (s) => r.metrics.filter((m) => m.status === s).length;
+  setText('summary', T.summary(count('fix'), count('watch'), count('good')));
+  $('findings').innerHTML = list.map((m) => {
+    const d = describe(m, T);
+    return `<li class="finding"><span class="badge ${m.status}">${esc(T.status[m.status])}</span><div>` +
+      `<div class="f-title"><span>${esc(d.title)}</span>${d.value ? `<span class="f-val">${esc(d.value)}</span>` : ''}</div>` +
+      `<p class="f-body">${esc(d.body)}</p>` +
+      (d.tip ? `<p class="f-tip"><b>${esc(T.tipLabel)}</b>${esc(d.tip)}</p>` : '') +
+      (r.phases[m.phase] !== null && m.phase ? `<button type="button" class="f-jump" data-jump="${m.phase}">${esc(T.see(T.phase[m.phase]))}</button>` : '') +
+      `</div></li>`;
+  }).join('');
+}
+document.addEventListener('click', (e) => { const b = e.target.closest('[data-jump]'); if (b) jump(b.getAttribute('data-jump')); });
+
+// ---------- AI coach ----------
+let keySaved = '';
+try { keySaved = localStorage.getItem(KEY_KEY) || ''; } catch (e) {}
+if (keySaved) { $('key-input').value = keySaved; $('key-keep').checked = true; }
+$('key-box').hidden = !!COACH_ENDPOINT;
+
+function renderCoachButton() {
+  const T = I18N[state.lang];
+  setText('coach-go', $('coach-out').innerHTML ? T.coachAgain : T.coachGo);
+}
+function clearCoach() { $('coach-out').innerHTML = ''; setText('coach-meta', ''); say('coach-msg', ''); renderCoachButton(); }
+
+// A small Markdown subset: ### headings, - and 1. lists, **bold**, paragraphs. Text is escaped first.
+function renderMarkdown(src) {
+  const inline = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  let html = '', list = null, para = [];
+  const flushPara = () => { if (para.length) { html += `<p>${para.map(inline).join('<br>')}</p>`; para = []; } };
+  const flushList = () => { if (list) { html += `</${list}>`; list = null; } };
+  for (const raw of src.split('\n')) {
+    const line = raw.trim();
+    let m;
+    if (!line) { flushPara(); flushList(); }
+    else if ((m = line.match(/^#{1,6}\s+(.*)$/))) { flushPara(); flushList(); html += `<h4>${inline(m[1])}</h4>`; }
+    else if ((m = line.match(/^[-*•]\s+(.*)$/)) || (m = line.match(/^\d+[.)]\s+(.*)$/))) {
+      flushPara();
+      const kind = /^\d/.test(line) ? 'ol' : 'ul';
+      if (list !== kind) { flushList(); html += `<${kind}>`; list = kind; }
+      html += `<li>${inline(m[1])}</li>`;
+    } else { flushList(); para.push(line); }
+  }
+  flushPara(); flushList();
+  return html;
+}
+
+// What goes to the coach: the four stills at most 1024 px long, and the measurements in English
+function coachInput(coach) {
+  const r = state.result;
+  const frames = [];
+  for (const p of PHASES) {
+    const still = state.stills[p]; if (!still) continue;
+    const sc = Math.min(1, 1024 / Math.max(still.width, still.height));
+    const cv = document.createElement('canvas');
+    cv.width = Math.round(still.width * sc); cv.height = Math.round(still.height * sc);
+    cv.getContext('2d').drawImage(still, 0, 0, cv.width, cv.height);
+    frames.push({ phase: p, jpeg: cv.toDataURL('image/jpeg', 0.85).split(',')[1] });
+  }
+  const tp = r.tempo;
+  return {
+    lang: state.lang, view: r.view, hand: state.hand,
+    tempo: `backswing ${tp.back.toFixed(2)} s, downswing ${tp.down.toFixed(2)} s, ratio ${tp.ratio.toFixed(1)} : 1${tp.slowmo ? ' (the video looks like slow motion, so only the ratio is meaningful)' : ''}.`,
+    notes: $('notes-input').value.slice(0, 600),
+    findings: r.metrics.map((m) => ({ status: m.status, text: coach.findingText(m) })),
+    frames,
+  };
+}
+
+$('coach-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (state.coachBusy || !state.result) return;
+  const T = I18N[state.lang];
+  const key = $('key-input').value.trim();
+  if (!COACH_ENDPOINT && !key.startsWith('sk-')) { say('coach-msg', T.needKey, true); $('key-input').focus(); return; }
+  try { if ($('key-keep').checked && key) localStorage.setItem(KEY_KEY, key); else localStorage.removeItem(KEY_KEY); } catch (err) {}
+
+  state.coachBusy = true; $('coach-go').disabled = true;
+  say('coach-msg', ''); setText('coach-meta', '');
+  const out = $('coach-out');
+  out.innerHTML = `<span class="thinking">${esc(T.coachLoading)}</span>`;
+  let text = '', pending = false;
+  const paint = () => { pending = false; out.innerHTML = renderMarkdown(text); };
+  try {
+    const coach = await import('./coach.js');
+    const input = coachInput(coach);
+    const problem = coach.checkCoachInput(input);
+    if (problem) throw new Error(problem);
+    out.innerHTML = `<span class="thinking">${esc(T.coachThinking)}</span>`;
+
+    let stream;
+    if (COACH_ENDPOINT) {
+      const { BetaMessageStream } = await import(`${SDK}/lib/BetaMessageStream.mjs/+esm`);
+      const res = await fetch(COACH_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input) });
+      if (!res.ok) { const err = new Error((await res.json().catch(() => ({}))).error || res.statusText); err.status = res.status; throw err; }
+      stream = BetaMessageStream.fromReadableStream(res.body);
+    } else {
+      const { default: Anthropic } = await import(`${SDK}/+esm`);
+      // The key is the visitor's own, typed into their own browser and sent only to Anthropic
+      const client = new Anthropic({ apiKey: key, dangerouslyAllowBrowser: true });
+      stream = client.beta.messages.stream(coach.buildCoachRequest(input));
+    }
+    stream.on('text', (d) => { text += d; if (!pending) { pending = true; requestAnimationFrame(paint); } });
+    const msg = await stream.finalMessage();
+    paint();
+    if (msg.stop_reason === 'refusal') { if (!text) out.innerHTML = ''; say('coach-msg', T.refusal, true); }
+    else if (msg.stop_reason === 'max_tokens') out.insertAdjacentHTML('beforeend', `<p>${esc(T.truncated)}</p>`);
+    const u = msg.usage || {};
+    if (u.input_tokens != null) {
+      const cost = ((u.input_tokens + (u.cache_read_input_tokens || 0)) * PRICE.input + u.output_tokens * PRICE.output) / 1e6;
+      setText('coach-meta', T.usage(u.input_tokens, u.output_tokens, cost.toFixed(3)));
+    }
+  } catch (err) {
+    if (!text) out.innerHTML = '';
+    const st = err && err.status, E = T.coachErr;
+    const m = st === 401 ? E[401] : st === 403 ? E[403] : st === 429 ? E[429] : st === 529 || st === 503 ? E[529]
+      : (err && /fetch|network|connection/i.test(String(err.message || err))) && !st ? E.net : E.other((err && err.message) || String(err));
+    say('coach-msg', m, true);
+  } finally {
+    state.coachBusy = false; $('coach-go').disabled = false; renderCoachButton();
+  }
+});
+
+// ---------- boot ----------
+renderStatic();
+</script>
+<!-- GoatCounter: counts visits without cookies; the totals feed the visitor map on the homepage. -->
+<script data-goatcounter="https://wentaoz.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>
