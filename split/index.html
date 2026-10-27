@@ -99,6 +99,13 @@ button, input, select { font: inherit; color: inherit; }
 }
 .lang button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
 .banner { margin: 16px 0 0; padding: 10px 14px; border-radius: 8px; background: var(--green-soft); font-size: 14.5px; }
+/* a shared ledger's line under the header: green when in step with the server, grey while saving, red when it can't be reached */
+.banner.bad { background: var(--red-soft); }
+.sync { display: flex; align-items: baseline; gap: 8px; margin: 14px 0 0; font-size: 13.5px; color: var(--muted); }
+.sync .dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+.sync.busy .dot, .sync.loading .dot { background: var(--rule-strong); }
+.sync.off { color: var(--red); }
+.sync.off .dot { background: var(--red); }
 
 /* the three steps */
 .step { padding-block: 32px 4px; }
@@ -275,6 +282,7 @@ footer .link-btn { margin-left: auto; }
   </header>
 
   <noscript><p class="nojs">两清在你的浏览器里算账，需要 JavaScript。请开启后刷新页面。<br><span lang="en">All Square does its sums in your browser and needs JavaScript. Turn it on and reload.</span></p></noscript>
+  <p class="sync" id="sync" hidden><i class="dot" aria-hidden="true"></i><span id="sync-text"></span></p>
   <p class="banner" id="banner" role="status" hidden></p>
 
   <section class="step" id="step-people" aria-labelledby="h-people">
@@ -367,7 +375,12 @@ footer .link-btn { margin-left: auto; }
   var CURRENCIES = ['¥', '$', '€', '£'];
   var MAX_PEOPLE = 50, MAX_NAME = 24, MAX_WHAT = 60, MAX_EXPENSES = 500, MAX_CENTS = 1e10;
   var EXACT = 20;   // the exact search tries every subset of up to this many people: 2^20 of them
-  var KEY = 'allsquare.ledger', LANG_KEY = 'allsquare.lang';
+  /* The sync server behind shared ledgers: the Worker in workers/split, at the address its deploy prints
+     (.github/workflows/split-sync.yml). Left empty, share links are snapshots that carry the whole ledger. */
+  var API = '';
+  var POLL_MS = 5000;      // how often an open shared ledger asks the server for others' changes
+  var TIMEOUT_MS = 8000;   // a request to the server that takes longer counts as failed
+  var KEY = 'allsquare.ledger', SYNC_KEY = 'allsquare.sync', LANG_KEY = 'allsquare.lang';
 
   var I18N = {
     zh: {
@@ -409,7 +422,12 @@ footer .link-btn { margin-left: auto; }
       transferLine: function (a, b, m) { return a + ' 转给 ' + b + ' ' + m; },
       approx: '有钱要收付的人超过 ' + EXACT + ' 个，这里改用逐对配平，转账次数可能比最少多几笔。',
       copyText: '复制结果', copyLink: '复制分享链接',
-      copied: '已复制，可以直接粘贴到群里。', linkCopied: '链接已复制。朋友打开就能看到这本账。',
+      copied: '已复制，可以直接粘贴到群里。', linkCopied: '链接已复制。发到群里，大家打开看到的都是最新的账，谁改了大家都能看到。',
+      making: '正在生成链接…',
+      snapshot: '连不上同步服务器（在中国大陆打不开），复制的是快照链接：之后的修改不会出现在这个链接里。',
+      snapshotPlain: '复制的是快照链接：之后的修改不会出现在这个链接里，改完要重新复制。',
+      shared: '共享账本：有链接的人都能看、都能改',
+      syncState: { ok: '已同步', busy: '正在同步…', off: '连不上同步服务器，改动先存在这台设备上，连上后自动同步', loading: '正在打开…' },
       tallyH: '每个人的账', cols: ['', '付了', '应摊', '结余'],
       tallyNote: '结余 = 付了 − 应摊。正数等着收钱，负数要付钱。',
       summary: function (n, k, m) { return '两清 · ' + n + ' 人 · ' + k + ' 笔 · 合计 ' + m; },
@@ -420,12 +438,18 @@ footer .link-btn { margin-left: auto; }
         '<p><span class="k">平分</span><br>每一笔由付款人先垫上，再由勾选的人平分。金额按「分」计算；除不尽时，零头一人一分地分出去，付款人也在平分名单里的话先算付款人，所以每个人之间最多差一分钱，加起来和总额一分不差。</p>' +
         '<p><span class="k">结余</span><br>每个人的结余 = 自己垫付的钱 − 自己应摊的钱。正数等着收钱，负数要往外付，所有人加起来正好是零。</p>' +
         '<p><span class="k">最少转账</span><br>结余不为零的有 n 个人时，n − 1 笔转账一定够：每次让欠得最多的人还给被欠得最多的人，每笔至少结清一个人。想更少，只能把这 n 个人分成几组，每组的结余加起来恰好为零，各组内部自己结清：分得出 k 组，就只要 n − k 笔，任何方案都不可能更少。页面在所有分法里找组数最多的一种：先把结余正好相抵的两个人配成一对，剩下的人在 ' + EXACT + ' 个以内时用动态规划穷举所有子集，保证转账次数最少；超过 ' + EXACT + ' 个时改用逐对配平，可能多出几笔。</p>' +
-        '<p><span class="k">数据</span><br>账本只存在这台设备的浏览器里，不会上传。「复制分享链接」把整本账写进链接 # 后面的部分，这部分浏览器不会发给服务器。朋友打开链接，看到的是同一本账，也可以接着记，但之后各记各的，不会同步。</p>',
+        '<p><span class="k">数据和分享</span><br>账本先只存在这台设备的浏览器里。点「复制分享链接」或「复制结果」后，账本存到同步服务器上，链接里只带一串随机编号。之后谁打开这个链接，看到的都是最新的账；开着页面的人，几秒内就能看到别人的修改；两个人同时记账也不会互相覆盖。有链接的人都能改账，所以别把链接发到群外。一年没人改的账会从服务器上删掉。同步服务器在中国大陆打不开：连不上时，分享会退回到快照链接，也就是把整本账写进链接本身，之后的修改不会同步。</p>',
       footSig: '两清', footNote: '亲兄弟，明算账。',
       reset: '清空重来', resetAsk: '清空所有名字和账目？清掉就找不回来了。',
+      newLedger: '新开一本账', newAsk: '新开一本账？这本共享账本不会删，用原来的链接随时还能打开。',
+      switchAsk: '打开这本共享账本？这台设备上还没分享出去的账会被替换。',
+      openFail: '连不上同步服务器，暂时打不开这本共享账本。在中国大陆打不开，换个网络再试。',
+      gone: '这本共享账本已经不在服务器上了（一年没人改会自动删除）。这台设备上的账还在，可以重新分享。',
+      noServer: '这个链接要用到同步服务器，但它还没设置好。',
       linkAsk: '打开链接里的账本？这台设备上现在的账会被替换。',
+      snapshotAsk: '这是一个快照链接，里面是分享那一刻的旧账。要离开现在的共享账本去看它吗？共享账本不会删。',
       linkBad: '这个链接里的账读不出来，可能复制得不完整。',
-      linkOpened: '已打开链接里的账本。之后的改动只留在这台设备上，不会同步给别人。'
+      linkOpened: '已打开链接里的快照，也就是分享那一刻的账。之后的改动只留在这台设备上。'
     },
     en: {
       eyebrow: 'Shared expenses · pick who splits each one · fewest transfers',
@@ -466,7 +490,12 @@ footer .link-btn { margin-left: auto; }
       transferLine: function (a, b, m) { return a + ' pays ' + b + ' ' + m; },
       approx: 'More than ' + EXACT + ' people have money to pay or receive, so the page matched them greedily; a plan with a few fewer transfers may exist.',
       copyText: 'Copy summary', copyLink: 'Copy share link',
-      copied: 'Copied. Paste it into the group chat.', linkCopied: 'Link copied. Whoever opens it sees this ledger.',
+      copied: 'Copied. Paste it into the group chat.', linkCopied: 'Link copied. Everyone who opens it sees the latest ledger, including later changes.',
+      making: 'Making the link…',
+      snapshot: 'Couldn’t reach the sync server (it can’t be reached from mainland China), so this is a snapshot link: later changes won’t show up in it.',
+      snapshotPlain: 'This is a snapshot link: later changes won’t show up in it, so copy a new one after editing.',
+      shared: 'Shared ledger: anyone with the link can see and edit it',
+      syncState: { ok: 'up to date', busy: 'syncing…', off: 'can’t reach the sync server; changes are kept on this device and sync once it’s back', loading: 'opening…' },
       tallyH: 'Everyone’s tally', cols: ['', 'Paid', 'Share', 'Balance'],
       tallyNote: 'Balance = paid − share. Positive gets paid back; negative pays.',
       summary: function (n, k, m) { return 'All Square · ' + n + ' people · ' + k + (k === 1 ? ' expense' : ' expenses') + ' · ' + m + ' in all'; },
@@ -477,24 +506,33 @@ footer .link-btn { margin-left: auto; }
         '<p><span class="k">Splitting</span><br>Whoever paid fronts the money, and the people ticked share it equally. Amounts are kept in cents; when they don’t divide evenly the leftover cents go out one each, to the payer first if they are sharing, so no two shares differ by more than a cent and they add up to the total exactly.</p>' +
         '<p><span class="k">Balances</span><br>Each person’s balance is what they paid minus their share. A positive balance is owed money, a negative one owes it, and together they sum to zero.</p>' +
         '<p><span class="k">Fewest transfers</span><br>With n people whose balances aren’t zero, n − 1 transfers always suffice: have the largest debtor pay the largest creditor, and every transfer settles at least one person. The only way to do better is to split the n people into groups whose balances each sum to zero and settle each group on its own: k groups need n − k transfers, and no plan can use fewer. The page looks for the split with the most groups. It first pairs off people whose balances cancel exactly, then, for up to ' + EXACT + ' people left, tries every subset by dynamic programming, which guarantees the minimum. Beyond ' + EXACT + ' it falls back to greedy matching, which may use a few more.</p>' +
-        '<p><span class="k">Your data</span><br>The ledger lives only in this browser on this device; nothing is uploaded. Copy share link writes the whole ledger into the part of the link after #, which browsers never send to a server. Whoever opens the link sees the same ledger and can keep adding to it, but from then on each copy is separate; nothing syncs.</p>',
+        '<p><span class="k">Data and sharing</span><br>A ledger starts out only in this browser on this device. Copy share link or Copy summary saves it to the sync server, and the link carries just a random id. Whoever opens the link sees the latest ledger, anyone with the page open sees others’ changes within seconds, and two people adding expenses at once don’t overwrite each other. Anyone with the link can edit, so keep it within the group. A ledger nobody changes for a year is deleted from the server. The sync server can’t be reached from mainland China; when it can’t be reached, sharing falls back to a snapshot link that carries the whole ledger itself, and later changes won’t reach it.</p>',
       footSig: 'All Square', footNote: 'Short accounts make long friends.',
       reset: 'Start over', resetAsk: 'Clear every name and expense? This can’t be undone.',
+      newLedger: 'Start a new ledger', newAsk: 'Start a new ledger? This shared one isn’t deleted; its link still opens it.',
+      switchAsk: 'Open this shared ledger? The unshared ledger on this device will be replaced.',
+      openFail: 'Can’t reach the sync server, so the shared ledger can’t open right now. It can’t be reached from mainland China; try another network.',
+      gone: 'This shared ledger is no longer on the server (ledgers untouched for a year are deleted). The copy on this device is still here and can be shared again.',
+      noServer: 'This link needs the sync server, which isn’t set up yet.',
       linkAsk: 'Open the ledger in this link? It replaces the one on this device.',
+      snapshotAsk: 'This is a snapshot link holding the ledger as it was when shared. Leave the shared ledger you have open to view it? The shared one isn’t deleted.',
       linkBad: 'The ledger in this link couldn’t be read; it may have been cut off when copied.',
-      linkOpened: 'Opened the ledger from the link. Changes from here on stay on this device and don’t sync.'
+      linkOpened: 'Opened the snapshot in this link: the ledger as it was when shared. Changes from here on stay on this device.'
     }
   };
 
   // ---------- state ----------
-  // people and expenses carry ids that live only in this page; saved and shared copies use list positions
+  // a ledger is its currency, people [{id, name}] and expenses [{id, what, cents, payer, parts}]; ids are short random strings
   var state = {
-    lang: 'zh', cur: '¥', people: [], expenses: [], nextId: 1,
+    lang: 'zh', cur: '¥', people: [], expenses: [],
     editing: null,   // id of the expense loaded into the form
     payer: null,     // the form's payer
     parts: null,     // the form's sharers, in list order; null means everyone
     confirmDel: null
   };
+  /* A shared ledger also has its id on the server, the server's version this copy is built on, and the changes
+     made here that the server hasn't taken yet. null while the ledger is only on this device. */
+  var sync = null;   // {id, version, pending: [ops], busy, status: 'ok' | 'busy' | 'off' | 'loading'}
   try {
     var savedLang = localStorage.getItem(LANG_KEY);
     if (savedLang === 'zh' || savedLang === 'en') state.lang = savedLang;
@@ -502,12 +540,14 @@ footer .link-btn { margin-left: auto; }
   } catch (e) { state.lang = 'zh'; }
   state.cur = state.lang === 'zh' ? '¥' : '$';
 
+  var ID = /^[a-z0-9]{1,12}$/, LEDGER_ID = /^[A-Za-z0-9_-]{16}$/;
+  function newId() { return [].map.call(crypto.getRandomValues(new Uint8Array(8)), function (b) { return (b % 36).toString(36); }).join(''); }
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function cleanName(s) { return typeof s === 'string' ? s.replace(/\s+/g, ' ').trim().slice(0, MAX_NAME) : ''; }
   function person(id) { for (var i = 0; i < state.people.length; i++) if (state.people[i].id === id) return state.people[i]; return null; }
   function nameOf(id) { var p = person(id); return p ? p.name : '?'; }
   function expense(id) { for (var i = 0; i < state.expenses.length; i++) if (state.expenses[i].id === id) return state.expenses[i]; return null; }
-  function uses(id) { return state.expenses.filter(function (e) { return e.payer === id || e.parts.indexOf(id) >= 0; }).length; }
+  function uses(l, id) { return l.expenses.filter(function (e) { return e.payer === id || e.parts.indexOf(id) >= 0; }).length; }
   function money(c, signed) {
     var s = (Math.abs(c) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     return (c < 0 ? '−' : signed && c > 0 ? '+' : '') + state.cur + s;
@@ -524,6 +564,40 @@ footer .link-btn { margin-left: auto; }
     if (!/^(\d+(\.\d{0,2})?|\.\d{1,2})$/.test(s)) return NaN;
     var c = Math.round(parseFloat(s) * 100);
     return c > 0 && c <= MAX_CENTS ? c : NaN;
+  }
+
+  // ---------- changes ----------
+  /* Every change is an op, applied here at once. On a shared ledger it is also kept until the server takes it;
+     if someone else saved first, the kept ops are replayed on their copy, so neither side's change is lost.
+     So an op checks what it needs again when it is applied: a name added twice, or a sharer removed meanwhile. */
+  function applyOp(l, op) {
+    var i;
+    if (op.t === 'add-people') {
+      op.people.forEach(function (p) {
+        var low = p.name.toLowerCase();
+        if (l.people.length < MAX_PEOPLE && !l.people.some(function (q) { return q.id === p.id || q.name.toLowerCase() === low; })) l.people.push({ id: p.id, name: p.name });
+      });
+    } else if (op.t === 'remove-person') {
+      if (!uses(l, op.id)) l.people = l.people.filter(function (p) { return p.id !== op.id; });
+    } else if (op.t === 'put-expense') {
+      var e = op.e, parts = l.people.filter(function (p) { return e.parts.indexOf(p.id) >= 0; }).map(function (p) { return p.id; });
+      if (!parts.length || !l.people.some(function (p) { return p.id === e.payer; })) return;
+      var rec = { id: e.id, what: e.what, cents: e.cents, payer: e.payer, parts: parts };
+      for (i = 0; i < l.expenses.length; i++) if (l.expenses[i].id === e.id) { l.expenses[i] = rec; return; }
+      if (l.expenses.length < MAX_EXPENSES) l.expenses.push(rec);
+    } else if (op.t === 'remove-expense') {
+      l.expenses = l.expenses.filter(function (x) { return x.id !== op.id; });
+    } else if (op.t === 'currency') {
+      l.cur = op.cur;
+    }
+  }
+  var creating = null;   // ops made while the first save of a shared ledger is on its way
+  function act(op) {
+    applyOp(state, op);
+    if (creating) creating.push(op);
+    if (sync) { sync.pending.push(op); push(); }
+    save();
+    render();
   }
 
   // ---------- the arithmetic ----------
@@ -615,53 +689,179 @@ footer .link-btn { margin-left: auto; }
     return settleMemo.value;
   }
 
-  // ---------- saving and sharing ----------
-  // stored and shared as {v, c: currency, p: [names], e: [[what, cents, payer, [sharers]]]}, people by position
+  // ---------- saving ----------
+  // stored, shared and synced as {v: 2, c: currency, p: [[id, name]], e: [[id, what, cents, payer, [sharers]]]}
   function toData() {
-    var at = {};
-    state.people.forEach(function (p, i) { at[p.id] = i; });
     return {
-      v: 1, c: state.cur,
-      p: state.people.map(function (p) { return p.name; }),
-      e: state.expenses.map(function (e) { return [e.what, e.cents, at[e.payer], e.parts.map(function (id) { return at[id]; })]; })
+      v: 2, c: state.cur,
+      p: state.people.map(function (p) { return [p.id, p.name]; }),
+      e: state.expenses.map(function (e) { return [e.id, e.what, e.cents, e.payer, e.parts.slice()]; })
     };
   }
-  // reads a saved or shared ledger, which may come from anywhere, so every field is checked; null if anything is off
+  /* Reads a ledger saved here, carried in a link or sent by the server, so every field is checked; null if
+     anything is off. Version 1, from the first snapshot links, named people by their place in the list. */
   function fromData(d) {
-    if (!d || d.v !== 1 || !Array.isArray(d.p) || !Array.isArray(d.e) || d.p.length > MAX_PEOPLE || d.e.length > MAX_EXPENSES) return null;
-    var people = [], seen = {}, id = 1, i;
+    if (!d || (d.v !== 1 && d.v !== 2) || !Array.isArray(d.p) || !Array.isArray(d.e) || d.p.length > MAX_PEOPLE || d.e.length > MAX_EXPENSES) return null;
+    var v1 = d.v === 1, people = [], known = {}, i, j;
     for (i = 0; i < d.p.length; i++) {
-      var name = cleanName(d.p[i]), low = name.toLowerCase();
-      if (!name || seen['~' + low]) return null;
-      seen['~' + low] = true;
-      people.push({ id: id++, name: name });
+      var p = v1 ? [newId(), d.p[i]] : d.p[i], name = Array.isArray(p) && cleanName(p[1]);
+      if (!name || typeof p[0] !== 'string' || !ID.test(p[0]) || known['~' + p[0]]) return null;
+      known['~' + p[0]] = true;
+      people.push({ id: p[0], name: name });
     }
-    var at = function (j) { return typeof j === 'number' && j % 1 === 0 && j >= 0 && j < people.length ? people[j] : null; };
-    var expenses = [];
+    var who = function (x) {
+      if (v1) return typeof x === 'number' && x % 1 === 0 && x >= 0 && x < people.length ? people[x].id : null;
+      return typeof x === 'string' && known['~' + x] ? x : null;
+    };
+    var expenses = [], seen = {};
     for (i = 0; i < d.e.length; i++) {
-      var e = d.e[i];
-      if (!Array.isArray(e) || e.length !== 4 || typeof e[0] !== 'string' || !Array.isArray(e[3]) || !e[3].length) return null;
-      var cents = e[1], payer = at(e[2]), used = {};
-      if (typeof cents !== 'number' || cents % 1 !== 0 || cents <= 0 || cents > MAX_CENTS || !payer) return null;
-      for (var j = 0; j < e[3].length; j++) {
-        var q = at(e[3][j]);
-        if (!q || used[q.id]) return null;
-        used[q.id] = true;
+      var e = d.e[i], o = v1 ? 0 : 1;   // version 2 puts the expense's id first
+      if (!Array.isArray(e) || e.length !== 4 + o) return null;
+      var id = v1 ? newId() : e[0], cents = e[o + 1], payer = who(e[o + 2]), used = {};
+      if (typeof id !== 'string' || !ID.test(id) || seen['~' + id] || typeof e[o] !== 'string') return null;
+      if (typeof cents !== 'number' || cents % 1 !== 0 || cents <= 0 || cents > MAX_CENTS || !payer || !Array.isArray(e[o + 3]) || !e[o + 3].length) return null;
+      for (j = 0; j < e[o + 3].length; j++) {
+        var q = who(e[o + 3][j]);
+        if (!q || used[q]) return null;
+        used[q] = true;
       }
+      seen['~' + id] = true;
       expenses.push({
-        id: id++, what: e[0].replace(/\s+/g, ' ').trim().slice(0, MAX_WHAT), cents: cents, payer: payer.id,
-        parts: people.filter(function (p) { return used[p.id]; }).map(function (p) { return p.id; })
+        id: id, what: e[o].replace(/\s+/g, ' ').trim().slice(0, MAX_WHAT), cents: cents, payer: payer,
+        parts: people.filter(function (x) { return used[x.id]; }).map(function (x) { return x.id; })
       });
     }
-    return { cur: CURRENCIES.indexOf(d.c) >= 0 ? d.c : null, people: people, expenses: expenses, nextId: id };
+    return { cur: CURRENCIES.indexOf(d.c) >= 0 ? d.c : null, people: people, expenses: expenses };
   }
   function adopt(l) {
-    state.people = l.people; state.expenses = l.expenses; state.nextId = l.nextId;
+    state.people = l.people; state.expenses = l.expenses;
     if (l.cur) state.cur = l.cur;
-    state.editing = null; state.payer = null; state.parts = null; state.confirmDel = null;
   }
-  function save() { try { localStorage.setItem(KEY, JSON.stringify(toData())); } catch (e) {} }
+  function resetForm() {
+    state.editing = null; state.payer = null; state.parts = null; state.confirmDel = null;
+    $('what-input').value = ''; $('amount-input').value = '';
+  }
+  function hasContent() { return state.people.length > 0 || state.expenses.length > 0; }
+  // what leaving this ledger would lose: all of it if only here, else the changes the server hasn't taken
+  function unsaved() { return sync ? sync.pending.length > 0 : hasContent(); }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(toData())); } catch (e) {}
+    saveSync();
+  }
+  function saveSync() {
+    try {
+      if (sync) localStorage.setItem(SYNC_KEY, JSON.stringify({ id: sync.id, version: sync.version, pending: sync.pending }));
+      else localStorage.removeItem(SYNC_KEY);
+    } catch (e) {}
+  }
+  // a shared ledger keeps #l=<id> in the address, so the address bar is its link too
+  function setHash() {
+    try { history.replaceState(null, '', location.pathname + location.search + (sync ? '#l=' + sync.id : '')); } catch (e) {}
+  }
 
+  // ---------- sync ----------
+  function api(method, path, body) {
+    var ctl = window.AbortController ? new AbortController() : null;
+    var timer = ctl && setTimeout(function () { ctl.abort(); }, TIMEOUT_MS);
+    return fetch(API + path, {
+      method: method, cache: 'no-store', signal: ctl ? ctl.signal : undefined,
+      headers: body ? { 'Content-Type': 'application/json' } : undefined,
+      body: body ? JSON.stringify(body) : undefined
+    }).then(function (r) {
+      return r.json().catch(function () { return null; }).then(function (j) { clearTimeout(timer); return { status: r.status, body: j }; });
+    }, function (err) { clearTimeout(timer); throw err; });
+  }
+  function setStatus(s) { if (sync) { sync.status = s; renderSync(); } }
+  function serverCopy(doc, onto) {
+    var l = doc && fromData(doc.data);
+    if (!l) return false;
+    onto.forEach(function (op) { applyOp(l, op); });
+    adopt(l);
+    sync.version = doc.version;
+    save(); render();
+    return true;
+  }
+  // send the ledger with the changes made here; on 409 take the server's copy, replay them on it and send again
+  function push() {
+    if (!sync || sync.busy || !sync.pending.length) return;
+    var id = sync.id, sent = sync.pending.length;
+    sync.busy = true; setStatus('busy');
+    api('PUT', '/ledgers/' + id, { base: sync.version, data: toData() }).then(function (res) {
+      if (!sync || sync.id !== id) return;
+      sync.busy = false;
+      if (res.status === 404) return gone();
+      if (res.status === 200 && res.body) {
+        sync.version = res.body.version;
+        sync.pending = sync.pending.slice(sent);
+        saveSync();
+        setStatus('ok');
+      } else if (res.status !== 409 || !serverCopy(res.body, sync.pending)) {
+        return setStatus('off');   // tried again on the next tick
+      }
+      push();
+    }, function () {
+      if (!sync || sync.id !== id) return;
+      sync.busy = false;
+      setStatus('off');
+    });
+  }
+  // fetch others' changes; a ledger with changes of its own waiting sends those instead, which brings theirs back too
+  function pull() {
+    if (!sync || sync.busy) return;
+    if (sync.pending.length) return push();
+    var id = sync.id;
+    sync.busy = true;
+    api('GET', '/ledgers/' + id).then(function (res) {
+      if (!sync || sync.id !== id) return;
+      sync.busy = false;
+      if (res.status === 404) return gone();
+      if (res.status !== 200 || !res.body) return failed();
+      if (res.body.version > sync.version && !sync.pending.length && !serverCopy(res.body, [])) return failed();
+      if ($('banner').textContent === I18N[state.lang].openFail) banner('');
+      setStatus('ok');
+      push();
+    }, function () {
+      if (!sync || sync.id !== id) return;
+      sync.busy = false;
+      failed();
+    });
+  }
+  // a shared ledger that has never loaded here says so in the banner too, since the page shows nothing of it
+  function failed() {
+    if (!sync.version) banner(I18N[state.lang].openFail, true);
+    setStatus('off');
+  }
+  // the server no longer has this ledger: keep the copy here as an unshared ledger
+  function gone() {
+    sync = null;
+    saveSync(); setHash();
+    banner(I18N[state.lang].gone);
+    render();
+  }
+  function tick() { if (sync && !document.hidden) pull(); }
+
+  // ---------- sharing ----------
+  function base() { return location.href.split('#')[0]; }
+  function snapshotLink() { return base() + '#d=' + toBase64url(JSON.stringify(toData())); }
+  /* The link to share: the shared ledger's, saving this one to the server first if it is only here.
+     If there is no server, or it can't be reached, a snapshot link carrying the whole ledger instead. */
+  var making = null;
+  function shareLink() {
+    if (sync) return Promise.resolve({ url: base() + '#l=' + sync.id, live: true });
+    if (!API) return Promise.resolve({ url: snapshotLink(), live: false });
+    if (making) return making;
+    creating = [];
+    making = api('POST', '/ledgers', { data: toData() }).then(function (res) {
+      if (res.status !== 200 || !res.body || !LEDGER_ID.test(res.body.id)) throw new Error('not saved');
+      // changes made while the ledger was on its way go up next
+      sync = { id: res.body.id, version: res.body.version, pending: creating, busy: false, status: 'ok' };
+      saveSync(); setHash(); render(); push();
+      return { url: base() + '#l=' + sync.id, live: true };
+    }).catch(function () {
+      return { url: snapshotLink(), live: false, unreached: true };
+    }).then(function (s) { creating = null; making = null; return s; });
+    return making;
+  }
   function toBase64url(str) {
     var bytes = new TextEncoder().encode(str), bin = '';
     for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
@@ -672,28 +872,45 @@ footer .link-btn { margin-left: auto; }
     for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
     return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
   }
-  function shareLink() { return location.href.split('#')[0] + '#d=' + toBase64url(JSON.stringify(toData())); }
 
-  // a shared link carries the whole ledger after #d=; opening it loads that ledger, after asking if it would replace another
+  /* #l=<id> opens a shared ledger; #d=... is a snapshot carrying a whole ledger, from before there was a server
+     or when it couldn't be reached. Either asks first if it would replace a ledger that exists only here, and
+     a snapshot also asks before taking the place of a shared ledger, since it is an older copy. */
   function openLink() {
-    var h = location.hash;
-    if (h.indexOf('#d=') !== 0) return;
-    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
-    var T = I18N[state.lang], l = null;
-    try { l = fromData(JSON.parse(fromBase64url(h.slice(3)))); } catch (e) {}
-    if (!l) { banner(T.linkBad); return; }
-    var mine = JSON.stringify(toData());
-    var had = { people: state.people, expenses: state.expenses, nextId: state.nextId, cur: state.cur };
-    adopt(l);
-    if ((had.people.length || had.expenses.length) && JSON.stringify(toData()) !== mine && !window.confirm(T.linkAsk)) {
-      adopt(had);
-      return;
+    var h = location.hash, T = I18N[state.lang];
+    if (h.indexOf('#l=') === 0) {
+      var id = h.slice(3);
+      if (sync && sync.id === id) return;
+      if (!API || !LEDGER_ID.test(id)) { banner(API ? T.linkBad : T.noServer, true); return; }
+      if (unsaved() && !window.confirm(T.switchAsk)) return;
+      adopt({ people: [], expenses: [] });
+      resetForm();
+      sync = { id: id, version: 0, pending: [], busy: false, status: 'loading' };
+      save();
+      banner('');
+      return;   // the first pull fills it in
     }
-    $('what-input').value = ''; $('amount-input').value = '';
+    if (h.indexOf('#d=') !== 0) return;
+    var l = null;
+    try { l = fromData(JSON.parse(fromBase64url(h.slice(3)))); } catch (e) {}
+    if (!l) { banner(T.linkBad, true); return; }
+    if (shape(l) === shape(state)) return;
+    if (sync ? !window.confirm(T.snapshotAsk) : hasContent() && !window.confirm(T.linkAsk)) return;
+    adopt(l);
+    resetForm();
+    sync = null;
     save();
     banner(T.linkOpened);
   }
-  function banner(text) { $('banner').textContent = text; $('banner').hidden = !text; }
+  // a ledger's content without its ids, which differ each time a version 1 snapshot is read
+  function shape(l) {
+    var at = {};
+    l.people.forEach(function (p, i) { at[p.id] = i; });
+    return JSON.stringify([l.cur || state.cur, l.people.map(function (p) { return p.name; }), l.expenses.map(function (e) {
+      return [e.what, e.cents, at[e.payer], e.parts.map(function (id) { return at[id]; })];
+    })]);
+  }
+  function banner(text, bad) { $('banner').textContent = text; $('banner').hidden = !text; $('banner').classList.toggle('bad', !!bad); }
 
   function copy(text, done) {
     var fallback = function () {
@@ -707,6 +924,25 @@ footer .link-btn { margin-left: auto; }
     };
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback);
     else fallback();
+  }
+  // Safari only copies inside the tap itself, so text still being made (a link the server hasn't answered) goes over as a promise
+  function copyLater(text, done) {
+    var later = function () { text.then(function (t) { copy(t, done); }); };
+    if (!window.ClipboardItem || !navigator.clipboard || !navigator.clipboard.write) return later();
+    try {
+      var blob = text.then(function (t) { return new Blob([t], { type: 'text/plain' }); });
+      navigator.clipboard.write([new ClipboardItem({ 'text/plain': blob })]).then(done, later);
+    } catch (e) { later(); }
+  }
+  function share(build, liveMsg) {
+    var T = I18N[state.lang], made = shareLink();
+    if (!sync && API) say('share-msg', T.making);
+    copyLater(made.then(function (s) { return build(s.url); }), function () {
+      made.then(function (s) {
+        var T = I18N[state.lang];
+        say('share-msg', s.live ? T[liveMsg] : s.unreached ? T.snapshot : T.snapshotPlain, !!s.unreached, 8000);
+      });
+    });
   }
 
   // ---------- render ----------
@@ -741,7 +977,14 @@ footer .link-btn { margin-left: auto; }
     setText('copy-text', T.copyText); setText('copy-link', T.copyLink);
     setText('tally-h', T.tallyH);
     setText('method-h', T.methodH); $('method').innerHTML = T.method;
-    setText('foot-sig', T.footSig); setText('foot-note', T.footNote); setText('reset', T.reset);
+    setText('foot-sig', T.footSig); setText('foot-note', T.footNote); setText('reset', sync ? T.newLedger : T.reset);
+  }
+  function renderSync() {
+    $('sync').hidden = !sync;
+    if (!sync) return;
+    var T = I18N[state.lang];
+    $('sync').className = 'sync ' + sync.status;
+    setText('sync-text', T.shared + ' · ' + T.syncState[sync.status]);
   }
 
   function renderPeople() {
@@ -760,6 +1003,7 @@ footer .link-btn { margin-left: auto; }
     $('spend-body').hidden = !open;
     if (!open) return;
     if (!person(state.payer)) state.payer = state.people.length ? state.people[0].id : null;
+    if (state.parts) state.parts = state.parts.filter(person);   // someone else may have removed a sharer
     var parts = formParts();
     $('payer-chips').innerHTML = state.people.map(function (p) {
       return '<label class="chip"><input type="radio" name="payer" value="' + p.id + '"' + (p.id === state.payer ? ' checked' : '') + '><span>' + esc(p.name) + '</span></label>';
@@ -768,11 +1012,11 @@ footer .link-btn { margin-left: auto; }
       return '<label class="chip sharer"><input type="checkbox" value="' + p.id + '"' + (parts.indexOf(p.id) >= 0 ? ' checked' : '') + '><span>' + esc(p.name) + '</span></label>';
     }).join('');
     var e = state.editing && expense(state.editing);
-    $('spend-form').classList.toggle('editing', !!e);
-    $('editing-note').hidden = !e;
-    if (e) setText('editing-note', T.editing(state.expenses.indexOf(e) + 1, e.what));
-    setText('spend-submit', e ? T.save : T.add);
-    $('spend-cancel').hidden = !e;
+    $('spend-form').classList.toggle('editing', !!state.editing);
+    $('editing-note').hidden = !state.editing;
+    if (state.editing) setText('editing-note', T.editing(e ? state.expenses.indexOf(e) + 1 : state.expenses.length + 1, $('what-input').value.trim()));
+    setText('spend-submit', state.editing ? T.save : T.add);
+    $('spend-cancel').hidden = !state.editing;
     renderPreview();
   }
   // the line under the sharers: how many split it and, once there is an amount, what each pays
@@ -838,8 +1082,7 @@ footer .link-btn { margin-left: auto; }
       '</tr></thead><tbody>' + rows + '</tbody>';
   }
 
-  function render() { renderStatic(); renderPeople(); renderForm(); renderLedger(); renderSettle(); }
-  function commit() { save(); render(); }
+  function render() { renderStatic(); renderSync(); renderPeople(); renderForm(); renderLedger(); renderSettle(); }
 
   // ---------- events ----------
   $('btn-zh').addEventListener('click', function () { setLang('zh'); });
@@ -876,34 +1119,32 @@ footer .link-btn { margin-left: auto; }
     var T = I18N[state.lang], input = $('name-input');
     var names = input.value.split(/[,，、;；\n]+/).map(cleanName).filter(Boolean);
     if (!names.length) { input.focus(); return; }
-    var dups = [], full = false;
+    var add = [], dups = [], full = false;
     names.forEach(function (name) {
       var low = name.toLowerCase();
-      if (state.people.some(function (p) { return p.name.toLowerCase() === low; })) { if (dups.indexOf(name) < 0) dups.push(name); return; }
-      if (state.people.length >= MAX_PEOPLE) { full = true; return; }
-      state.people.push({ id: state.nextId++, name: name });
+      if (state.people.concat(add).some(function (p) { return p.name.toLowerCase() === low; })) { if (dups.indexOf(name) < 0) dups.push(name); return; }
+      if (state.people.length + add.length >= MAX_PEOPLE) { full = true; return; }
+      add.push({ id: newId(), name: name });
     });
     input.value = '';
     say('people-msg', (dups.length ? T.dup(dups) : '') + (full ? (dups.length ? ' ' : '') + T.full : ''), true);
-    commit();
+    if (add.length) act({ t: 'add-people', people: add });
   });
   $('people').addEventListener('click', function (ev) {
     var b = ev.target.closest('[data-remove]');
     if (!b) return;
-    var T = I18N[state.lang], id = +b.getAttribute('data-remove'), p = person(id), n = uses(id);
+    var T = I18N[state.lang], id = b.getAttribute('data-remove'), p = person(id), n = uses(state, id);
     if (!p) return;
     if (n) { say('people-msg', T.inUse(p.name, n), true); return; }
-    state.people = state.people.filter(function (x) { return x.id !== id; });
-    if (state.parts) state.parts = state.parts.filter(function (x) { return x !== id; });
     say('people-msg', '');
-    commit();
+    act({ t: 'remove-person', id: id });
     $('name-input').focus();
   });
 
   // step 2: the form
-  $('cur').addEventListener('change', function () { state.cur = $('cur').value; commit(); });
+  $('cur').addEventListener('change', function () { act({ t: 'currency', cur: $('cur').value }); });
   $('amount-input').addEventListener('input', renderPreview);
-  $('payer-chips').addEventListener('change', function (ev) { state.payer = +ev.target.value; });
+  $('payer-chips').addEventListener('change', function (ev) { state.payer = ev.target.value; });
   $('parts-chips').addEventListener('change', function () {
     var on = {};
     [].forEach.call($('parts-chips').querySelectorAll('input:checked'), function (x) { on[x.value] = true; });
@@ -914,33 +1155,27 @@ footer .link-btn { margin-left: auto; }
     state.parts = formParts().length === state.people.length ? [] : null;
     renderForm();
   });
-  function clearForm() {
-    state.editing = null; state.parts = null;
-    $('what-input').value = ''; $('amount-input').value = '';
-  }
   $('spend-form').addEventListener('submit', function (ev) {
     ev.preventDefault();
     var T = I18N[state.lang], cents = parseAmount($('amount-input').value), parts = formParts();
     if (!(cents > 0)) { say('spend-msg', T.badAmount, true); $('amount-input').focus(); return; }
     if (!parts.length) { say('spend-msg', T.noParts, true); return; }
     if (!person(state.payer)) return;
+    if (!state.editing && state.expenses.length >= MAX_EXPENSES) { say('spend-msg', T.tooMany, true); return; }
     var what = $('what-input').value.replace(/\s+/g, ' ').trim().slice(0, MAX_WHAT);
-    var e = state.editing && expense(state.editing), msg;
-    if (e) {
-      e.what = what; e.cents = cents; e.payer = state.payer; e.parts = parts.slice();
-      msg = T.saved(what || T.untitled, money(cents));
-    } else {
-      if (state.expenses.length >= MAX_EXPENSES) { say('spend-msg', T.tooMany, true); return; }
-      state.expenses.push({ id: state.nextId++, what: what, cents: cents, payer: state.payer, parts: parts.slice() });
-      msg = T.added(what || T.untitled, money(cents));
-    }
-    clearForm();
-    commit();
+    var msg = (state.editing ? T.saved : T.added)(what || T.untitled, money(cents));
+    var e = { id: state.editing || newId(), what: what, cents: cents, payer: state.payer, parts: parts.slice() };
+    var payer = state.payer;
+    resetForm();
+    state.payer = payer;   // the next expense is often paid by the same person
+    act({ t: 'put-expense', e: e });
     say('spend-msg', msg, false, 4000);
     $('what-input').focus();
   });
   $('spend-cancel').addEventListener('click', function () {
-    clearForm();
+    var payer = state.payer;
+    resetForm();
+    state.payer = payer;
     say('spend-msg', '');
     renderForm(); renderLedger();
     $('what-input').focus();
@@ -952,7 +1187,7 @@ footer .link-btn { margin-left: auto; }
     var b = ev.target.closest('[data-edit], [data-del]');
     if (!b) return;
     if (b.hasAttribute('data-edit')) {
-      var e = expense(+b.getAttribute('data-edit'));
+      var e = expense(b.getAttribute('data-edit'));
       if (!e) return;
       state.editing = e.id; state.payer = e.payer; state.parts = e.parts.slice(); state.confirmDel = null;
       $('what-input').value = e.what; $('amount-input').value = plain(e.cents);
@@ -962,7 +1197,7 @@ footer .link-btn { margin-left: auto; }
       $('amount-input').focus({ preventScroll: true });
       return;
     }
-    var id = +b.getAttribute('data-del');
+    var id = b.getAttribute('data-del');
     clearTimeout(delTimer);
     if (state.confirmDel !== id) {
       state.confirmDel = id;
@@ -973,47 +1208,65 @@ footer .link-btn { margin-left: auto; }
       return;
     }
     var at = state.expenses.indexOf(expense(id));
-    state.expenses = state.expenses.filter(function (x) { return x.id !== id; });
     state.confirmDel = null;
-    if (state.editing === id) clearForm();
-    commit();
+    if (state.editing === id) resetForm();
+    act({ t: 'remove-expense', id: id });
     // focus moves to the entry that took its place, or the one before, or back to the form
     var left = $('ledger').querySelectorAll('[data-del]');
     (left[Math.min(at, left.length - 1)] || $('what-input')).focus();
   });
 
-  // step 3: copy the plan or a link to the whole ledger
+  // step 3: copy the plan or the link, both pointing at the shared ledger
   $('copy-text').addEventListener('click', function () {
-    var T = I18N[state.lang], r = settle(tally());
-    var total = state.expenses.reduce(function (a, e) { return a + e.cents; }, 0);
-    var lines = [T.summary(state.people.length, state.expenses.length, money(total))];
-    if (r.transfers.length) r.transfers.forEach(function (x) { lines.push(T.transferLine(nameOf(x.from.id), nameOf(x.to.id), money(x.cents))); });
-    else lines.push(T.summaryNone);
-    lines.push(T.details + shareLink());
-    copy(lines.join('\n'), function () { say('share-msg', T.copied, false, 4000); });
+    share(function (url) {
+      var T = I18N[state.lang], r = settle(tally());
+      var total = state.expenses.reduce(function (a, e) { return a + e.cents; }, 0);
+      var lines = [T.summary(state.people.length, state.expenses.length, money(total))];
+      if (r.transfers.length) r.transfers.forEach(function (x) { lines.push(T.transferLine(nameOf(x.from.id), nameOf(x.to.id), money(x.cents))); });
+      else lines.push(T.summaryNone);
+      lines.push(T.details + url);
+      return lines.join('\n');
+    }, 'copied');
   });
   $('copy-link').addEventListener('click', function () {
-    var T = I18N[state.lang];
-    copy(shareLink(), function () { say('share-msg', T.linkCopied, false, 4000); });
+    share(function (url) { return url; }, 'linkCopied');
   });
 
+  // on a shared ledger this leaves it (it stays on the server); on one only here it clears everything
   $('reset').addEventListener('click', function () {
-    if (!state.people.length && !state.expenses.length) return;
-    if (!window.confirm(I18N[state.lang].resetAsk)) return;
-    state.people = []; state.expenses = []; state.nextId = 1; state.payer = null; state.confirmDel = null;
-    clearForm();
+    var T = I18N[state.lang];
+    if (!sync && !hasContent()) return;
+    if (!window.confirm(sync ? T.newAsk : T.resetAsk)) return;
+    sync = null;
+    adopt({ people: [], expenses: [] });
+    resetForm();
     ['people-msg', 'spend-msg', 'share-msg'].forEach(function (id) { say(id, ''); });
     banner('');
-    commit();
+    save(); setHash(); render();
     $('name-input').focus();
   });
 
   // ---------- boot ----------
-  try { var stored = localStorage.getItem(KEY); if (stored) { var l = fromData(JSON.parse(stored)); if (l) adopt(l); } } catch (e) {}
+  try {
+    var stored = localStorage.getItem(KEY), l = stored && fromData(JSON.parse(stored));
+    if (l) adopt(l);
+    var s = API && JSON.parse(localStorage.getItem(SYNC_KEY) || 'null');
+    if (s && LEDGER_ID.test(s.id) && typeof s.version === 'number' && Array.isArray(s.pending)) {
+      sync = { id: s.id, version: s.version, pending: s.pending, busy: false, status: 'busy' };
+    }
+  } catch (e) {}
   render();
   openLink();   // after the first render, so a question about replacing the ledger isn't asked over a blank page
+  setHash();
   render();
-  window.addEventListener('hashchange', function () { if (location.hash.indexOf('#d=') === 0) { openLink(); render(); } });
+  tick();
+  setInterval(tick, POLL_MS);
+  document.addEventListener('visibilitychange', tick);
+  window.addEventListener('online', tick);
+  window.addEventListener('hashchange', function () {
+    if (location.hash.indexOf('#l=') !== 0 && location.hash.indexOf('#d=') !== 0) return;
+    openLink(); setHash(); render(); tick();
+  });
 })();
 </script>
 <!-- GoatCounter: counts visits without cookies; the totals feed the visitor map on the homepage.

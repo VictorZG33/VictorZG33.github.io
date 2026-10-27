@@ -1,0 +1,38 @@
+# Deploys the sync server behind shared ledgers in 两清 All Square (wentaoz.com/split/): the Cloudflare Worker
+# in workers/split. Needs two repository secrets, CLOUDFLARE_API_TOKEN (a token made from the
+# "Edit Cloudflare Workers" template) and CLOUDFLARE_ACCOUNT_ID; until both are set it does nothing.
+name: Split sync server
+
+on:
+  push:
+    branches: [main]
+    paths: ['workers/split/**', '.github/workflows/split-sync.yml']
+  workflow_dispatch:        # and on demand, from the Actions tab
+
+permissions:
+  contents: read
+
+concurrency: split-sync
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - name: Wait for the Cloudflare secrets
+        if: env.CLOUDFLARE_API_TOKEN == '' || env.CLOUDFLARE_ACCOUNT_ID == ''
+        run: echo "::notice::Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID as repository secrets to deploy the sync server."
+
+      - uses: actions/checkout@v4
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+
+      - name: Deploy, and show the server's address in the run summary
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        working-directory: workers/split
+        shell: bash
+        run: |
+          npx --yes wrangler@4.149.0 deploy | tee deploy.log
+          url=$(grep -o 'https://[a-z0-9.-]*\.workers\.dev' deploy.log | head -n 1)
+          echo "::notice title=Sync server address (the API in split/index.html)::$url"

@@ -1,0 +1,14 @@
+# The sync server behind shared ledgers in 两清 All Square (wentaoz.com/split/).
+# .github/workflows/split-sync.yml deploys it whenever this folder changes on main.
+name = "split-sync"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+workers_dev = true      # served at https://split-sync.<your subdomain>.workers.dev
+
+[[durable_objects.bindings]]
+name = "LEDGER"
+class_name = "Ledger"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Ledger"]   # SQLite-backed, the kind the free plan offers
