@@ -1,0 +1,13 @@
+name = "golf-coach"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+
+# At most 5 coaching requests per minute from one IP address, counted per Cloudflare location.
+# A Claude call takes longer than that anyway; this only slows down a script hammering the Worker.
+[[ratelimits]]
+name = "COACH_LIMIT"
+namespace_id = "1001"
+
+  [ratelimits.simple]
+  limit = 5
+  period = 60
