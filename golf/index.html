@@ -412,7 +412,7 @@ const PRICE = { input: 4, output: 20 };   // US$ per million tokens for the coac
 const MP = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.1.0';
 const POSE_MODEL = 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task';
 const MAX_SECONDS = 30;     // longer clips are refused: trim to the swing
-const MAX_SAMPLES = 450;    // frames analysed per clip: 30 per second up to 15 s, fewer after that
+const MAX_SAMPLES = 600;    // frames analysed per clip: 30 per second up to 20 s, fewer after that
 const DETECT_SIZE = 640;    // frames are scaled to this long side before the pose model sees them
 const PHASES = ['address', 'top', 'impact', 'finish'];
 const LANG_KEY = 'golf.lang', KEY_KEY = 'golf.apiKey';
@@ -442,7 +442,7 @@ const I18N = {
     ],
     loadingModel: '正在加载姿态识别模型（第一次大约 20 MB）…',
     reading: '正在读取视频…',
-    scanning: (i, n) => `正在识别第 ${i} / ${n} 帧`,
+    scanning: (p) => `正在识别动作 ${p}%`,
     capturing: '正在截取关键帧…',
     cancel: '取消', cancelled: '已取消。',
     tooLong: (s) => `视频有 ${s} 秒，太长了。请剪到只含一次挥杆（30 秒以内）。`,
@@ -627,7 +627,7 @@ const I18N = {
     ],
     loadingModel: 'Loading the pose model (about 20 MB the first time)…',
     reading: 'Reading the video…',
-    scanning: (i, n) => `Tracking frame ${i} of ${n}`,
+    scanning: (p) => `Tracking the swing ${p}%`,
     capturing: 'Capturing the key frames…',
     cancel: 'Cancel', cancelled: 'Cancelled.',
     tooLong: (s) => `The video is ${s} seconds long. Trim it to the one swing, under 30 seconds.`,
@@ -948,14 +948,126 @@ function seekTo(t) {
     const guard = setTimeout(finish, 2000);
     video.addEventListener('seeked', () => {
       if (video.requestVideoFrameCallback) { video.requestVideoFrameCallback(() => finish()); setTimeout(finish, 150); }
-      else finish();
+      else requestAnimationFrame(() => requestAnimationFrame(finish));   // no way to know, so give it two frames
     }, { once: true });
     video.currentTime = t;
   });
 }
 
+// ---------- tracking ----------
+// Playing the clip through and reading each frame as it comes up decodes every frame once.
+// Seeking to each frame instead makes the browser decode again from the last keyframe every
+// time, which on phone video costs more than the pose model itself. Playback slows down when the
+// model can't keep up, so the samples stay about SAMPLE_GAP apart on slow devices too. Anything
+// playback skipped (a slow frame, a stall, a browser that won't play) is then filled in by seeking.
+const SAMPLE_GAP = 1 / 30;   // seconds of video between analysed frames
+const MIN_RATE = 0.1;        // slowest playback while tracking
+
+function makeDetector(lm, W, H) {
+  const sc = Math.min(1, DETECT_SIZE / Math.max(W, H));
+  const work = document.createElement('canvas');
+  work.width = Math.round(W * sc); work.height = Math.round(H * sc);
+  const ctx = work.getContext('2d');
+  const base = tsBase + 1000;   // the model wants timestamps that only ever increase, across videos too
+  return (t) => {
+    ctx.drawImage(video, 0, 0, work.width, work.height);
+    tsBase = Math.max(tsBase + 1, base + Math.round(t * 1000));
+    const res = lm.detectForVideo(work, tsBase);
+    const pose = res.landmarks && res.landmarks[0];
+    return { t, lm: pose ? pose.map((q) => [q.x * W, q.y * H, q.visibility == null ? 1 : q.visibility]) : null };
+  };
+}
+
+async function track(detect, dur, gap, job, report, T) {
+  let frames = [];
+  if (video.requestVideoFrameCallback) {
+    // The model's first call can take seconds (it compiles its GPU programs), so make it on a
+    // paused video; otherwise the start of the clip, the address, plays past unseen.
+    await seekTo(0);
+    const first = detect(video.currentTime);
+    frames.push(first); report(first);
+    frames = frames.concat(await trackByPlaying(detect, gap, first.t, job, report));
+  }
+  // Fill the gaps by seeking: every SAMPLE_GAP step with no frame near it
+  const end = dur - 0.01;
+  let k = 0;
+  const have = frames.map((f) => f.t).sort((x, y) => x - y), extra = [];
+  for (let t = 0; t < end; t += gap) {
+    while (k < have.length && have[k] < t - 0.75 * gap) k++;
+    if (k < have.length && Math.abs(have[k] - t) <= 0.75 * gap) continue;
+    if (job.aborted) throw new Error(T.cancelled);
+    await seekTo(t);
+    const f = detect(t);
+    extra.push(f); report(f);
+  }
+  return frames.concat(extra).sort((x, y) => x.t - y.t);
+}
+
+// Reads frames while the video plays, until it ends, stalls, play() is refused (iOS Low Power
+// Mode does that) or the run is cancelled. The pose model tracks from one frame to the next, so
+// frames must reach it in order: when a slow frame lets playback run past a sample, it rewinds to
+// that sample and carries on at half the speed, and once at the slowest speed it pauses the video
+// for every frame instead.
+function trackByPlaying(detect, gap, from, job, report) {
+  return new Promise((resolve) => {
+    const frames = [];
+    let last = from, cost = 0, done = false, busy = false, stepping = false, heard = performance.now();
+    const finish = () => {
+      if (done) return;
+      done = true; clearInterval(watch); video.removeEventListener('ended', finish); video.pause();
+      resolve(frames);
+    };
+    const setRate = (r) => { if (Math.abs(r - video.playbackRate) > 0.05 * video.playbackRate) { try { video.playbackRate = r; } catch (e) {} } };
+    const take = (t) => {
+      const a = performance.now();
+      const f = detect(t);
+      frames.push(f); last = f.t; report(f);
+      const ms = performance.now() - a;
+      cost = cost ? cost * 0.8 + ms * 0.2 : ms;
+    };
+    const resume = () => { if (!done) { video.requestVideoFrameCallback(step); video.play().catch(finish); } };
+    const step = (now, meta) => {
+      if (done || busy) return;
+      heard = performance.now();
+      if (job.aborted) { finish(); return; }
+      const due = last + gap;
+      if (meta.mediaTime > due + 0.75 * gap) {
+        // fell behind: go back for the sample that was skipped
+        busy = true; video.pause();
+        if (video.playbackRate <= MIN_RATE * 1.05) { stepping = true; setRate(1); } else setRate(Math.max(MIN_RATE, video.playbackRate / 2));
+        seekTo(due).then(() => { busy = false; heard = performance.now(); if (done) return; take(video.currentTime); resume(); });
+        return;
+      }
+      if (meta.mediaTime >= due - 0.004) {
+        if (stepping) video.pause();
+        take(meta.mediaTime);
+        if (stepping) { resume(); return; }
+        // as fast as the model keeps up with, with some headroom
+        setRate(Math.max(MIN_RATE, Math.min(1, 1000 * gap / (cost * 1.3))));
+      }
+      video.requestVideoFrameCallback(step);
+    };
+    const watch = setInterval(() => {
+      const quiet = performance.now() - heard;
+      if (quiet > 3000 && video.paused && !video.ended && !busy) video.play().catch(() => {});
+      if (quiet > 8000) finish();
+    }, 1000);
+    video.addEventListener('ended', finish);
+    video.playbackRate = 0.25;
+    resume();
+  });
+}
+
 // ---------- upload ----------
 const drop = $('drop');
+// Start fetching the pose model as soon as someone reaches for the upload box, so it is ready,
+// or nearly, by the time they have picked a video
+let modelLoading = null;
+function warmModel() {
+  if (!modelLoading) modelLoading = loadModel().catch((e) => { modelLoading = null; throw e; });
+  return modelLoading;
+}
+['pointerdown', 'focusin', 'dragenter'].forEach((e) => drop.addEventListener(e, () => { warmModel().catch(() => {}); }, { once: true }));
 $('file').addEventListener('change', () => { const f = $('file').files[0]; $('file').value = ''; if (f) start(f); });
 ['dragenter', 'dragover'].forEach((e) => drop.addEventListener(e, (ev) => { ev.preventDefault(); drop.classList.add('over'); }));
 ['dragleave', 'drop'].forEach((e) => drop.addEventListener(e, (ev) => { ev.preventDefault(); drop.classList.remove('over'); }));
@@ -980,7 +1092,7 @@ async function start(file) {
   try {
     progress(0, T.loadingModel);
     let lm;
-    try { lm = await loadModel(); } catch (e) { throw new Error(T.modelFail); }
+    try { lm = await warmModel(); } catch (e) { throw new Error(T.modelFail); }
 
     progress(0, T.reading);
     if (state.url) URL.revokeObjectURL(state.url);
@@ -1001,30 +1113,18 @@ async function start(file) {
     try { await video.play(); video.pause(); } catch (e) {}   // lets iOS decode frames for seeking
     sizeOverlay();
 
-    // Track the pose frame by frame
+    // Track the pose through the clip
     const W = video.videoWidth, H = video.videoHeight, dur = video.duration;
-    const fps = Math.min(30, MAX_SAMPLES / dur), n = Math.max(2, Math.floor(dur * fps));
-    const sc = Math.min(1, DETECT_SIZE / Math.max(W, H));
-    const work = document.createElement('canvas');
-    work.width = Math.round(W * sc); work.height = Math.round(H * sc);
-    const wctx = work.getContext('2d');
-    const frames = [];
+    const gap = Math.max(SAMPLE_GAP, dur / MAX_SAMPLES);
+    const detect = makeDetector(lm, W, H);
+    let shown = 0;
+    const report = (f) => {
+      drawLive(f.lm);
+      if (++shown % 3 === 0) { const text = T.scanning(Math.min(100, Math.round(f.t / dur * 100))); progress(f.t / dur, text); setText('scan', text); }
+    };
     $('scan').hidden = false;
-    for (let i = 0; i < n; i++) {
-      if (job.aborted) throw new Error(T.cancelled);
-      const t = Math.min(i / fps, dur - 0.02);
-      await seekTo(t);
-      wctx.drawImage(video, 0, 0, work.width, work.height);
-      tsBase += 34;   // the model wants timestamps that only ever increase, across videos too
-      const res = lm.detectForVideo(work, tsBase);
-      const pose = res.landmarks && res.landmarks[0];
-      frames.push({ t, lm: pose ? pose.map((q) => [q.x * W, q.y * H, q.visibility == null ? 1 : q.visibility]) : null });
-      drawLive(frames[i].lm);
-      if (i % 2 === 0 || i === n - 1) {
-        const text = T.scanning(i + 1, n);
-        progress((i + 1) / n, text); setText('scan', text);
-      }
-    }
+    const frames = await track(detect, dur, gap, job, report, T);
+    video.playbackRate = +$('speed').value;
     $('scan').hidden = true;
     state.frames = frames; state.W = W; state.H = H;
 
@@ -1182,7 +1282,7 @@ function showTime() {
 let seeking = false;
 $('play').addEventListener('click', () => { if (video.paused) { if (video.ended) video.currentTime = 0; video.play(); } else video.pause(); });
 video.addEventListener('play', () => { showPlay(); if (!raf && !state.busy) raf = requestAnimationFrame(loop); });
-video.addEventListener('pause', () => { showPlay(); drawOverlay(); showTime(); });
+video.addEventListener('pause', () => { showPlay(); if (!state.busy) { drawOverlay(); showTime(); } });
 video.addEventListener('seeked', () => { if (!state.busy) { drawOverlay(); showTime(); } });
 $('seek').addEventListener('input', () => { seeking = true; video.pause(); video.currentTime = ($('seek').value / 1000) * (video.duration || 0); });
 $('seek').addEventListener('change', () => { seeking = false; });
