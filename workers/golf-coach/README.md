@@ -2,7 +2,7 @@
 
 A Cloudflare Worker that lets every visitor of [wentaoz.com/golf/](https://wentaoz.com/golf/) use the AI coach on the site's own Anthropic API key, without anyone having to paste a key.
 
-Until it is deployed, the page asks each visitor for their own key and calls Claude straight from their browser. Nothing here is needed for that.
+This is what the page uses by default (`COACH_ENDPOINT` in `golf/index.html`). A visitor can tick *Use my own Anthropic API key* instead; the page then calls Claude straight from their browser with their key, and nothing here is involved. With `COACH_ENDPOINT` empty, that is the only way.
 
 ## What it does
 
@@ -14,24 +14,26 @@ The page posts the coach input (four JPEG key frames, the measurements and the p
 4. builds the Claude request with `buildCoachRequest` from the same file, so it can only ever send the golf-coach prompt, and
 5. streams the answer back to the page.
 
-The API key lives in the Worker as a secret and never reaches the browser.
+The API key lives in the Worker as a secret and never reaches the browser. Without it, the Worker answers `503 not_configured`, and the page tells the visitor the site's coach is unavailable and points them to their own key. It says the same when the key is refused or its credit has run out.
 
 ## Deploying
 
-You need a Cloudflare account (the free plan is enough) and an Anthropic API key.
+`.github/workflows/golf-coach.yml` deploys the Worker whenever this folder or `golf/coach.js` changes on `main`, using the same Cloudflare secrets as the All Square sync server.
 
 1. In the [Anthropic Console](https://console.anthropic.com), create a workspace for the site, set a monthly spend limit on it (for example US$10), and create an API key in that workspace. The spend limit is what caps the bill if someone abuses the Worker.
-2. In this folder:
+2. Store the key as the repository secret `ANTHROPIC_API_KEY` (Settings → Secrets and variables → Actions). `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` should already be there.
+3. Actions → Golf coach server → Run workflow. The run's summary shows the Worker's address, `https://golf-coach.<subdomain>.workers.dev`, which should match `COACH_ENDPOINT` in `golf/index.html`.
 
-   ```sh
-   npm install
-   npx wrangler login
-   npx wrangler secret put ANTHROPIC_API_KEY   # paste the key when asked
-   npx wrangler deploy
-   ```
+The workflow uploads the key with every deploy, so to change it, update the repository secret and run the workflow again.
 
-   The last command prints the Worker's address, such as `https://golf-coach.<your-subdomain>.workers.dev`.
-3. In `golf/index.html`, set `COACH_ENDPOINT` to that address and push. The key field disappears from the page and the button uses the Worker.
+To deploy by hand instead, in this folder:
+
+```sh
+npm install
+npx wrangler login
+npx wrangler secret put ANTHROPIC_API_KEY   # paste the key when asked
+npx wrangler deploy
+```
 
 To test locally, put `ANTHROPIC_API_KEY=...` in a `.dev.vars` file here (it is git-ignored) and run `npx wrangler dev`.
 

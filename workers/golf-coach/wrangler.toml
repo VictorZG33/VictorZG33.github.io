@@ -1,6 +1,9 @@
+# The AI coach server behind 挥杆镜 Swing Mirror (wentaoz.com/golf/).
+# .github/workflows/golf-coach.yml deploys it whenever this folder or golf/coach.js changes on main.
 name = "golf-coach"
 main = "worker.js"
 compatibility_date = "2026-10-01"
+workers_dev = true      # served at https://golf-coach.<your subdomain>.workers.dev
 
 # At most 5 coaching requests per minute from one IP address, counted per Cloudflare location.
 # A Claude call takes longer than that anyway; this only slows down a script hammering the Worker.
