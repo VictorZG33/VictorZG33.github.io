@@ -370,7 +370,7 @@ const I18N = {
     key: '怎么看杰神的分：93 及格，95 以上是真喜欢，98 以上惊艳，100 封神。同一款酒，他平均比 Parker 一系的评家低 4 分左右。',
     interestH: '利益相关',
     sogou: (p) => `在搜狗微信里搜「杰神 ${p}」`,
-    sogouHint: '他 2025 年的榜单不打分、只用颜色标注，没能收进评分表，那里可能有他新的评价。',
+    sogouHint: '评分表收到他 2025 年的榜单为止，之后的评价可能在这里。',
     byFound: '分数照他发表的原样；短评是转述，原文见出处。',
     byPredicted: '按杰神的打分习惯模拟，不是他本人写的。',
     whyH: '为什么是这个分',
@@ -399,7 +399,7 @@ const I18N = {
     method:
       '<p><span class="k">杰神是谁</span><br>杰神是微信公众号「杰神自号」的作者，在南京做美国精品酒进口，也在纳帕有自己的酒庄。他每年把喝过的高端酒整理成「杰神葡萄酒榜单」，每款打分：2016 年用文字，2017–2018 年用 1–6 星，2019 年起用百分制。他说话直，打分比 Parker、Jeb Dunnuck 一系的评家平均低 4 分左右，93 分以下在他那里就算难喝。</p>' +
       '<p><span class="k">怎么认酒</span><br>照片和你输入的文字一起交给 Anthropic 的 Claude 模型，它读出酒庄、酒款、年份和产区，按这款酒的名声和年份估一个适饮期。看不清的地方，它会说明自己猜了什么。</p>' +
-      '<p><span class="k">怎么查杰神的分数</span><br>他的分数都在微信文章的图片表格里，搜索引擎搜不到。所以这里用的是一张从他的榜单里整理出来的评分表：2016 到 2023 年的六份榜单逐张读图录入，每份的酒款数、满分酒数都和文中写的对得上（只有 2017 年缺了打印件里没加载出来的 17 款）；再加上他文章里点评过的酒，一共一千一百多条。2025 年的榜单不打分、只用颜色标注，没有收进来。酒庄、酒款、年份都对上才算他评过，并附上出处。</p>' +
+      '<p><span class="k">怎么查杰神的分数</span><br>他的分数都在微信文章的图片表格里，搜索引擎搜不到。所以这里用的是一张从他的榜单里整理出来的评分表：2016 到 2023 年的六份榜单逐张读图录入，每份的酒款数、满分酒数都和文中写的对得上（只有 2017 年原文自己就缺了 17 款）。2025 年的榜单不再打分，只给每款酒标一种颜色，颜色的意思是按他文中点名的酒推断的：红是超一流，蓝是顶级，黑是正常，橙是老了或名不副实，绿是糟糕，灰是最恶心。再加上他文章里点评过的酒，一共一千三百多条。酒庄、酒款、年份都对上才算他评过，并附上出处。</p>' +
       '<p><span class="k">怎么预测</span><br>表里没有时，Claude 按他的打分习惯推一个百分制分数：先按产区定起点，再参照他给同一款酒其他年份、同一酒庄打过的分，还会上网查 Wine Advocate、Jeb Dunnuck 等评家给这款酒的分数作锚（最多搜 3 次），然后模仿他的口吻写一段短评。这一部分是模拟，页面上用虚线的印章标出来。</p>' +
       '<p><span class="k">照片和费用</span><br>默认请求经本站的服务器转给 Anthropic，由本站付费，服务器不保存照片和回答。用你自己的 API key 时，请求从你的浏览器直接发给 Anthropic，费用记在你的账上。每问一瓶大约 0.05–0.35 美元。</p>' +
       '<p><span class="k">声明</span><br>本页与杰神本人无关。他的分数和文章归他所有，这里只给分数、转述和出处链接。他代理或自己酿的酒，页面会注明。</p>',
@@ -439,7 +439,7 @@ const I18N = {
     key: 'Reading his scores: 93 is a pass, 95 and up means he really likes it, 98 and up is stunning, 100 is legendary. On the same wine he averages about 4 points below the Parker school of critics.',
     interestH: 'Interest',
     sogou: (p) => `Search Sogou’s WeChat search for “杰神 ${p}”`,
-    sogouHint: 'His 2025 list marks wines by colour instead of scoring them and isn’t in the table; a newer verdict may be there.',
+    sogouHint: 'The table runs to his 2025 list; anything newer may be here.',
     byFound: 'The score is as he published it; the note is retold, so read the original at the source.',
     byPredicted: 'Simulated from the way 杰神 scores. He didn’t write this.',
     whyH: 'Why this score',
@@ -468,7 +468,7 @@ const I18N = {
     method:
       '<p><span class="k">Who 杰神 is</span><br>杰神 (Jieshen) writes the Chinese WeChat account 杰神自号. He imports American wine in Nanjing and has his own winery in Napa. Every year he publishes 杰神葡萄酒榜单, a list of the fine wines he drank with a score for each: in words in 2016, 1 to 6 stars in 2017–2018, out of 100 since 2019. He is blunt, scores about 4 points below the Parker school on average, and calls anything under 93 hard to drink.</p>' +
       '<p><span class="k">Identifying the wine</span><br>The photo and whatever you typed go to Anthropic’s Claude, which reads the producer, cuvée, vintage and region and estimates a drinking window from the wine’s reputation and the vintage. Where something is unreadable, it says what it assumed.</p>' +
-      '<p><span class="k">Finding his score</span><br>His scores are image tables inside WeChat articles, which search engines can’t see. So the page uses a table collected from his lists: all six from 2016 to 2023, read image by image, each matching the number of wines and of 100-point wines its article states (but for 17 wines of 2017 whose tables didn’t load in the printout), plus the wines his other articles judge, over 1,100 rows in all. His 2025 list marks wines by colour instead of scoring them and isn’t included. It counts as his only when producer, wine and vintage all match, and it comes with the source.</p>' +
+      '<p><span class="k">Finding his score</span><br>His scores are image tables inside WeChat articles, which search engines can’t see. So the page uses a table collected from his lists: every list from 2016 to 2025, read image by image, each matching the number of wines and of 100-point wines its article states (but for 17 wines of 2017 that the article itself lacks). The 2025 list has no scores, only a colour per wine, and the colours’ meanings are inferred from what he writes about the wines he names: red is outstanding, blue top-class, black ordinary, orange old or not worth its name, green poor, grey the most disgusting. With the wines his other articles judge, that is over 1,300 rows. It counts as his only when producer, wine and vintage all match, and it comes with the source.</p>' +
       '<p><span class="k">Predicting</span><br>When the wine isn’t in the table, Claude predicts a score out of 100 the way he scores: a starting point for the region, then what he gave other vintages of the same wine and the same producer, anchored on other critics’ scores for the wine, such as Wine Advocate and Jeb Dunnuck, which it looks up on the web (at most 3 searches). Then it writes a short note in his voice. That part is a simulation, and the page marks it with a dashed seal.</p>' +
       '<p><span class="k">Photos and cost</span><br>By default the request goes through this site’s server to Anthropic and the site pays; the server keeps neither the photo nor the answer. With your own API key, the request goes from your browser straight to Anthropic and is billed to you. Each bottle costs about US$0.05–0.35.</p>' +
       '<p><span class="k">Disclaimer</span><br>This page has nothing to do with 杰神 himself. His scores and articles are his; this page shows only the scores, retold notes and links to the sources. Where he sells or makes the wine, the page says so.</p>',

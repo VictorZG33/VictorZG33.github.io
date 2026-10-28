@@ -1,15 +1,17 @@
 // What 杰神模拟器 knows about 杰神: his framework, and every score of his that could be read, collected
 // in October 2026 from his WeChat account 杰神自号. The account can't be read outside WeChat, so the
-// lists come from printouts of the original articles (2016, 2017, 2021, 2022, 2023) and from the
-// account's mirror on Sohu (2018, 2019; author 764488), with his other articles from that mirror,
-// from Sogou's WeChat search snippets and from his import company 杰森洋行's Sohu account (758114).
+// lists come from printouts and screenshots of the original articles (2016, 2017, 2021, 2022, 2023,
+// 2025) and from the account's mirror on Sohu (2018, 2019; author 764488), with his other articles
+// from that mirror, from Sogou's WeChat search snippets and from his import company 杰森洋行's Sohu
+// account (758114).
 //
-// The lists from 2016 to 2023 are complete but for 17 wines of 2017, whose two table images didn't
-// load in the printout. The score tables are images, read row by row, and each list's count of wines,
+// Every list from 2016 to 2025 is here in full, but for 17 wines of 2017 whose tables are missing from
+// the article itself. The score tables are images, read row by row, and each list's count of wines,
 // of 100-point wines and of RP 100 wines matches what its article states (for 2017, 2018 and 2019, so
-// do the regional averages he published, in every region whose tables are all there). The 2025 list marks wines by colour
-// instead of scoring them, so only the few wines its search snippets describe are here. Scores are as
-// he gave them; the notes are paraphrases, not his words. sim.js puts all of this into the prompt.
+// do the regional averages he published, in every region whose tables are all there). The 2025 list
+// has no scores, only a colour per wine; what each colour means is read from what the article says
+// about the wines it names, and the framework says so. Scores are as he gave them; the notes are
+// paraphrases, not his words. sim.js puts all of this into the prompt.
 
 export const FRAMEWORK = `# 杰神是谁
 
@@ -22,7 +24,7 @@ export const FRAMEWORK = `# 杰神是谁
 - 2019–2023 榜单：100 分制，旁边标 RP/WA 和 Jeb Dunnuck（JD）的分数（2021 起只标满分）。坏瓶（Corked、Oxidized、Bottle shock、受热）不打分，只标注；同一款酒两瓶不一样就分开打。
 - 2019–2023 四份榜单共 503 个分数：均值 93.5，标准差 4.5，100 分 28 个（约 5%）。70 分只给过几款：死掉的老酒、Prieuré Roch Suchots 2013、木杺红 2021。他说 93 分以下的都真的很难喝。所以在他这里：93 及格，95 以上是真喜欢，98 以上惊艳，100 封神。
 - 他不给 100 的理由也很具体：酒已到顶、不会再更好（Henri Jayer Richebourg 1959 给 99），对陈年时间存疑（Fairchild Perrarus 2015 给 99），有一丝 brett（La Mission Haut-Brion 1989 给 99）。
-- 2025 榜单不打分，改用颜色标注。
+- 2025 榜单（2026 年 2 月发布）不再打分，约 210 款，只收 200 到 7 万美元的酒（国产酒例外），每款酒的名字用颜色标出，他说给足了暗示，但没说颜色的意思。按他文中点名的酒推断：红＝超一流（Yquem 1943、1961 La Chapelle、Huet Le Haut-Lieu 1947、Egon Müller Eiswein 1983），蓝＝顶级（Krug Clos du Mesnil 2008、Colgin IX 2019），黑＝正常，橙＝传奇或名贵却老了、名不副实（Le Pin 1982、Vega Sicilia 1962、Rousseau Chambertin 1991、Screaming Eagle 1992），绿＝糟糕（他点名的 Fourrier、Kalin、Les Horées、William Kelley，和最让他失望的 DRC Romanée-Conti 2022），灰＝年度最恶心（Audiffred Reignots 2022）。表里这一年的分数写的就是这些词。换成百分制大致是：超一流 99–100，顶级 96–98，正常 92–94，老了/失望 88–91，糟糕 80–88，最恶心 70 以下。引用这一年时要说明颜色的意思是推断的。
 - 预测一律用 100 分制。
 
 # 他和酒评家
@@ -32,7 +34,7 @@ export const FRAMEWORK = `# 杰神是谁
 
 # 他奖励什么
 
-- 成熟、纯净、浓缩、干净、平衡，有结构、中段和张力，喝着「愉悦」。他认为没有用桶过重这回事，只有果香不足：新桶多不扣分，桶味压过果味才扣。人比风土重要。
+- 成熟、纯净、浓缩、干净、平衡，有结构、中段和张力，喝着「愉悦」。他说顶尖酒的共性是 robustness（结实、稳定），而不是多变和香气；最高的赞美是「冻龄」：1961 La Chapelle 隔六年再喝没变化，在杯里四五个小时不变。他认为没有用桶过重这回事，只有果香不足：新桶多不扣分，桶味压过果味才扣。人比风土重要。
 - 最爱：纳帕顶级赤霞珠（Realm、Schrader、Colgin——他说已稳坐纳帕第一、Bryant、Dana、Harlan、Tusk、Maybach、Abreu、Sloan），尤其 To Kalon；Sine Qua Non 的好酒款；Marcassin 和 Aubert 的霞多丽；DRC、Leroy、d'Auvenay、Rousseau 的好年份、Mugnier、Liger-Belair La Romanée、Méo-Camuzet、Henri Jayer、Cathiard；白勃艮第 Coche-Dury（2016 Perrières 让他刮目相看）、Ramonet、Lafon、Leflaive；Yquem；顶级年份香槟（Salon、Cristal Rosé、Krug Clos du Mesnil）；隆河 Rayas、Chave、Guigal 的 La-La、Bonneau、老年份 La Chapelle；意大利他只服 Roagna、Monfortino、Masseto 这类；顶级老波特（Noval Nacional 1963、Taylor 1863）；状态完美的传奇老酒（1961 Haut-Brion、1962 Vega Sicilia Unico、1900 Margaux）。
 
 # 他惩罚什么
@@ -40,13 +42,15 @@ export const FRAMEWORK = `# 杰神是谁
 - 生青、早采、青椒味；烂熟（他说烂熟里往往夹着生青）；酸高而单宁粗；瘫软、油腻、中段空、散架、干瘦；怪味和自然酒式的臭；老得快。
 - 年轻的波尔多一级庄被重罚：2016 年份 Lafite 85、Mouton 88、Margaux 90、Haut-Brion 91，2019 年份 Lafite 和 Margaux 都是 91，而评家给 98–100；好的老年份波尔多照样高分。意大利 2019 平均只有 88（Sassicaia 2016 只给 80）。华盛顿州他算三流。
 - 2018 年份的纳帕：他说很多酒为了避免过熟做得太绿，甚至带焦油味（Harlan 2018 93、Screaming Eagle 2018 90，评家都是 100）。
-- 勃艮第红：他说越来越熟、越来越瘫，很多名家用桶太重。国产酒：用桶糊弄、萃取不够，寡淡发水（木杺红 2021 70）。
+- 勃艮第红：他说越来越熟、越来越瘫，很多名家用桶太重；顶尖的酒产自勃艮第，一大堆烂酒也产自勃艮第，只追香气的勃艮第最让他看不上。网友寄给他的勃艮第大多被他骂。国产酒：用桶糊弄、萃取不够，寡淡发水（木杺红 2021 70，2023 年份才「终于能喝」），国产白都走偏了。
+- 2012 年以后的 Marcassin 霞多丽他说一年比一年差，不能买。老意大利酒：粗糙的单宁陈年也不会软化（Biondi-Santi 1955）。传奇老波尔多有过辉煌，终究会老。
+- 酒评家自己酿的酒他也不放过：William Kelley 的 Bourgogne Aligoté 2022 是他 2025 年的「年度最糟」。
 - 点名骂过：Opus One（生青、酸高单宁糙、陈年快出老味）、Dominus（2013 年以后瘫软）、Caymus、Silver Oak、Shafer、Hundred Acre（「中年油腻大叔」）、Bevan、Lokoya、Verité、Quilceda Creek、Cayuse、Kapcsandy 和 Blankiet 的美乐、2012 年以后的 Insignia、Scarecrow、Ghost Horse、Arnoux-Lachaux（又瘫又甜，像 Kosta Browne）、Kosta Browne、Ponsot、Dujac（多数年份；1990 Clos de la Roche 是例外，给了 100）、Prieuré Roch（Suchots 2013 给了 70，就是他文中「菜刀的 Suchots」那支年度最恶心的酒）。Screaming Eagle 和 2015 年以前的 Dana 他只算二流。
 - 他不信「波尔多都能陈年」，难喝就是难喝，跟年轻无关；不喜欢用醒酒器。分数不看价格（他说没有性价比这一回事），价不符值只在评语里骂。
 
 # 利益关系
 
-据他 2017–2019 年的文章，他的公司杰森洋行卖过 Realm、Schrader、Myriad、Dana、Tusk 的酒；神兽酒庄 Fairest Creature（Triniceros 麒麟、Polyspline 九尾狐、Sine Fine 比翼鸟、Perihelios 鲲）是他自己的。这些酒他给的分和评家几乎持平，别的酒他平均要低 4 到 5 分。
+据他 2017–2019 年的文章，他的公司杰森洋行卖过 Realm、Schrader、Myriad、Dana、Tusk 的酒；神兽酒庄 Fairest Creature（Triniceros 麒麟、Polyspline 九尾狐、Sine Fine 比翼鸟、Perihelios 鲲）是他自己的。这些酒他给的分和评家几乎持平，别的酒他平均要低 4 到 5 分。他也爱拿自家的 2018 麒麟去比别人的名酒（他说 Screaming Eagle 1992 被它「按在泥地里摩擦」）。
 
 # 预测他会给几分（100 分制）
 
@@ -1188,15 +1192,216 @@ export const REVIEWS = [
   ["宝庄 Celebre", "Sulu", "2018", "91", "", "L23", "中国"],
   ["Ao Yun", "Ao Yun", "2018", "Heat damage", "", "L23", "该瓶受热损坏，未打分"],
   ["黄雀形", "甜酒", "NV", "96", "", "L23", "中国"],
-  ["Audiffred", "Vosne-Romanee 1er Cru Les Reignots", "2022", "", "", "L25", "“葡萄酒中的红姐”，他这辈子喝过最恶心的酒"],
-  ["Domaine Armand Rousseau", "(cuvee not given)", "1991", "", "", "L25", "很贵却令人失望"],
-  ["Domaine de la Romanee-Conti", "Romanee-Conti Grand Cru", "", "", "", "L25", "令人失望：要结构没有结构、要张力没张力"],
-  ["Krug", "Clos du Mesnil", "2008", "", "", "L25", "2025年“论牛逼还得看”的一支"],
-  ["Colgin Cellars", "IX Estate", "2019", "", "", "L25", "2025年内喝了不止一瓶（评价未见）"],
-  ["Colgin Cellars", "Tychson Hill", "2013", "", "", "L25", "2025年内喝了不止一瓶（评价未见）"],
-  ["Screaming Eagle", "Cabernet Sauvignon", "2021", "", "", "L25", "2025年内喝了不止一瓶（评价未见）"],
-  ["Domaine d'Auvenay", "Chevalier-Montrachet Grand Cru", "2007", "", "", "L25", "2025年内喝了不止一瓶（评价未见）"],
-  ["Vega Sicilia", "Unico", "1962", "", "", "L25", "他第三次喝这款，评价细节被摘要截断"],
+  ["Bass Phillip", "Premium Pinot Noir", "2021", "糟糕", "", "L25", "榜单上标绿色"],
+  ["Penfolds", "Bin 620 Coonawarra Cabernet Shiraz", "2008", "正常", "", "L25", "榜单上标黑色"],
+  ["Mollydooker", "Velvet Glove Shiraz", "", "糟糕", "", "L25", "榜单上标绿色；没注意啥年份"],
+  ["Vina Errazuriz", "Vinedo Chadwick", "2016", "糟糕", "", "L25", "榜单上标绿色"],
+  ["Bodega Catena Zapata", "Estiba Reservada", "2015", "正常", "", "L25", "榜单上标黑色"],
+  ["嘉地 (Jia Di)", "嘉地信使 Messenger", "2016", "正常", "", "L25", "榜单上标黑色"],
+  ["九鼎 (Jiu Ding)", "九鼎qi白 White", "2023", "糟糕", "", "L25", "榜单上标绿色"],
+  ["理光 (Li Guang)", "理光", "", "糟糕", "", "L25", "榜单上标绿色；没注意啥年份"],
+  ["酩一 (Ming Yi)", "岚若之下 (Lan Ruo Zhi Xia)", "2022", "糟糕", "", "L25", "榜单上标绿色"],
+  ["木杺 (Mu Xin)", "木杺白 White", "2023", "糟糕", "", "L25", "榜单上标绿色；他说木杺的白还没做明白，国产白走上了歪路"],
+  ["木杺 (Mu Xin)", "木杺红 Red", "2023", "正常", "", "L25", "榜单上标黑色；他说木杺的红终于进步了，能喝了"],
+  ["圣域 (Sheng Yu)", "圣域", "", "糟糕", "", "L25", "榜单上标绿色；没注意啥年份"],
+  ["天塞 (Tiansai)", "天塞珍藏霞多丽 Reserve Chardonnay", "2019", "正常", "", "L25", "榜单上标黑色；他说不好喝，但路子是正的"],
+  ["Quinta do Noval", "Nacional Vintage Port", "2011", "顶级", "", "L25", "榜单上标蓝色"],
+  ["Egon Muller-Scharzhof", "Riesling Eiswein", "1983", "超一流", "", "L25", "榜单上标红色；比1971的Egon Muller冰酒还好，他猜是最好的冰酒"],
+  ["Egon Muller-Scharzhof", "Riesling Eiswein", "2016", "正常", "", "L25", "榜单上标黑色；他拿它比国产冰酒，说国产的连它都打不过"],
+  ["Bibi Graetz", "Colore", "2020", "正常", "", "L25", "榜单上标黑色"],
+  ["Biondi-Santi", "Brunello di Montalcino Riserva", "1955", "老了/失望", "", "L25", "榜单上标橙色；他说喝过就明白，意大利酒粗糙的单宁陈年后也不会软化"],
+  ["Bruno Giacosa", "Barolo Le Rocche del Falletto di Serralunga d'Alba", "2001", "正常", "", "L25", "榜单上标黑色"],
+  ["Giacomo Conterno", "Barolo Monfortino Riserva", "2001", "正常", "", "L25", "榜单上标黑色"],
+  ["Giuseppe Quintarelli", "Amarone della Valpolicella Classico", "1986", "正常", "", "L25", "榜单上标黑色"],
+  ["Il Marroneto", "Brunello di Montalcino Madonna delle Grazie", "2019", "正常", "", "L25", "榜单上标黑色"],
+  ["Roagna", "Barbaresco Crichet Paje", "1996", "正常", "", "L25", "榜单上标黑色"],
+  ["Tenuta San Guido", "Sassicaia", "2018", "糟糕", "", "L25", "榜单上标绿色"],
+  ["Stella di Campalto (Podere San Giuseppe)", "Amore", "2015", "正常", "", "L25", "榜单上标黑色"],
+  ["Marques de Murrieta", "Castillo Ygay Gran Reserva Especial", "2010", "糟糕", "", "L25", "榜单上标绿色"],
+  ["Vega Sicilia", "Unico", "1962", "老了/失望", "", "L25", "榜单上标橙色；第三次喝，垂垂老矣，他说这款酒终于走到了尽头"],
+  ["Chateau de Beaucastel", "Chateauneuf-du-Pape Hommage a Jacques Perrin", "2016", "顶级", "", "L25", "榜单上标蓝色"],
+  ["Chateau-Grillet", "Chateau-Grillet", "2018", "正常", "", "L25", "榜单上标黑色"],
+  ["Chateau Rayas", "Chateauneuf-du-Pape Reserve", "1978", "老了/失望", "", "L25", "榜单上标橙色"],
+  ["Domaine Jean-Louis Chave", "Hermitage Cuvee Cathelin", "2003", "老了/失望", "", "L25", "榜单上标橙色"],
+  ["Didier Gerin", "Cote-Rotie", "2017", "正常", "", "L25", "榜单上标黑色"],
+  ["E. Guigal", "Cote-Rotie La Mouline", "2017", "正常", "", "L25", "榜单上标黑色"],
+  ["Paul Jaboulet Aine", "Hermitage La Chapelle", "1961", "超一流", "", "L25", "榜单上标红色；真正的世纪之酒：robust、非常年轻，隔六年再喝没变化，杯中四五个小时不变"],
+  ["Domaine Jamet", "Cote-Rotie", "2010", "正常", "", "L25", "榜单上标黑色"],
+  ["Clos Rougeard", "Saumur Le Bourg", "2014", "正常", "", "L25", "榜单上标黑色"],
+  ["Domaine Huet", "Vouvray Cuvee Constance", "1997", "正常", "", "L25", "榜单上标黑色"],
+  ["Domaine Huet", "Vouvray Le Haut-Lieu", "1947", "超一流", "", "L25", "榜单上标红色；便宜却跻身超一流的甜酒，白诗南做成这样让他改变认知；可惜只有这一年"],
+  ["Domaine Vacheron", "Sancerre L'Enclos Remparts", "2019", "正常", "", "L25", "榜单上标黑色"],
+  ["Chateau d'Yquem", "Grand Vin", "1943", "超一流", "", "L25", "榜单上标红色；他说是喝到最满意的滴金，八千多美金，真牛"],
+  ["Chateau Lafite Rothschild", "Grand Vin", "2000", "正常", "", "L25", "榜单上标黑色"],
+  ["Chateau Lafleur", "Grand Vin", "2019", "正常", "", "L25", "榜单上标黑色"],
+  ["Chateau Latour", "Grand Vin", "2009", "正常", "", "L25", "榜单上标黑色"],
+  ["Chateau Latour a Pomerol", "Grand Vin", "1961", "老了/失望", "", "L25", "榜单上标橙色；已过巅峰；他没见过它最好的样子，但能想象"],
+  ["Chateau Leoville Las Cases", "Grand Vin", "2005", "正常", "", "L25", "榜单上标黑色"],
+  ["Chateau Leoville Las Cases", "Grand Vin", "2019", "正常", "", "L25", "榜单上标黑色"],
+  ["Chateau Malescot St. Exupery", "Grand Vin", "1961", "正常", "", "L25", "榜单上标黑色；1.5L"],
+  ["Chateau Mouton Rothschild", "Grand Vin", "2018", "正常", "", "L25", "榜单上标黑色"],
+  ["Chateau Palmer", "Grand Vin", "2015", "正常", "", "L25", "榜单上标黑色"],
+  ["Chateau Pontet-Canet", "Grand Vin", "2010", "正常", "", "L25", "榜单上标黑色"],
+  ["Le Pin", "Grand Vin", "1982", "老了/失望", "", "L25", "榜单上标橙色；传奇终究会老；他庆幸之前见过它最巅峰的样子"],
+  ["Petrus", "Grand Vin", "1947", "老了/失望", "", "L25", "榜单上标橙色；他说波尔多的传奇酒有过辉煌，但终究会老"],
+  ["Aubert Wines", "Sonoma Coast Chardonnay", "2010", "正常", "", "L25", "榜单上标黑色"],
+  ["Black & Blue", "Black & Blue", "1992", "老了/失望", "", "L25", "榜单上标橙色；Manfred创立Sine Qua Non之前的第一个作品，意义大过酒本身"],
+  ["Marcassin", "Chardonnay", "2008", "顶级", "", "L25", "榜单上标蓝色"],
+  ["Marcassin", "Chardonnay", "2012", "顶级", "", "L25", "榜单上标蓝色"],
+  ["Marcassin", "Chardonnay", "2017", "糟糕", "", "L25", "榜单上标绿色；他说2012年以后的Marcassin霞多丽一年比一年差，不能买"],
+  ["Marcassin", "Chardonnay", "2021", "糟糕", "", "L25", "榜单上标绿色；他说2012年以后的Marcassin霞多丽一年比一年差，不能买"],
+  ["Sine Qua Non", "Distenta", "2021", "正常", "", "L25", "榜单上标黑色"],
+  ["Sine Qua Non", "Eleven Confessions Vineyard Syrah", "2019", "正常", "", "L25", "榜单上标黑色"],
+  ["Sine Qua Non", "Eleven Confessions Vineyard Syrah", "2020", "正常", "", "L25", "榜单上标黑色"],
+  ["Sine Qua Non", "Just for the Love of It Syrah", "2002", "正常", "", "L25", "榜单上标黑色；3L"],
+  ["Sine Qua Non", "On Your Toes Syrah", "2001", "顶级", "", "L25", "榜单上标蓝色"],
+  ["Sine Qua Non", "Writings on the Wall", "2012", "顶级", "", "L25", "榜单上标蓝色；1.5L"],
+  ["To Kalon Vineyard Company", "HWC Cabernet Sauvignon", "2019", "正常", "", "L25", "榜单上标黑色"],
+  ["Tusk Estates", "Cabernet Sauvignon", "2014", "正常", "", "L25", "榜单上标黑色"],
+  ["Tusk Estates", "Cabernet Sauvignon", "2021", "糟糕", "", "L25", "榜单上标绿色"],
+  ["Vice Versa", "Beckstoffer Dr. Crane Cabernet Sauvignon", "2022", "糟糕", "", "L25", "榜单上标绿色"],
+  ["Vice Versa", "Beckstoffer Las Piedras Cabernet Sauvignon", "2022", "正常", "", "L25", "榜单上标黑色"],
+  ["Vice Versa", "Magnificent 7", "2022", "正常", "", "L25", "榜单上标黑色；喝了两瓶"],
+  ["Vice Versa", "Beckstoffer To Kalon Cabernet Sauvignon", "2022", "糟糕", "", "L25", "榜单上标绿色"],
+  ["Vice Versa", "To Kalon Beatrix Cabernet Sauvignon", "2022", "糟糕", "", "L25", "榜单上标绿色"],
+  ["Zakin Family Estate", "Cabernet Sauvignon", "2022", "正常", "", "L25", "榜单上标黑色"],
+  ["Hundred Acre", "Kayli Morgan Vineyard Cabernet Sauvignon", "2002", "正常", "", "L25", "榜单上标黑色；1.5L"],
+  ["Joseph Phelps Vineyards", "Insignia", "2002", "正常", "", "L25", "榜单上标黑色；1.5L"],
+  ["Alejandro Bulgheroni Estate", "Lithology Beckstoffer Dr. Crane Cabernet Sauvignon", "2022", "正常", "", "L25", "榜单上标黑色"],
+  ["Alejandro Bulgheroni Estate", "Lithology Beckstoffer Las Piedras Cabernet Sauvignon", "2022", "正常", "", "L25", "榜单上标黑色"],
+  ["Alejandro Bulgheroni Estate", "Lithology Beckstoffer To Kalon Cabernet Sauvignon", "2022", "正常", "", "L25", "榜单上标黑色"],
+  ["Nine Suns", "Cabernet Sauvignon", "2013", "正常", "", "L25", "榜单上标黑色"],
+  ["Opus One", "Opus One", "2017", "正常", "", "L25", "榜单上标黑色；喝了两瓶"],
+  ["Paul Hobbs", "Beckstoffer To Kalon Vineyard Cabernet Sauvignon", "2002", "正常", "", "L25", "榜单上标黑色；1.5L"],
+  ["Scarecrow", "Cabernet Sauvignon", "2013", "正常", "", "L25", "榜单上标黑色；1.5L"],
+  ["Schrader Cellars", "Old Sparky Beckstoffer To Kalon Cabernet Sauvignon", "2021", "正常", "", "L25", "榜单上标黑色；1.5L"],
+  ["Screaming Eagle", "Cabernet Sauvignon", "1992", "老了/失望", "", "L25", "榜单上标橙色；首发年份，两万美金一瓶，他说被同为首发的2018麒麟（他自己的酒）按在泥地里摩擦"],
+  ["Screaming Eagle", "Cabernet Sauvignon", "1997", "老了/失望", "", "L25", "榜单上标橙色"],
+  ["Screaming Eagle", "Cabernet Sauvignon", "2021", "正常", "", "L25", "榜单上标黑色；喝了两瓶"],
+  ["Seven Apart", "Expedition", "2019", "糟糕", "", "L25", "榜单上标绿色"],
+  ["Sloan Estate", "Proprietary Red", "2002", "顶级", "", "L25", "榜单上标蓝色"],
+  ["Spottswoode", "Estate Cabernet Sauvignon", "1992", "正常", "", "L25", "榜单上标黑色；1.5L"],
+  ["Sterling Vineyards", "Iridium Cabernet Sauvignon", "2017", "正常", "", "L25", "榜单上标黑色"],
+  ["To Kalon Vineyard Company", "Eliza's Cabernet Sauvignon", "2019", "正常", "", "L25", "榜单上标黑色"],
+  ["To Kalon Vineyard Company", "Highest Beauty Cabernet Sauvignon", "2019", "正常", "", "L25", "榜单上标黑色"],
+  ["Dalla Valle Vineyards", "Maya", "1992", "正常", "", "L25", "榜单上标黑色"],
+  ["Dalla Valle Vineyards", "MDV", "2018", "正常", "", "L25", "榜单上标黑色"],
+  ["Dana Estates", "Helms Vineyard", "2023", "正常", "", "L25", "榜单上标黑色"],
+  ["Dana Estates", "Hershey Vineyard", "2023", "正常", "", "L25", "榜单上标黑色"],
+  ["Dana Estates", "Hershey Vineyard Sauvignon Blanc", "2021", "正常", "", "L25", "榜单上标黑色"],
+  ["Dana Estates", "Hershey Vineyard Sauvignon Blanc", "2022", "顶级", "", "L25", "榜单上标蓝色"],
+  ["Dana Estates", "Lotus Vineyard", "2013", "正常", "", "L25", "榜单上标黑色"],
+  ["Dana Estates", "Lotus Vineyard", "2015", "正常", "", "L25", "榜单上标黑色；1.5L"],
+  ["Dana Estates", "Onda", "2019", "正常", "", "L25", "榜单上标黑色"],
+  ["Dana Estates", "Onda Sauvignon Blanc", "2022", "正常", "", "L25", "榜单上标黑色"],
+  ["Bryant Family Vineyard", "DB4", "2022", "正常", "", "L25", "榜单上标黑色"],
+  ["Bryant Family Vineyard", "DB4", "2023", "正常", "", "L25", "榜单上标黑色"],
+  ["Dominus Estate", "Dominus", "2015", "糟糕", "", "L25", "榜单上标绿色"],
+  ["Fait-Main", "Beckstoffer Las Piedras Cabernet Sauvignon", "2018", "正常", "", "L25", "榜单上标黑色"],
+  ["Fait-Main", "Beckstoffer Las Piedras Cabernet Sauvignon", "2021", "正常", "", "L25", "榜单上标黑色"],
+  ["Fait-Main", "Beckstoffer Las Piedras Cabernet Sauvignon", "2023", "正常", "", "L25", "榜单上标黑色"],
+  ["Fait-Main", "Tierra Roja Vineyard Cabernet Sauvignon", "2023", "正常", "", "L25", "榜单上标黑色"],
+  ["Harlan Estate", "Harlan Estate", "2015", "正常", "", "L25", "榜单上标黑色"],
+  ["Harlan Estate", "Harlan Estate", "2016", "正常", "", "L25", "榜单上标黑色；1.5L"],
+  ["Alejandro Bulgheroni Estate", "Estate Cabernet Sauvignon", "2022", "正常", "", "L25", "榜单上标黑色"],
+  ["Abreu Vineyard", "Madrona Ranch", "2002", "顶级", "", "L25", "榜单上标蓝色"],
+  ["Abreu Vineyard", "Madrona Ranch", "2013", "正常", "", "L25", "榜单上标黑色"],
+  ["Realm Cellars", "The Absurd", "2018", "正常", "", "L25", "榜单上标黑色"],
+  ["Realm Cellars", "The Absurd", "2019", "正常", "", "L25", "榜单上标黑色"],
+  ["Amuse Bouche", "Amuse Bouche", "2018", "正常", "", "L25", "榜单上标黑色"],
+  ["Bryant Family Vineyard", "Bettina", "2022", "正常", "", "L25", "榜单上标黑色"],
+  ["Bryant Family Vineyard", "Cabernet Sauvignon", "1997", "老了/失望", "", "L25", "榜单上标橙色"],
+  ["Bryant Family Vineyard", "Cabernet Sauvignon", "2002", "正常", "", "L25", "榜单上标黑色"],
+  ["Bryant Family Vineyard", "Cabernet Franc", "2023", "顶级", "", "L25", "榜单上标蓝色"],
+  ["Bryant Family Vineyard", "Cabernet Sauvignon", "2022", "正常", "", "L25", "榜单上标黑色"],
+  ["Bryant Family Vineyard", "Cabernet Sauvignon", "2023", "顶级", "", "L25", "榜单上标蓝色"],
+  ["BV", "Purity", "2013", "顶级", "", "L25", "榜单上标蓝色；1.5L"],
+  ["Christopher Tynan Cellars", "Meleagris Gallopavo Cabernet Sauvignon", "2013", "顶级", "", "L25", "榜单上标蓝色"],
+  ["Colgin Cellars", "Cariad", "2022", "糟糕", "", "L25", "榜单上标绿色"],
+  ["Colgin Cellars", "IX Estate", "2019", "顶级", "", "L25", "榜单上标蓝色；喝了四瓶"],
+  ["Colgin Cellars", "IX Estate", "2022", "糟糕", "", "L25", "榜单上标绿色"],
+  ["Colgin Cellars", "Tychson Hill Vineyard", "2013", "顶级", "", "L25", "榜单上标蓝色；喝了两瓶"],
+  ["Colgin Cellars", "Tychson Hill Vineyard", "2021", "顶级", "", "L25", "榜单上标蓝色"],
+  ["Nicolas Protin Aymon", "Pommard 1er Cru", "2022", "糟糕", "", "L25", "榜单上标绿色"],
+  ["Domaine Philippe Charlopin", "Chambertin Grand Cru", "2014", "糟糕", "", "L25", "榜单上标绿色"],
+  ["Domaine Philippe Charlopin", "Echezeaux Grand Cru", "2002", "糟糕", "", "L25", "榜单上标绿色"],
+  ["Domaine Pierre Damoy", "Chambertin-Clos de Beze Grand Cru", "2001", "正常", "", "L25", "榜单上标黑色"],
+  ["Domaine Pierre Morey", "Meursault 1er Cru Perrieres", "2018", "正常", "", "L25", "榜单上标黑色"],
+  ["Pierre Vincent", "Puligny-Montrachet 1er Cru Les Referts", "2023", "正常", "", "L25", "榜单上标黑色"],
+  ["Domaine Prieure Roch", "Ladoix Le Cloud", "2020", "糟糕", "", "L25", "榜单上标绿色"],
+  ["PVG", "Echezeaux Grand Cru", "2019", "正常", "", "L25", "榜单上标黑色"],
+  ["PVG", "Vosne-Romanee 1er Cru Les Suchots", "2019", "正常", "", "L25", "榜单上标黑色"],
+  ["Pierre-Yves Colin-Morey", "Montrachet Grand Cru", "2013", "正常", "", "L25", "榜单上标黑色"],
+  ["Domaine Comte Georges de Vogue", "Musigny Grand Cru Vieilles Vignes", "2022", "正常", "", "L25", "榜单上标黑色"],
+  ["William Kelley", "Bourgogne Aligote", "2022", "糟糕", "", "L25", "榜单上标绿色；年度最糟：酒评家自己酿的酒，又贵又糟"],
+  ["William Kelley", "Bourgogne Rouge", "2022", "糟糕", "", "L25", "榜单上标绿色"],
+  ["William Kelley", "Moulin-a-Vent", "2022", "糟糕", "", "L25", "榜单上标绿色"],
+  ["Domaine Fourrier", "Chambertin-Clos de Beze Grand Cru", "2013", "糟糕", "", "L25", "榜单上标绿色；Fourrier被他点名为这一年的烂酒之一"],
+  ["Domaine Fourrier", "Gevrey-Chambertin 1er Cru Cherbaudes", "2019", "糟糕", "", "L25", "榜单上标绿色；Fourrier被他点名为这一年的烂酒之一"],
+  ["Domaine Fourrier", "Gevrey-Chambertin 1er Cru Clos Saint-Jacques", "2016", "糟糕", "", "L25", "榜单上标绿色；Fourrier被他点名为这一年的烂酒之一"],
+  ["Francois Millet", "Chambolle-Musigny Foucheres", "2023", "正常", "", "L25", "榜单上标黑色"],
+  ["Domaine Guffens-Heynen", "Pouilly-Fuisse Croux Petits Croux", "2020", "糟糕", "", "L25", "榜单上标绿色；年度最糟的候选：William Kelley给了满分，他说又贵又糟"],
+  ["Domaine Guilbert Gillet", "Savigny-les-Beaune", "2021", "糟糕", "", "L25", "榜单上标绿色；应该就是他点名的烂酒「GG」"],
+  ["Domaine Henri Boillot", "Montrachet Grand Cru", "2002", "糟糕", "", "L25", "榜单上标绿色"],
+  ["Henri Jayer", "Nuits-Saint-Georges 1er Cru Les Meurgers", "1983", "正常", "", "L25", "榜单上标黑色"],
+  ["Henri Jayer", "Vosne-Romanee", "1978", "正常", "", "L25", "榜单上标黑色"],
+  ["Domaine Henri Magnien", "Gevrey-Chambertin 1er Cru Les Cazetiers", "2020", "正常", "", "L25", "榜单上标黑色"],
+  ["Domaine Jean Gros", "Richebourg Grand Cru", "1979", "正常", "", "L25", "榜单上标黑色"],
+  ["Jerome Galeyrand", "Cote de Nuits-Villages Les Retraits", "2022", "糟糕", "", "L25", "榜单上标绿色"],
+  ["Kalin", "Cote de Beaune Les Pierres Blanches", "2005", "糟糕", "", "L25", "榜单上标绿色；被他点名为这一年的烂酒之一"],
+  ["Domaine de la Pousse d'Or", "Chevalier-Montrachet Grand Cru", "2017", "糟糕", "", "L25", "榜单上标绿色"],
+  ["Domaine Les Horees", "Pernand-Vergelesses 1er Cru Les Fichots", "2022", "糟糕", "", "L25", "榜单上标绿色；被他点名为这一年的烂酒之一"],
+  ["Domaine du Comte Liger-Belair", "La Romanee Grand Cru", "2010", "顶级", "", "L25", "榜单上标蓝色"],
+  ["Liger-Belair", "Nuits-Saint-Georges 1er Cru Grandes Vignes", "2017", "糟糕", "", "L25", "榜单上标绿色"],
+  ["Domaine Louis Carillon", "Bienvenues-Batard-Montrachet Grand Cru", "2004", "正常", "", "L25", "榜单上标黑色"],
+  ["Maison Leroy", "Clos de Vougeot Grand Cru", "1978", "正常", "", "L25", "榜单上标黑色"],
+  ["Domaine Leroy", "Chambolle-Musigny", "2004", "顶级", "", "L25", "榜单上标蓝色"],
+  ["Domaine Leroy", "Clos de la Roche Grand Cru", "2001", "正常", "", "L25", "榜单上标黑色"],
+  ["Domaine Leroy", "Clos de la Roche Grand Cru", "2014", "正常", "", "L25", "榜单上标黑色"],
+  ["Domaine Leroy", "Clos de Vougeot Grand Cru", "2015", "正常", "", "L25", "榜单上标黑色"],
+  ["Domaine Leroy", "Musigny Grand Cru", "2001", "超一流", "", "L25", "榜单上标红色"],
+  ["Domaine Leroy", "Vosne-Romanee Les Genaivrieres", "2009", "正常", "", "L25", "榜单上标黑色"],
+  ["Domaine Ponsot", "Clos de la Roche Grand Cru", "2016", "糟糕", "", "L25", "榜单上标绿色"],
+  ["Domaine de la Romanee-Conti", "La Tache Grand Cru", "1990", "正常", "", "L25", "榜单上标黑色"],
+  ["Domaine de la Romanee-Conti", "La Tache Grand Cru", "2001", "正常", "", "L25", "榜单上标黑色"],
+  ["Domaine de la Romanee-Conti", "La Tache Grand Cru", "2017", "正常", "", "L25", "榜单上标黑色"],
+  ["Domaine de la Romanee-Conti", "Montrachet Grand Cru", "1998", "正常", "", "L25", "榜单上标黑色"],
+  ["Domaine de la Romanee-Conti", "Romanee-Conti Grand Cru", "1970", "正常", "", "L25", "榜单上标黑色"],
+  ["Domaine de la Romanee-Conti", "Romanee-Conti Grand Cru", "2022", "糟糕", "", "L25", "榜单上标绿色；这一年最让他失望：要结构没结构，要张力没张力，瘫短软，small and flabby"],
+  ["Domaine Dugat-Py", "Chassagne-Montrachet 1er Cru Morgeot", "2021", "正常", "", "L25", "榜单上标黑色"],
+  ["Domaine Duroche", "Gevrey-Chambertin 1er Cru Lavaut Saint-Jacques", "2022", "糟糕", "", "L25", "榜单上标绿色"],
+  ["Emmanuel Rouget", "Vosne-Romanee 1er Cru Cros Parantoux", "1996", "正常", "", "L25", "榜单上标黑色；1.5L"],
+  ["Domaine Faiveley", "Chambertin-Clos de Beze Grand Cru", "2001", "糟糕", "", "L25", "榜单上标绿色"],
+  ["Domaine Fourrier", "Chambertin Grand Cru", "2015", "糟糕", "", "L25", "榜单上标绿色；Fourrier被他点名为这一年的烂酒之一"],
+  ["Domaine Fourrier", "Chambertin Grand Cru", "2018", "糟糕", "", "L25", "榜单上标绿色；Fourrier被他点名为这一年的烂酒之一"],
+  ["Anne Boisson", "Meursault Les Chevalieres", "2020", "正常", "", "L25", "榜单上标黑色"],
+  ["Antoine Lepetit de la Bigne", "Meursault 1er Cru Charmes Dessus", "2023", "糟糕", "", "L25", "榜单上标绿色"],
+  ["Armand Heitz", "Meursault 1er Cru Perrieres", "2020", "正常", "", "L25", "榜单上标黑色"],
+  ["Domaine Armand Rousseau", "Chambertin Grand Cru", "1991", "老了/失望", "", "L25", "榜单上标橙色；很贵却令人失望"],
+  ["Domaine Armand Rousseau", "Gevrey-Chambertin Clos du Chateau", "2013", "正常", "", "L25", "榜单上标黑色"],
+  ["Domaine Ballot-Millot", "Meursault 1er Cru Perrieres", "2023", "正常", "", "L25", "榜单上标黑色"],
+  ["Domaine Jean-Yves Bizot", "Echezeaux Grand Cru", "2009", "正常", "", "L25", "榜单上标黑色"],
+  ["Domaine Bruno Clair", "Gevrey-Chambertin 1er Cru Les Cazetiers", "2015", "正常", "", "L25", "榜单上标黑色"],
+  ["Domaine Charles Noellat", "Richebourg Grand Cru", "1971", "正常", "", "L25", "榜单上标黑色"],
+  ["Domaine Coche-Dury", "Meursault 1er Cru Genevrieres", "2005", "正常", "", "L25", "榜单上标黑色"],
+  ["Domaine Coche-Dury", "Puligny-Montrachet Les Enseigneres", "2022", "正常", "", "L25", "榜单上标黑色"],
+  ["Domaine d'Auvenay", "Chevalier-Montrachet Grand Cru", "2007", "超一流", "", "L25", "榜单上标红色；喝了两瓶"],
+  ["Domaine Audiffred", "Vosne-Romanee 1er Cru Aux Reignots", "2022", "最恶心", "", "L25", "榜单上标灰色；年度最恶心，他说也是这辈子喝过最恶心的酒，「葡萄酒中的红姐」"],
+  ["Domaine Leflaive", "Batard-Montrachet Grand Cru", "2019", "正常", "", "L25", "榜单上标黑色；1.5L"],
+  ["Domaine Leflaive", "Puligny-Montrachet 1er Cru Clavoillon", "2014", "正常", "", "L25", "榜单上标黑色"],
+  ["Domaine Leflaive", "Puligny-Montrachet 1er Cru Clavoillon", "2020", "正常", "", "L25", "榜单上标黑色"],
+  ["Domaine Leflaive", "Puligny-Montrachet 1er Cru Clavoillon", "2021", "正常", "", "L25", "榜单上标黑色"],
+  ["Dom Perignon", "Vintage Brut", "2013", "正常", "", "L25", "榜单上标黑色"],
+  ["Dom Perignon", "Oenotheque", "1959", "老了/失望", "", "L25", "榜单上标橙色；Oenotheque首发年份，近一万美金；他说能喝，还行"],
+  ["Dom Perignon", "Oenotheque", "1996", "正常", "", "L25", "榜单上标黑色"],
+  ["Dom Perignon", "P3 (Plenitude 3)", "1990", "正常", "", "L25", "榜单上标黑色"],
+  ["Krug", "Clos du Mesnil", "2008", "顶级", "", "L25", "榜单上标蓝色；他说论牛逼还是得看这一支"],
+  ["Krug", "Vintage Brut", "1995", "正常", "", "L25", "榜单上标黑色"],
+  ["Louis Roederer", "Cristal", "2013", "正常", "", "L25", "榜单上标黑色"],
+  ["Louis Roederer", "Cristal Rose", "2013", "正常", "", "L25", "榜单上标黑色"],
+  ["Salon", "Cuvee S Le Mesnil Blanc de Blancs", "1959", "糟糕", "", "L25", "榜单上标绿色"],
+  ["Salon", "Cuvee S Le Mesnil Blanc de Blancs", "1990", "正常", "", "L25", "榜单上标黑色"],
+  ["Salon", "Cuvee S Le Mesnil Blanc de Blancs", "1999", "正常", "", "L25", "榜单上标黑色；1.5L"],
   ["Scarecrow", "Cabernet Sauvignon", "2013", "", "RP100", "A1", "黑果和酸度不错，但已开始下坡、略显松软"],
   ["Hundred Acre", "Kayli Morgan Vineyard Cabernet Sauvignon", "2013", "", "RP100", "A1", "油滑奔放、桶香重、结构松散，像“中年油腻大叔”"],
   ["Maybach Family Vineyards", "Materium", "2013", "", "RP100", "A1", "饱满有表现力，香气甜美有层次，平衡到位"],
