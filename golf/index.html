@@ -447,6 +447,7 @@ const I18N = {
     cancel: '取消', cancelled: '已取消。',
     tooLong: (s) => `视频有 ${s} 秒，太长了。请剪到只含一次挥杆（30 秒以内）。`,
     badVideo: '浏览器读不了这个视频。iPhone 拍的 HEVC 视频在部分浏览器里打不开：换 Safari，或在相册里把视频导出为「兼容性最佳」后再试。',
+    stuck: '读不出这个视频的画面。在 iPhone 上请先关掉低电量模式再试；也可以在相册里把视频导出为「兼容性最佳」。',
     notVideo: '这不是视频文件。',
     modelFail: '姿态识别模型加载失败，请检查网络后刷新页面再试。',
     errors: {
@@ -632,6 +633,7 @@ const I18N = {
     cancel: 'Cancel', cancelled: 'Cancelled.',
     tooLong: (s) => `The video is ${s} seconds long. Trim it to the one swing, under 30 seconds.`,
     badVideo: 'Your browser can’t read this video. iPhone HEVC videos don’t open in every browser: try Safari, or export the video as “Most Compatible” first.',
+    stuck: 'The video’s frames couldn’t be read. On an iPhone, turn off Low Power Mode and try again, or export the video as “Most Compatible” first.',
     notVideo: 'That isn’t a video file.',
     modelFail: 'The pose model didn’t load. Check your connection and reload the page.',
     errors: {
@@ -954,6 +956,38 @@ function seekTo(t) {
   });
 }
 
+// Load the clip and get its first frame decoded. iOS Safari loads no frames until playback starts
+// (it ignores preload), so the muted clip plays for a moment; where play() is refused, as in Low
+// Power Mode, a fresh load and a seek get the frame instead. A clip that still shows nothing gives
+// up with a message rather than waiting for ever.
+function openVideo(url, job, T) {
+  return new Promise((resolve, reject) => {
+    let done = false, refused = false;
+    const end = (err) => {
+      if (done) return;
+      done = true; clearInterval(poll); clearTimeout(limit);
+      video.removeEventListener('loadeddata', onData); video.removeEventListener('loadedmetadata', onMeta); video.removeEventListener('error', onError);
+      video.pause();
+      if (err) reject(err); else resolve();
+    };
+    const onData = () => end();
+    const onMeta = () => { if (refused) video.currentTime = 0.001; };
+    const onError = () => end(new Error(T.badVideo));
+    video.addEventListener('loadeddata', onData);
+    video.addEventListener('loadedmetadata', onMeta);
+    video.addEventListener('error', onError);
+    const poll = setInterval(() => { if (job.aborted) end(new Error(T.cancelled)); }, 250);
+    const limit = setTimeout(() => end(new Error(T.stuck)), 20000);
+    video.pause();
+    video.src = url;
+    video.play().then(() => { if (!done && video.readyState >= 2) end(); }).catch(() => {
+      if (done) return;
+      refused = true;
+      video.load();
+    });
+  });
+}
+
 // ---------- tracking ----------
 // Playing the clip through and reading each frame as it comes up decodes every frame once.
 // Seeking to each frame instead makes the browser decode again from the last keyframe every
@@ -1102,15 +1136,9 @@ async function start(file) {
     ['frames', 'findings', 'summary', 'detected'].forEach((id) => { $(id).innerHTML = ''; });
     $('tempo').hidden = true; $('notes').hidden = true; $('controls').hidden = true; $('jumps').hidden = true; $('legend').hidden = true;
     clearCoach();
-    video.pause();
-    video.src = state.url;
-    await new Promise((resolve, reject) => {
-      video.onloadeddata = resolve;
-      video.onerror = () => reject(new Error(T.badVideo));
-    });
+    await openVideo(state.url, job, T);
     if (!video.videoWidth || !isFinite(video.duration)) throw new Error(T.badVideo);
     if (video.duration > MAX_SECONDS + 0.5) throw new Error(T.tooLong(Math.round(video.duration)));
-    try { await video.play(); video.pause(); } catch (e) {}   // lets iOS decode frames for seeking
     sizeOverlay();
 
     // Track the pose through the clip
