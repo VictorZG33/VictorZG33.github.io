@@ -374,6 +374,10 @@ footer .sig { font-family: var(--display); font-stretch: 112%; font-weight: 700;
         <label class="label" for="notes-input" id="notes-label"></label>
         <textarea id="notes-input" maxlength="600"></textarea>
       </div>
+      <div class="field" id="mode-box">
+        <label class="check"><input type="checkbox" id="own-key"><span id="own-key-label"></span></label>
+        <p class="hint" id="mode-hint"></p>
+      </div>
       <div class="field" id="key-box">
         <label class="label" for="key-input" id="key-label"></label>
         <input type="password" id="key-input" autocomplete="off" spellcheck="false" placeholder="sk-ant-…">
@@ -402,10 +406,10 @@ footer .sig { font-family: var(--display); font-stretch: 112%; font-weight: 700;
 import { analyzeSwing, BONES } from './swing.js';
 
 // ---------- settings ----------
-// The AI coach. With COACH_ENDPOINT empty, visitors paste their own Anthropic API key and the page
-// calls Claude directly. Set it to the address of the Worker in workers/golf-coach to let everyone
-// use the site's key instead (the Worker keeps the key secret).
-const COACH_ENDPOINT = '';
+// The AI coach. Visitors use the site's Anthropic API key through the Worker in workers/golf-coach,
+// which keeps the key secret, unless they tick "use my own key": then the page calls Claude directly
+// with the key they paste. With COACH_ENDPOINT empty, their own key is the only way.
+const COACH_ENDPOINT = 'https://golf-coach.wentaozhang1997.workers.dev';
 const SDK = 'https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.133.0';
 const PRICE = { input: 4, output: 20 };   // US$ per million tokens for the coach model (Claude Opus 5.5)
 
@@ -479,6 +483,8 @@ const I18N = {
     coachIntro: 'AI 教练（Claude）会看上面四个关键帧和测量结果，写一份具体的点评：最该先改的两三件事、为什么、怎么练。只有这四张截图和数字会发出去，视频本身不会。',
     notesLabel: '补充说明（可选）：差点、常见失误、用的什么杆…',
     notesPh: '比如：差点 18，一号木经常右曲，这是 7 号铁。',
+    ownKey: '用我自己的 Anthropic API key',
+    siteHint: '默认免费，用的是本站的额度。人多或本站额度用完时，可以改用你自己的 key。',
     keyLabel: '你的 Anthropic API key',
     keyKeep: '在这台设备上记住',
     keyHint: '没有 key？在 console.anthropic.com 注册并充值后创建一个。key 只存在你的浏览器里，直接发给 Anthropic，不经过本站。每次点评大约花 0.05–0.10 美元。',
@@ -492,6 +498,9 @@ const I18N = {
       429: '请求太频繁或额度已用完，过一会儿再试。',
       529: 'AI 服务现在很忙，过一会儿再试。',
       net: '连不上 AI 服务，请检查网络后再试。',
+      siteBusy: '本站的 AI 教练现在请求太多，过一两分钟再试，或者改用你自己的 API key。',
+      siteDown: '本站的 AI 教练暂时用不了（可能额度用完了）。勾选「用我自己的 Anthropic API key」可以继续。',
+      siteNet: '连不上本站的 AI 教练。过一会儿再试，或者改用你自己的 API key。',
       other: (m) => `点评失败：${m}`,
     },
     refusal: 'AI 拒绝了这次请求，换个说明再试一次。',
@@ -503,7 +512,7 @@ const I18N = {
       '<p><span class="k">找关键位置</span><br>双手先升到髋部以上很高的位置（上杆），再落回最低点（击球），然后再升起（收杆）。上杆顶点取双手最高的时刻；击球取下杆中双手最低的时刻；准备取上杆开始前最静止的一段；收杆取双手升到最高处的时刻。节奏 = 从起杆到顶点的时间 ÷ 从顶点到击球的时间，职业球员大多接近 3 : 1。</p>' +
       '<p><span class="k">测量</span><br>所有测量都相对于准备姿势：头和髋往哪个方向移动了多少、身体前倾和侧倾的角度变了多少。厘米数按普通成年人的身材比例换算（正面按两肩间距约 36 cm，侧面按躯干约 48 cm），只是估计。如果画面在挥杆中移动，会用双脚的位置来校正。判断好坏的界线是给业余球员的常见经验值，不是绝对标准。</p>' +
       '<p><span class="k">局限</span><br>这是二维的估计：身体转动、遮挡和模糊都会让点位不准，侧后方拍摄时前侧手臂常被挡住。它适合发现明显的问题和对比前后变化，代替不了教练当面看。</p>' +
-      '<p><span class="k">AI 教练</span><br>点「让 AI 教练看看」时，四张关键帧（缩小成最长 1024 像素的 JPEG）、测量结果和你的补充说明会发给 Anthropic 的 Claude 模型，由它写点评。用你自己的 API key 时，请求从你的浏览器直接发给 Anthropic，费用记在你的账上。</p>',
+      '<p><span class="k">AI 教练</span><br>点「让 AI 教练看看」时，四张关键帧（缩小成最长 1024 像素的 JPEG）、测量结果和你的补充说明会发给 Anthropic 的 Claude 模型，由它写点评。默认请求经本站的服务器转发，由本站付费，服务器不保存图片和点评。用你自己的 API key 时，请求从你的浏览器直接发给 Anthropic，费用记在你的账上。</p>',
     footSig: '挥杆镜', footNote: '练习场上的第二双眼睛。',
     f: {
       tempo: {
@@ -665,6 +674,8 @@ const I18N = {
     coachIntro: 'The AI coach (Claude) looks at the four key frames and the measurements and writes you a specific lesson: the two or three things to change first, why, and how to practise them. Only those four stills and the numbers are sent, never the video.',
     notesLabel: 'Anything to add (optional): handicap, usual miss, club…',
     notesPh: 'For example: 18 handicap, slice my driver, this was a 7-iron.',
+    ownKey: 'Use my own Anthropic API key',
+    siteHint: 'Free by default, on this site’s credit. If it’s busy or the credit has run out, you can use your own key instead.',
     keyLabel: 'Your Anthropic API key',
     keyKeep: 'Remember it on this device',
     keyHint: 'No key? Sign up at console.anthropic.com, add credit and create one. The key stays in your browser and goes straight to Anthropic, never through this site. Each lesson costs about US$0.05–0.10.',
@@ -678,6 +689,9 @@ const I18N = {
       429: 'Too many requests, or the credit has run out. Try again in a while.',
       529: 'The AI service is busy right now. Try again in a while.',
       net: 'Couldn’t reach the AI service. Check your connection and try again.',
+      siteBusy: 'The site’s AI coach is getting too many requests. Try again in a minute or two, or use your own API key.',
+      siteDown: 'The site’s AI coach isn’t available right now (its credit may have run out). Tick “Use my own Anthropic API key” to carry on.',
+      siteNet: 'Couldn’t reach the site’s AI coach. Try again in a while, or use your own API key.',
       other: (m) => `The lesson failed: ${m}`,
     },
     refusal: 'The AI declined this request. Change your note and try again.',
@@ -689,7 +703,7 @@ const I18N = {
       '<p><span class="k">Finding the positions</span><br>Your hands rise well above your hips (the backswing), drop to their lowest point (impact), and rise again (the finish). The top is when the hands hang highest; impact is when they are lowest on the way down; address is the stillest moment before the backswing starts; the finish is when the hands reach the top of the follow-through. Tempo is the time from takeaway to the top divided by the time from the top to impact. Most tour players are close to 3 : 1.</p>' +
       '<p><span class="k">Measurements</span><br>Everything is measured against your address position: which way and how far your head and hips moved, how your forward bend and side tilt changed. Centimetres are scaled from typical adult proportions (about 36 cm between the shoulders face-on, about 48 cm of trunk down the line), so they are estimates. If the picture moves during the swing, your feet are used to correct for it. The lines between good and bad are common rules of thumb for amateurs, not hard limits.</p>' +
       '<p><span class="k">Limits</span><br>This is a 2D estimate: turning, overlapping limbs and blur all throw the points off, and down the line the lead arm is often hidden. It is good at spotting obvious faults and comparing before and after, not at replacing a coach on the range.</p>' +
-      '<p><span class="k">The AI coach</span><br>When you ask the AI coach, the four key frames (as JPEGs at most 1024 pixels long), the measurements and your note go to Anthropic’s Claude model, which writes the lesson. With your own API key the request goes from your browser straight to Anthropic and is billed to your account.</p>',
+      '<p><span class="k">The AI coach</span><br>When you ask the AI coach, the four key frames (as JPEGs at most 1024 pixels long), the measurements and your note go to Anthropic’s Claude model, which writes the lesson. By default the request goes through this site’s server and the site pays; the server keeps neither the frames nor the lesson. With your own API key the request goes from your browser straight to Anthropic and is billed to your account.</p>',
     footSig: 'Swing Mirror', footNote: 'A second pair of eyes on the range.',
     f: {
       tempo: {
@@ -873,6 +887,7 @@ function renderStatic() {
   setText('tempo-h', T.tempoH); setText('find-h', T.findH);
   setText('h-coach', T.hCoach); setText('coach-intro', T.coachIntro);
   setText('notes-label', T.notesLabel); $('notes-input').placeholder = T.notesPh;
+  setText('own-key-label', T.ownKey); setText('mode-hint', T.siteHint);
   setText('key-label', T.keyLabel); setText('key-keep-label', T.keyKeep); setText('key-hint', T.keyHint);
   setText('method-h', T.methodH); $('method').innerHTML = T.method;
   setText('foot-sig', T.footSig); setText('foot-note', T.footNote);
@@ -1374,7 +1389,18 @@ document.addEventListener('click', (e) => { const b = e.target.closest('[data-ju
 let keySaved = '';
 try { keySaved = localStorage.getItem(KEY_KEY) || ''; } catch (e) {}
 if (keySaved) { $('key-input').value = keySaved; $('key-keep').checked = true; }
-$('key-box').hidden = !!COACH_ENDPOINT;
+// A visitor who saved their own key keeps using it; everyone else starts on the site's key
+$('own-key').checked = !!keySaved || !COACH_ENDPOINT;
+$('mode-box').hidden = !COACH_ENDPOINT;
+function renderKeyMode() {
+  const own = $('own-key').checked;
+  $('key-box').hidden = !own; $('mode-hint').hidden = own;
+}
+$('own-key').addEventListener('change', () => {
+  renderKeyMode(); say('coach-msg', '');
+  if ($('own-key').checked) $('key-input').focus();
+});
+renderKeyMode();
 
 function renderCoachButton() {
   const T = I18N[state.lang];
@@ -1430,9 +1456,9 @@ $('coach-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   if (state.coachBusy || !state.result) return;
   const T = I18N[state.lang];
-  const key = $('key-input').value.trim();
-  if (!COACH_ENDPOINT && !key.startsWith('sk-')) { say('coach-msg', T.needKey, true); $('key-input').focus(); return; }
-  try { if ($('key-keep').checked && key) localStorage.setItem(KEY_KEY, key); else localStorage.removeItem(KEY_KEY); } catch (err) {}
+  const own = $('own-key').checked, key = $('key-input').value.trim();
+  if (own && !key.startsWith('sk-')) { say('coach-msg', T.needKey, true); $('key-input').focus(); return; }
+  if (own) try { if ($('key-keep').checked) localStorage.setItem(KEY_KEY, key); else localStorage.removeItem(KEY_KEY); } catch (err) {}
 
   state.coachBusy = true; $('coach-go').disabled = true;
   say('coach-msg', ''); setText('coach-meta', '');
@@ -1448,7 +1474,7 @@ $('coach-form').addEventListener('submit', async (e) => {
     out.innerHTML = `<span class="thinking">${esc(T.coachThinking)}</span>`;
 
     let stream;
-    if (COACH_ENDPOINT) {
+    if (!own) {
       const { BetaMessageStream } = await import(`${SDK}/lib/BetaMessageStream.mjs/+esm`);
       const res = await fetch(COACH_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input) });
       if (!res.ok) { const err = new Error((await res.json().catch(() => ({}))).error || res.statusText); err.status = res.status; throw err; }
@@ -1472,8 +1498,15 @@ $('coach-form').addEventListener('submit', async (e) => {
   } catch (err) {
     if (!text) out.innerHTML = '';
     const st = err && err.status, E = T.coachErr;
-    const m = st === 401 ? E[401] : st === 403 ? E[403] : st === 429 ? E[429] : st === 529 || st === 503 ? E[529]
-      : (err && /fetch|network|connection/i.test(String(err.message || err))) && !st ? E.net : E.other((err && err.message) || String(err));
+    const why = String((err && err.message) || err), net = !st && /fetch|network|connection/i.test(why);
+    // On the site's key, a bad key, a spent credit or a missing Worker is the site's problem, not the
+    // visitor's: those all read as "unavailable" and point to the visitor's own key
+    const m = !own
+      ? st === 429 ? E.siteBusy : st >= 500 && why !== 'not_configured' ? E[529]
+        : [401, 402, 403, 404, 503].includes(st) || (st === 400 && /credit|limit|billing/i.test(why)) ? E.siteDown
+        : net ? E.siteNet : E.other(why)
+      : st === 401 ? E[401] : st === 403 ? E[403] : st === 429 ? E[429] : st === 529 || st === 503 ? E[529]
+        : net ? E.net : E.other(why);
     say('coach-msg', m, true);
   } finally {
     state.coachBusy = false; $('coach-go').disabled = false; renderCoachButton();
