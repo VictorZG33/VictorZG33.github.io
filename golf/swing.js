@@ -103,7 +103,7 @@ export function analyzeSwing(frames, opts = {}) {
       imp = Math.round((a + b) / 2); }
     let top = up.a;
     for (let i = up.a; i <= up.b; i++) if (h[i] > h[top]) top = i;
-    const speed = (h[top] - h[imp]) / ((imp - top) * dt);
+    const speed = (h[top] - h[imp]) / (frames[imp].t - frames[top].t);
     if (!best || speed > best.speed) best = { k, top, imp, speed };
   }
   if (!best) return { ok: false, error: late ? 'starts_late' : 'no_swing' };
@@ -193,7 +193,7 @@ export function analyzeSwing(frames, opts = {}) {
   const hipT = fix(steady(hips, top, 1, n), top), hipI = fix(hips(impact), impact);
 
   // Tempo. Tour players take about three times as long going back as coming down.
-  const back = (top - takeaway) * dt, down = (impact - top) * dt, ratio = back / down;
+  const back = frames[top].t - frames[takeaway].t, down = frames[impact].t - frames[top].t, ratio = back / down;
   const slowmo = down > 0.5;
   const tempo = { back, down, ratio, slowmo };
   add('tempo', 'top', ratio, 'ratio', ratio >= 2.5 && ratio <= 3.6 ? 'good' : ratio >= 2 && ratio <= 4.2 ? 'watch' : 'fix');
