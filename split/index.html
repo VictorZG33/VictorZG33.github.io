@@ -377,7 +377,7 @@ footer .link-btn { margin-left: auto; }
   var EXACT = 20;   // the exact search tries every subset of up to this many people: 2^20 of them
   /* The sync server behind shared ledgers: the Worker in workers/split, at the address its deploy prints
      (.github/workflows/split-sync.yml). Left empty, share links are snapshots that carry the whole ledger. */
-  var API = '';
+  var API = 'https://split-sync.wentaozhang1997.workers.dev';
   var POLL_MS = 5000;      // how often an open shared ledger asks the server for others' changes
   var TIMEOUT_MS = 8000;   // a request to the server that takes longer counts as failed
   var KEY = 'allsquare.ledger', SYNC_KEY = 'allsquare.sync', LANG_KEY = 'allsquare.lang';
