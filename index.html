@@ -478,6 +478,8 @@ button.copy:hover { background: var(--ink); color: var(--bg); }
 
 @media (max-width: 24rem) {
   .tick .unit { display: none; }   /* keeps "400" and "500" apart on the narrowest phones; the readout carries the unit */
+  .kit { grid-template-columns: minmax(0, 1fr); row-gap: 0.1rem; }   /* label above its text */
+  .kit dd + dt { margin-top: 0.6rem; }
 }
 @media (max-width: 46rem) {
   body { font-size: 1.0625rem; }
@@ -637,7 +639,18 @@ button.copy:hover { background: var(--ink); color: var(--bg); }
       </div>
 
       <div class="panel" role="tabpanel" id="panel-wine" aria-labelledby="tab-wine" data-title="Wine">
-        <p>Burgundy first, then Piedmont, with detours through California. I organize blind tastings with friends, everyone bringing a bottle, and keep my tasting notes on <a href="https://www.cellartracker.com/user.asp?iUserOverride=902605">CellarTracker</a>. Sake when I can find good sake, and beer, which I check in on <a href="https://untappd.com/user/WentaoZ">Untappd</a>.</p>
+        <p>Burgundy first, then Napa, with detours through Bordeaux. I organize blind tastings with friends, everyone bringing a bottle, and keep my tasting notes, 175 so far, on <a href="https://www.cellartracker.com/user.asp?iUserOverride=902605">CellarTracker</a>. Sake when I can find good sake, and beer, which I check in on <a href="https://untappd.com/user/WentaoZ">Untappd</a>.</p>
+        <!-- Counted from the CellarTracker exports of October 2026 (cellar list, tasting notes, bottles drunk) -->
+        <dl class="kit">
+          <dt>In the glass</dt>
+          <dd>214 bottles since 2020: 97 from Burgundy, half of them from the C&ocirc;te de Nuits, 50 from Napa and 18 from Bordeaux.</dd>
+          <dt>In the cellar</dt>
+          <dd>85 bottles, counting those still on the way, and two in three from California, mostly Napa cabernet: Realm Cellars, and six vintages of Fait-Main&rsquo;s Beckstoffer Las Piedras. Twenty from Burgundy, from Bourgogne rouge up to de Vog&uuml;&eacute;&rsquo;s Musigny.</dd>
+          <dt>Tastings</dt>
+          <dd>Ten Clos Vougeots from ten producers, 1989 to 2020, in one evening; thirteen Burgundies from 1978 to 2021 in another. Realm and Fait-Main side by side, double-decanted six hours ahead. Opus One, Promontory and Stag&rsquo;s Leap Wine Cellars at the wineries.</dd>
+          <dt>Highest marks</dt>
+          <dd>97 for the 2017 Promontory and the 2019 Fait-Main Las Piedras; 96 for the 1996 and 2008 Latour; 95, and wine of the night, for the 1993 de Vog&uuml;&eacute; Musigny.</dd>
+        </dl>
         <a class="moon" id="moon-card" href="wine-moon/">
           <span class="moon-head"><span class="moon-zh" lang="zh-CN">醉月历</span><span class="moon-en">Wine Moon</span></span>
           <span class="moon-live"><i class="moon-dot" aria-hidden="true"></i><span id="moon-text">Today in the biodynamic calendar</span></span>
