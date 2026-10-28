@@ -45,9 +45,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <title>Wentao Zhang</title>
 <!-- Only the widths and weights the page uses; the Chinese face is cut down to the characters
-     of the tool cards' names, 醉月历 and 滚落线, so a new Chinese name needs adding to text= -->
+     of the tool cards' names, 醉月历, 滚落线 and 两清, so a new Chinese name needs adding to text= -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..700&family=STIX+Two+Text:ital,wght@0,400..600;1,400&display=swap">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700&text=%E9%86%89%E6%9C%88%E5%8E%86%E6%BB%9A%E8%90%BD%E7%BA%BF&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700&text=%E9%86%89%E6%9C%88%E5%8E%86%E6%BB%9A%E8%90%BD%E7%BA%BF%E4%B8%A4%E6%B8%85&display=swap">
 <style>
 /* Layout: one left-aligned column on a two-track grid (section name | content).
    The only full-width object is the film colour strip under the name. */
@@ -60,6 +60,8 @@
   --film-mark: #3178D3;  /* the same colour held to 3:1 on --bg, for underlines and focus */
   /* Wine Moon's four day types, borrowed from that page so the card matches it */
   --wm-fruit: #8A1C2D; --wm-flower: #A9781A; --wm-leaf: #2C6A4A; --wm-root: #6E4A2C;
+  /* All Square's red ink (money owed) and green (money coming back), borrowed from that page */
+  --sq-owed: #B3261E; --sq-back: #2F6B4F;
 
   --display: "Archivo", "Helvetica Neue", Arial, sans-serif;   /* name, section names, controls */
   --body: "STIX Two Text", "STIXGeneral", Cambria, "Times New Roman", serif;  /* running text, citations */
@@ -75,6 +77,7 @@
     --bg: #0C1218; --ink: #E9EDF2; --ink-2: #9FAAB8; --rule: #28323D;
     --film: #3178D3; --film-mark: #3178D3;
     --wm-fruit: #E0667A; --wm-flower: #E2B657; --wm-leaf: #6FBF93; --wm-root: #C28E62;
+    --sq-owed: #F0806F; --sq-back: #79C29C;
     color-scheme: dark;
   }
 }
@@ -82,6 +85,7 @@
   --bg: #0C1218; --ink: #E9EDF2; --ink-2: #9FAAB8; --rule: #28323D;
   --film: #3178D3; --film-mark: #3178D3;
   --wm-fruit: #E0667A; --wm-flower: #E2B657; --wm-leaf: #6FBF93; --wm-root: #C28E62;
+  --sq-owed: #F0806F; --sq-back: #79C29C;
   color-scheme: dark;
 }
 
@@ -380,8 +384,8 @@ a:focus-visible, button:focus-visible {
 }
 .kit dt { font-family: var(--display); font-weight: 650; color: var(--ink-2); }
 
-/* Tool cards (Wine Moon, Fall Line): the only boxed objects on the page, because each leads to a separate tool */
-.moon, .fl {
+/* Tool cards (Wine Moon, Fall Line, All Square): the only boxed objects on the page, because each leads to a separate tool */
+.moon, .fl, .sq {
   --wm: var(--ink-2);
   display: grid; gap: 0.625rem;
   padding: 1.125rem 1.25rem 1.125rem 1.375rem;
@@ -390,40 +394,40 @@ a:focus-visible, button:focus-visible {
   color: inherit;
   text-decoration: none;
 }
-.moon:hover, .fl:hover { border-color: var(--ink); border-left-color: var(--wm); }
+.moon:hover, .fl:hover, .sq:hover { border-color: var(--ink); border-left-color: var(--wm); }
 .moon.day-fruit { --wm: var(--wm-fruit); }
 .moon.day-flower { --wm: var(--wm-flower); }
 .moon.day-leaf { --wm: var(--wm-leaf); }
 .moon.day-root { --wm: var(--wm-root); }
-.moon-head, .fl-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.625rem; }
-.moon-zh, .fl-zh { font-family: "Noto Serif SC", "Songti SC", "STSong", "SimSun", var(--body); font-weight: 700; font-size: 1.375rem; letter-spacing: 0.04em; }
-.moon-en, .fl-en { font-style: italic; font-size: 1.25rem; }
+.moon-head, .fl-head, .sq-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.625rem; }
+.moon-zh, .fl-zh, .sq-zh { font-family: "Noto Serif SC", "Songti SC", "STSong", "SimSun", var(--body); font-weight: 700; font-size: 1.375rem; letter-spacing: 0.04em; }
+.moon-en, .fl-en, .sq-en { font-style: italic; font-size: 1.25rem; }
 .moon-live {
   display: flex; align-items: center; gap: 0.5rem;
   font-family: var(--display); font-weight: 650; font-size: var(--ui);
   color: var(--wm);
 }
 .moon-dot { width: 0.75rem; height: 0.75rem; border-radius: 50%; background: var(--wm); flex: none; }
-.moon-desc, .fl-desc { font-size: var(--ui); line-height: 1.5; color: var(--ink-2); }
-.moon-cta, .fl-cta {
+.moon-desc, .fl-desc, .sq-desc { font-size: var(--ui); line-height: 1.5; color: var(--ink-2); }
+.moon-cta, .fl-cta, .sq-cta {
   font-family: var(--display); font-weight: 650; font-size: var(--small);
   text-decoration: underline; text-decoration-color: var(--film-mark); text-decoration-thickness: 2px; text-underline-offset: 0.2em;
 }
-/* Fall Line's left edge is its own slope-angle legend, 20° at the top to 50°+ at the bottom */
-.fl {
-  --fl-bands: #9ed668 0 14.29%, #f6e23c 0 28.57%, #f8a01e 0 42.86%, #e8422e 0 57.14%, #b61678 0 71.43%, #6834aa 0 85.71%, #1e1a3c 0;
-  position: relative;
-}
-.fl::before {
+/* Fall Line's left edge is its own slope-angle legend, 20° at the top to 50°+ at the bottom;
+   All Square's is its two inks, red for money owed over green for money coming back */
+.fl { --bands: #9ed668 0 14.29%, #f6e23c 0 28.57%, #f8a01e 0 42.86%, #e8422e 0 57.14%, #b61678 0 71.43%, #6834aa 0 85.71%, #1e1a3c 0; }
+.sq { --bands: var(--sq-owed) 0 50%, var(--sq-back) 0; }
+.fl, .sq { position: relative; }
+.fl::before, .sq::before {
   content: "";
   position: absolute; top: -1px; bottom: -1px; left: -4px; width: 4px;
-  background: linear-gradient(180deg, var(--fl-bands));
+  background: linear-gradient(180deg, var(--bands));
 }
-.fl-live {
+.fl-live, .sq-live {
   display: flex; align-items: center; gap: 0.5rem;
   font-family: var(--display); font-weight: 650; font-size: var(--ui);
 }
-.fl-strip { width: 4.5rem; height: 0.75rem; flex: none; background: linear-gradient(90deg, var(--fl-bands)); }
+.fl-strip, .sq-strip { width: 4.5rem; height: 0.75rem; flex: none; background: linear-gradient(90deg, var(--bands)); }
 
 /* Contact */
 .contact { display: grid; gap: 1rem; justify-items: start; }
@@ -502,7 +506,7 @@ button.copy:hover { background: var(--ink); color: var(--bg); }
   .edu, .hobbies { gap: 0.75rem; }
   .row { grid-template-columns: 8rem minmax(0, 1fr); column-gap: 1.5rem; }
   .row h2 { padding-top: 0.28em; }
-  .theme-toggle, .copy, .material, .tabs, .moon, .fl, .film-cursor, .spectrum, #visitors { display: none !important; }
+  .theme-toggle, .copy, .material, .tabs, .moon, .fl, .sq, .film-cursor, .spectrum, #visitors { display: none !important; }
   .hobbies .panel[hidden] { display: grid !important; }
   .panel::before { content: attr(data-title); font-family: var(--display); font-weight: 650; font-size: var(--ui); }
   .film-strip, .swatch { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -660,12 +664,19 @@ button.copy:hover { background: var(--ink); color: var(--bg); }
       </div>
 
       <div class="panel" role="tabpanel" id="panel-skiing" aria-labelledby="tab-skiing" data-title="Skiing">
-        <p>Winter weekends go to skiing.</p>
+        <p>Winter weekends go to skiing. I track every day on the mountain with Slopes, where you can <a href="https://my.getslopes.com/app/addFriend/ZLlejWOQ2d">add me as a friend</a>.</p>
+        <p>A few days from that log. My biggest day is still Copper Mountain in late November 2019: 18 runs and 27,306 vertical feet. At Breckenridge in 2022 I got above 12,800 feet, and at Jackson Hole on the second day of 2023 the Aerial Tram took me 4,107 feet up in one ride. Big Sky has the other two: my top speed, 53.1 mph, in 2025, and the Big Couloir off Lone Peak in February 2026.</p>
         <a class="fl" href="fallline/">
           <span class="fl-head"><span class="fl-zh" lang="zh-CN">滚落线</span><span class="fl-en">Fall Line</span></span>
           <span class="fl-live"><i class="fl-strip" aria-hidden="true"></i><span>Slope angle, 20° to 50°+</span></span>
           <span class="fl-desc">A 3D ski map I built after FATMAP went dark. It shades every slope by its angle and the way it faces, computed in your browser from open elevation data, draws runs and lifts for ski areas around the world, replays GPX tracks and keeps working offline on the mountain. In Chinese and English.</span>
           <span class="fl-cta">Open the map</span>
+        </a>
+        <a class="sq" href="split/">
+          <span class="sq-head"><span class="sq-zh" lang="zh-CN">两清</span><span class="sq-en">All Square</span></span>
+          <span class="sq-live"><i class="sq-strip" aria-hidden="true"></i><span>Who owes whom</span></span>
+          <span class="sq-desc">A bill splitter I built for group trips. Log the house, the lift tickets and the gas with who paid and who shares each, and it works out the fewest transfers that settle everyone up. Share the ledger as a link and the whole group keeps one copy up to date. In Chinese and English.</span>
+          <span class="sq-cta">Split a trip</span>
         </a>
       </div>
 
