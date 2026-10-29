@@ -12,9 +12,24 @@ There is no build step: every file is served as-is. Edit and push to `main`; Git
 - `golf/index.html` is 挥杆镜 Swing Mirror, the golf swing analyser at `/golf/`. A visitor picks a video of one swing; MediaPipe's pose model (loaded from jsDelivr, the model file from Google's storage) tracks 33 body points in every frame, in the browser, and the video never leaves the device. `golf/swing.js` finds address, top, impact and finish in those points and measures tempo, head and hip movement and body angles, with the thresholds for good, watch and fix written next to each measurement. It has no DOM, so it can be run in node against saved landmarks.
 - `golf/coach.js` is the optional AI coach: it turns the four key frames and the measurements into one Claude request. By default the page sends it to `workers/golf-coach/`, a Cloudflare Worker at `COACH_ENDPOINT` in `golf/index.html` that calls Claude on the site's own key, kept there as a secret. `.github/workflows/golf-coach.yml` deploys it from the repository secret `ANTHROPIC_API_KEY`; the Worker's README explains the setup. A visitor can tick *Use my own Anthropic API key* instead: the page then calls Claude directly with the key they paste (kept in `localStorage` under `golf.apiKey` only if they tick *Remember*), and a visitor with a saved key starts on it. With `COACH_ENDPOINT` empty, the visitor's own key is the only way.
 - 杰神模拟器 Jieshen Simulator (`/jaysonsays/`) and 滚落线 Fall Line (`/fallline/`) live in their own repositories, [VictorZG33/jaysonsays](https://github.com/VictorZG33/jaysonsays) and [VictorZG33/fallline](https://github.com/VictorZG33/fallline). GitHub Pages serves each at that path because project sites inherit this site's custom domain; the homepage links to them from its Wine and Skiing tabs.
+- `photography/index.html` is the photography gallery, and the Photography tab on the homepage shows its first six photographs as a contact sheet. `photography/tools/build.mjs` makes both, with the images in `photography/img`, from full-size masters and `photography/photos.json`; see [Adding photographs](#adding-photographs).
 - `404.html` is what GitHub Pages serves for any missing path; its links are absolute for that reason.
-- `og.png`, `wine-moon/og.png`, `split/og.png` and `golf/og.png` are the 1200×630 preview images link previews show. They are screenshots of the pages, so retake them if the name, strip, Wine Moon, All Square or Swing Mirror colours change.
+- `og.png`, `wine-moon/og.png`, `split/og.png` and `golf/og.png` are the 1200×630 preview images link previews show. They are screenshots of the pages, so retake them if the name, strip, Wine Moon, All Square or Swing Mirror colours change. The gallery's preview is its first photograph, which the build script fills in.
 - The light/dark choice is stored in `localStorage` under `wentaoz.theme` and shared by every page; with nothing stored, pages follow the system setting.
+
+## Adding photographs
+
+The gallery shows each photograph at a fixed size for each of three window sizes, as Apple's product pages do: it fits in 800 × 480, 1200 × 720 or 1600 × 960 CSS pixels, picked by the window's width and height so the whole frame and its caption fit on screen. The script makes exactly those widths for screens at 1x, 1.5x and 2x, so on a laptop or a desktop monitor every pixel of the image lands on one pixel of the screen and the browser never resamples it. Phones and narrow windows get a fluid layout and the next size up. Each size is made straight from the master with a Lanczos filter, sharpened lightly at that size and compressed once: AVIF at quality 72, which keeps film grain, and JPEG at 90 for browsers without AVIF, both with full colour resolution (4:4:4) and in Display P3, with no other metadata, so no EXIF or GPS position.
+
+1. Export a master of each photograph from Lightroom: Display P3, long edge 4,000 px or more (the largest size sent to any screen is 3,200 px wide), TIFF or JPEG at quality 95, output sharpening for Screen, Standard. Fill in Title, Caption and the location in Lightroom and they are copied in.
+2. Put the masters in `photography/masters/`. Git ignores that folder, so they stay on your computer. The file name, lower-cased, becomes the photograph's id and its address in the gallery: `XPan 01.tif` is `/photography/#xpan-01`.
+3. Once, in `photography/tools`, run `npm ci` (Node 20.9 or newer). Then run `node build.mjs`, or `node build.mjs ~/path/to/masters` for masters kept elsewhere.
+4. Edit `photography/photos.json`: `title`, `alt` (what the photograph shows, for people who can't see it), `place`, `date`, `camera` and `film`. The list's order is the gallery's order, and its first six are the contact sheet. `width` and `height` are the master's size; the script keeps them. Run `node build.mjs` again: without new masters it only rewrites the two pages.
+5. Commit `photography/` and `index.html`.
+
+To take a photograph down, delete it from `photos.json` and run the script; its files go with it. A master newer than its files is made again, and `--force` remakes everything. Do that rarely: every remake adds a full set of files to the repository's history, and GitHub Pages wants a site under 1 GB. The script prints the size of `photography/img` after each run.
+
+The window sizes are written twice, in `SIZES` in `build.mjs` and in the media queries in `photography/index.html`, so a change to one needs the same change in the other and `--force`.
 
 ## Shared ledgers in All Square
 
@@ -36,7 +51,7 @@ To try it locally, run `npx wrangler dev --var DEV_ORIGINS:http://localhost:8000
 
 ## Visitor counting and the visitor map
 
-The homepage, Wine Moon, All Square and Swing Mirror load [GoatCounter](https://www.goatcounter.com) (site code `wentaoz`), which counts visits without cookies. To leave your own visits out, open `https://wentaoz.com/#toggle-goatcounter` once in each browser you use.
+The homepage, Wine Moon, All Square, Swing Mirror and the photography gallery load [GoatCounter](https://www.goatcounter.com) (site code `wentaoz`), which counts visits without cookies. To leave your own visits out, open `https://wentaoz.com/#toggle-goatcounter` once in each browser you use.
 
 The Visitors section on the homepage stays hidden until there is something to show. It reads two sources:
 
