@@ -1,5 +1,5 @@
-// Makes the photographs for the gallery (photography/index.html) and for the contact sheet in the
-// Photography tab of the homepage, from full-size masters.
+// Makes the photographs for 显影 Developed, the gallery (photography/index.html), and for its card
+// in the Photography tab of the homepage, from full-size masters.
 //
 //   npm ci                                once, in this folder
 //   node build.mjs [masters] [--force]
@@ -47,12 +47,12 @@ const SIZES = [
 const FLUID_HEIGHT = 0.88;
 
 // Widths made, as multiples of the photograph's width in the 400 × 240 box: every box at 1x, 1.5x
-// and 2x, and 1.5 for the contact sheet. JPEG leaves out l at 1.5x and xl at 2x, which only
-// screens recent enough for AVIF ask for. The contact sheet offers up to 4, enough for a
-// panorama alone in a row, 640 px wide, on a 2x screen.
+// and 2x, and 1.5 for the strip on the homepage. JPEG leaves out l at 1.5x and xl at 2x, which
+// only screens recent enough for AVIF ask for. The strip offers up to 4, enough for a panorama
+// alone in it on a 2x screen.
 const AVIF_WIDTHS = [1.5, 2, 3, 4, 4.5, 6, 8];
 const JPEG_WIDTHS = [1.5, 2, 3, 4, 6];
-const SHEET_WIDTHS = [1.5, 2, 3, 4];
+const STRIP_WIDTHS = [1.5, 2, 3, 4];
 
 // Output sharpening, applied after each resize: a small radius, on edges only (m1: 0 leaves flat
 // areas, and so the grain, alone). AVIF at 72 keeps film grain that 60, or effort 4, smooths away.
@@ -60,9 +60,8 @@ const SHARPEN = { sigma: 0.5, m1: 0, m2: 1 };
 const AVIF = { quality: 72, effort: 3, chromaSubsampling: '4:4:4' };
 const JPEG = { quality: 90, mozjpeg: true, chromaSubsampling: '4:4:4' };
 
-const SHEET_COUNT = 6;     // the first six photographs in the list make the contact sheet
-const SHEET_ROW = 4;       // a row of frames whose widths over heights add up to about this
-const SHEET_MIN_ROW = 2.5; // a row that adds up to less keeps the height of one that adds up to this
+const STRIP_ROW = 5.5;     // the homepage strip's frames' widths over heights add up to no more than this
+const STRIP_MIN_ROW = 2.5; // a strip that adds up to less keeps the height of one that adds up to this
 const MASTER_TYPES = new Set(['.jpg', '.jpeg', '.tif', '.tiff', '.png', '.webp', '.avif']);
 const FIELDS = ['id', 'title', 'alt', 'place', 'date', 'camera', 'film', 'width', 'height'];
 
@@ -239,44 +238,34 @@ function figure(p, files, first) {
   </figure>`;
 }
 
-// Splits the contact sheet into rows whose frames' widths over heights add up close to SHEET_ROW
-function sheetRows(photos) {
-  let best = null;
-  for (let cuts = 0; cuts < 1 << (photos.length - 1); cuts++) {
-    const rows = [[photos[0]]];
-    for (let i = 1; i < photos.length; i++) {
-      if (cuts & (1 << (i - 1))) rows.push([]);
-      rows[rows.length - 1].push(photos[i]);
-    }
-    const cost = rows.reduce((s, r) => s + (r.reduce((t, p) => t + p.width / p.height, 0) - SHEET_ROW) ** 2, 0);
-    if (!best || cost < best.cost) best = { rows, cost };
+// The gallery's card in the Photography tab shows the first photographs in one strip, all at the
+// same height: as many as fit while their widths over heights add up to no more than STRIP_ROW.
+// The card is the link, so the frames are previews with empty alt text.
+function strip(photos, filesById) {
+  const row = [];
+  let sum = 0;
+  for (const p of photos) {
+    if (row.length && sum + p.width / p.height > STRIP_ROW) break;
+    row.push(p);
+    sum += p.width / p.height;
   }
-  return best.rows;
-}
-
-function sheet(photos, filesById, total) {
-  if (!photos.length) return '\n        ';
-  const rows = sheetRows(photos).map((row) => {
-    const sum = row.reduce((t, p) => t + p.width / p.height, 0), s = Math.max(sum, SHEET_MIN_ROW);
-    const frames = row.map((p) => {
-      const files = filesById.get(p.id), b = base(p), a = p.width / p.height, share = a / s;
-      const pick = (list) => { const l = list.filter((f) => SHEET_WIDTHS.some((k) => k * b === f.w)); return l.length ? l : list.slice(0, 1); };
-      const avif = pick(files.avif), jpg = pick(files.jpg);
-      // the homepage's content column is 40rem wide at most, and the window less 1rem a side on phones
-      const sizes = `(min-width: 46rem) ${Math.round(640 * share)}px, calc(${round(100 * share, 2)}vw - ${round(2 * share, 3)}rem)`;
-      return `
-            <a href="photography/#${p.id}" style="--a:${round(a, 4)};--c:${p.color}"><picture><source type="image/avif" srcset="${srcset(avif, 'photography/img/')}" sizes="${sizes}"><img src="photography/img/${jpg[0].name}" srcset="${srcset(jpg, 'photography/img/')}" sizes="${sizes}" width="${p.width}" height="${p.height}" alt="${esc(altOf(p))}" loading="lazy" decoding="async"></picture></a>`;
-    }).join('');
+  if (!row.length) return '\n          <span class="dev-live">The first photographs are on their way</span>\n          ';
+  const s = Math.max(sum, STRIP_MIN_ROW);
+  const frames = row.map((p) => {
+    const files = filesById.get(p.id), b = base(p), a = p.width / p.height, share = a / s;
+    const pick = (list) => { const l = list.filter((f) => STRIP_WIDTHS.some((k) => k * b === f.w)); return l.length ? l : list.slice(0, 1); };
+    const avif = pick(files.avif), jpg = pick(files.jpg);
+    // inside the card: the homepage's 40rem column less 47px of border and padding, or on phones
+    // the window less 1rem a side and the same 47px
+    const sizes = `(min-width: 46rem) ${Math.round(593 * share)}px, calc(${round(100 * share, 2)}vw - ${round(2 * share, 3)}rem - ${round(47 * share, 1)}px)`;
     return `
-          <div class="sheet-row" style="--n:${row.length};--s:${round(s, 4)}">${frames}
-          </div>`;
+            <span style="--a:${round(a, 4)};--c:${p.color}"><picture><source type="image/avif" srcset="${srcset(avif, 'photography/img/')}" sizes="${sizes}"><img src="photography/img/${jpg[0].name}" srcset="${srcset(jpg, 'photography/img/')}" sizes="${sizes}" width="${p.width}" height="${p.height}" alt="" loading="lazy" decoding="async"></picture></span>`;
   }).join('');
-  const more = total === 1 ? 'See it full size' : `All ${total} photographs, full size`;
   return `
-        <div class="sheet">${rows}
-        </div>
-        <p class="sheet-more"><a href="photography/">${more}</a></p>
-        `;
+          <span class="dev-frames" style="--n:${row.length};--s:${round(s, 4)}">${frames}
+          </span>
+          <span class="dev-live">${photos.length} photograph${photos.length === 1 ? '' : 's'} so far</span>
+          `;
 }
 
 // Link previews show the first photograph; before there is one, the homepage's picture
@@ -371,7 +360,7 @@ page = between(page, 'og-image', ogImage(shown[0], og, ogSize), PAGE);
 await writeFile(PAGE, page);
 
 let home = await readFile(HOME, 'utf8');
-home = between(home, 'photos', sheet(shown.slice(0, SHEET_COUNT), filesById, shown.length), HOME);
+home = between(home, 'photos', strip(shown, filesById), HOME);
 await writeFile(HOME, home);
 
 await writeFile(LIST, JSON.stringify(photos.map(({ color, ...p }) => tidy(p)), null, 2) + '\n');

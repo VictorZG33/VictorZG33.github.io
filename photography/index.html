@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Photographs by Wentao Zhang, mostly on film: 35 mm, panoramas, 6×6 and 4×5, developed and scanned at home.">
-<meta property="og:title" content="Photography · Wentao Zhang">
+<meta name="description" content="显影 Developed: photographs by Wentao Zhang, mostly on film: 35 mm, panoramas, 6×6 and 4×5, developed and scanned at home.">
+<meta property="og:title" content="显影 Developed">
 <meta property="og:description" content="Photographs by Wentao Zhang, mostly on film: 35 mm, panoramas, 6×6 and 4×5, developed and scanned at home.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://wentaoz.com/photography/">
@@ -21,13 +21,16 @@
 /* Apply the theme picked with the Dark mode button (here or on the homepage) before first paint */
 (function () { try { var t = localStorage.getItem('wentaoz.theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {} })();
 </script>
-<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20fill%3D%22%230F1720%22%2F%3E%3Cpath%20d%3D%22M4%204h3v3H4zm7%200h3v3h-3zm7%200h3v3h-3zm7%200h3v3h-3zM4%2025h3v3H4zm7%200h3v3h-3zm7%200h3v3h-3zm7%200h3v3h-3z%22%20fill%3D%22%23E9EDF2%22%2F%3E%3Crect%20x%3D%223%22%20y%3D%2210%22%20width%3D%2226%22%20height%3D%2212%22%20fill%3D%22%233178D3%22%2F%3E%3C%2Fsvg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20fill%3D%22%230F1720%22%2F%3E%3Cpath%20d%3D%22M4%204h3v3H4zm7%200h3v3h-3zm7%200h3v3h-3zm7%200h3v3h-3zM4%2025h3v3H4zm7%200h3v3h-3zm7%200h3v3h-3zm7%200h3v3h-3z%22%20fill%3D%22%23E9EDF2%22%2F%3E%3Crect%20x%3D%223%22%20y%3D%2210%22%20width%3D%2226%22%20height%3D%2212%22%20fill%3D%22%23E8913A%22%2F%3E%3C%2Fsvg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<title>Photography · Wentao Zhang</title>
+<title>显影 Developed · Wentao Zhang</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..700&family=STIX+Two+Text:ital,wght@0,400..600;1,400&display=swap">
+<!-- The Chinese face only for the two characters of the name -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700&text=%E6%98%BE%E5%BD%B1&display=swap">
 <style>
-/* Type and colours follow the homepage. The photographs hang one under another, centred, each at a
+/* Type and colours follow the homepage, with the amber of a darkroom safelight, as on this
+   gallery's card there, for links and focus. The photographs hang one under another, centred, each at a
    fixed size per window size so that every screen gets one image pixel per screen pixel; the sizes
    and the files behind them are made by tools/build.mjs, which writes everything between the
    photos:start and photos:end markers below. Dark mode is true black, which is black on an OLED
@@ -37,7 +40,7 @@
   --ink: #0F1720;
   --ink-2: #51606F;
   --rule: #D3D9E0;
-  --mark: #3178D3;       /* the homepage's 70 nm film colour, for underlines and focus */
+  --mark: #B4530F;
 
   --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
   --body: "STIX Two Text", "STIXGeneral", Cambria, "Times New Roman", serif;
@@ -47,9 +50,9 @@
   --text: 1.125rem;
 }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) { --bg: #000000; --ink: #E9EDF2; --ink-2: #9FAAB8; --rule: #28323D; color-scheme: dark; }
+  :root:not([data-theme="light"]) { --bg: #000000; --ink: #E9EDF2; --ink-2: #9FAAB8; --rule: #28323D; --mark: #E8913A; color-scheme: dark; }
 }
-:root[data-theme="dark"] { --bg: #000000; --ink: #E9EDF2; --ink-2: #9FAAB8; --rule: #28323D; color-scheme: dark; }
+:root[data-theme="dark"] { --bg: #000000; --ink: #E9EDF2; --ink-2: #9FAAB8; --rule: #28323D; --mark: #E8913A; color-scheme: dark; }
 
 *, *::before, *::after { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -104,15 +107,16 @@ a:focus-visible, button:focus-visible {
 .theme-toggle:hover { color: var(--ink); }
 .theme-dot { width: 0.75rem; height: 0.75rem; border-radius: 50%; border: 1.5px solid currentColor; }
 .theme-toggle[aria-pressed="true"] .theme-dot { background: currentColor; }
+/* The name as on the homepage's card: Chinese in Noto Serif SC, English in italics */
 h1 {
   margin-top: clamp(1.5rem, 5vw, 3rem);
-  font-family: var(--display);
-  font-stretch: 125%;
-  font-weight: 700;
-  font-size: clamp(2.4rem, 7vw, 4.5rem);
-  line-height: 0.95;
-  letter-spacing: -0.025em;
+  display: flex; flex-wrap: wrap; align-items: baseline;
+  gap: 0 clamp(0.75rem, 2vw, 1.25rem);
+  font-weight: 400;
+  line-height: 1.1;
 }
+.h1-zh { font-family: "Noto Serif SC", "Songti SC", "STSong", "SimSun", var(--body); font-weight: 700; font-size: clamp(2.6rem, 7.5vw, 4.75rem); letter-spacing: 0.04em; }
+.h1-en { font-style: italic; font-size: clamp(2.2rem, 6vw, 3.75rem); }
 .lead { max-width: 40rem; }
 
 /* The photographs. Each figure is one grid track as wide as its photograph, so the caption lines
@@ -174,7 +178,7 @@ h1 {
     <a class="home" href="../">&larr; wentaoz.com</a>
     <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false" hidden><i class="theme-dot" aria-hidden="true"></i>Dark mode</button>
   </div>
-  <h1>Photography</h1>
+  <h1><span class="h1-zh" lang="zh-CN">显影</span><span class="h1-en">Developed</span></h1>
   <p class="lead">Mostly film. 35 mm on a Leica M3 and a Nikon 35Ti, panoramas on a Fuji TX-1; 6&times;6 on a Rolleiflex 2.8F; 4&times;5 on a large-format camera that also takes an Instax Wide back. Provia and Portra, and Kodak 5294 in 35 mm. I develop the film myself, scan it on an Epson V800, and print in the darkroom under an enlarger.</p>
 </header>
 
@@ -186,6 +190,13 @@ h1 {
       <img src="img/xpan-01-1200.jpg" srcset="img/xpan-01-600.jpg 600w, img/xpan-01-800.jpg 800w, img/xpan-01-1200.jpg 1200w, img/xpan-01-1600.jpg 1600w" sizes="(min-width: 1700px) and (min-height: 1060px) 1600px, (min-width: 1280px) and (min-height: 800px) 1200px, (min-width: 880px) and (min-height: 560px) 800px, min(100vw - 2rem, 241.43vh)" width="2000" height="729" alt="A sandy cove below dark, rocky cliffs, with blue-green surf breaking on the beach and dry golden grass in the foreground" fetchpriority="high" decoding="async">
     </picture>
     <figcaption><span class="photo-meta">Fuji TX-1</span></figcaption>
+  </figure>
+  <figure class="photo" id="4x5-01" style="--a:0.787;--m:376px;--l:564px;--xl:752px;--c:color(display-p3 0.452 0.463 0.441)">
+    <picture>
+      <source type="image/avif" srcset="img/4x5-01-282.avif 282w, img/4x5-01-376.avif 376w, img/4x5-01-564.avif 564w, img/4x5-01-752.avif 752w, img/4x5-01-846.avif 846w, img/4x5-01-1128.avif 1128w, img/4x5-01-1504.avif 1504w" sizes="(min-width: 1700px) and (min-height: 1060px) 752px, (min-width: 1280px) and (min-height: 800px) 564px, (min-width: 880px) and (min-height: 560px) 376px, min(100vw - 2rem, 69.26vh)">
+      <img src="img/4x5-01-564.jpg" srcset="img/4x5-01-282.jpg 282w, img/4x5-01-376.jpg 376w, img/4x5-01-564.jpg 564w, img/4x5-01-752.jpg 752w, img/4x5-01-1128.jpg 1128w" sizes="(min-width: 1700px) and (min-height: 1060px) 752px, (min-width: 1280px) and (min-height: 800px) 564px, (min-width: 880px) and (min-height: 560px) 376px, min(100vw - 2rem, 69.26vh)" width="1574" height="2000" alt="Cholla cacti, lit from behind so their spines glow, spread across a desert flat below a long mountain ridge; in front, the hollow skeleton of a dead cholla leans out of its own dark shadow" loading="lazy" decoding="async">
+    </picture>
+    <figcaption><span class="photo-meta">4×5</span></figcaption>
   </figure>
   <!-- photos:end -->
 </main>

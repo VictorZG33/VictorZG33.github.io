@@ -45,9 +45,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <title>Wentao Zhang</title>
 <!-- Only the widths and weights the page uses; the Chinese face is cut down to the characters
-     of the tool cards' names, 醉月历, 杰神模拟器, 滚落线 and 两清, so a new Chinese name needs adding to text= -->
+     of the tool cards' names, 醉月历, 杰神模拟器, 滚落线, 两清 and 显影, so a new Chinese name needs adding to text= -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..700&family=STIX+Two+Text:ital,wght@0,400..600;1,400&display=swap">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700&text=%E9%86%89%E6%9C%88%E5%8E%86%E6%9D%B0%E7%A5%9E%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%BB%9A%E8%90%BD%E7%BA%BF%E4%B8%A4%E6%B8%85&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700&text=%E9%86%89%E6%9C%88%E5%8E%86%E6%9D%B0%E7%A5%9E%E6%A8%A1%E6%8B%9F%E5%99%A8%E6%BB%9A%E8%90%BD%E7%BA%BF%E4%B8%A4%E6%B8%85%E6%98%BE%E5%BD%B1&display=swap">
 <style>
 /* Layout: one left-aligned column on a two-track grid (section name | content).
    The only full-width object is the film colour strip under the name. */
@@ -62,6 +62,8 @@
   --wm-fruit: #8A1C2D; --wm-flower: #A9781A; --wm-leaf: #2C6A4A; --wm-root: #6E4A2C;
   /* All Square's red ink (money owed) and green (money coming back), borrowed from that page */
   --sq-owed: #B3261E; --sq-back: #2F6B4F;
+  /* Developed: a darkroom safelight's amber */
+  --dev: #B4530F;
 
   --display: "Archivo", "Helvetica Neue", Arial, sans-serif;   /* name, section names, controls */
   --body: "STIX Two Text", "STIXGeneral", Cambria, "Times New Roman", serif;  /* running text, citations */
@@ -78,6 +80,7 @@
     --film: #3178D3; --film-mark: #3178D3;
     --wm-fruit: #E0667A; --wm-flower: #E2B657; --wm-leaf: #6FBF93; --wm-root: #C28E62;
     --sq-owed: #F0806F; --sq-back: #79C29C;
+    --dev: #E8913A;
     color-scheme: dark;
   }
 }
@@ -86,6 +89,7 @@
   --film: #3178D3; --film-mark: #3178D3;
   --wm-fruit: #E0667A; --wm-flower: #E2B657; --wm-leaf: #6FBF93; --wm-root: #C28E62;
   --sq-owed: #F0806F; --sq-back: #79C29C;
+  --dev: #E8913A;
   color-scheme: dark;
 }
 
@@ -384,24 +388,8 @@ a:focus-visible, button:focus-visible {
 }
 .kit dt { font-family: var(--display); font-weight: 650; color: var(--ink-2); }
 
-/* Photography: a contact sheet of the first photographs in the gallery, each a link to it there.
-   Every frame in a row has the same height: its width is its share of the row's widths over
-   heights (--s). Made by photography/tools/build.mjs, which writes between the photos markers. */
-.sheet { --gap: 4px; min-width: 0; }
-.sheet-row { display: flex; gap: var(--gap); }
-.sheet-row + .sheet-row { margin-top: var(--gap); }
-.sheet-row > a {
-  flex: none;
-  width: calc((100% - (var(--n) - 1) * var(--gap)) * var(--a) / var(--s));
-  aspect-ratio: var(--a);
-}
-.sheet picture { display: block; width: 100%; height: 100%; }
-.sheet img { display: block; width: 100%; height: 100%; object-fit: cover; background: var(--c, var(--rule)); }
-.sheet a:hover img { opacity: 0.85; }
-.sheet-more { font-size: var(--ui); }
-
-/* Tool cards (Wine Moon, Jieshen Simulator, Fall Line, All Square): the only boxed objects on the page, because each leads to a separate tool */
-.moon, .jie, .fl, .sq {
+/* Tool cards (Wine Moon, Jieshen Simulator, Fall Line, All Square, Developed): the only boxed objects on the page, because each leads to a separate page */
+.moon, .jie, .fl, .sq, .dev {
   --wm: var(--ink-2);
   display: grid; gap: 0.625rem;
   padding: 1.125rem 1.25rem 1.125rem 1.375rem;
@@ -410,22 +398,22 @@ a:focus-visible, button:focus-visible {
   color: inherit;
   text-decoration: none;
 }
-.moon:hover, .jie:hover, .fl:hover, .sq:hover { border-color: var(--ink); border-left-color: var(--wm); }
+.moon:hover, .jie:hover, .fl:hover, .sq:hover, .dev:hover { border-color: var(--ink); border-left-color: var(--wm); }
 .moon.day-fruit { --wm: var(--wm-fruit); }
 .moon.day-flower { --wm: var(--wm-flower); }
 .moon.day-leaf { --wm: var(--wm-leaf); }
 .moon.day-root { --wm: var(--wm-root); }
-.moon-head, .jie-head, .fl-head, .sq-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.625rem; }
-.moon-zh, .jie-zh, .fl-zh, .sq-zh { font-family: "Noto Serif SC", "Songti SC", "STSong", "SimSun", var(--body); font-weight: 700; font-size: 1.375rem; letter-spacing: 0.04em; }
-.moon-en, .jie-en, .fl-en, .sq-en { font-style: italic; font-size: 1.25rem; }
+.moon-head, .jie-head, .fl-head, .sq-head, .dev-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.625rem; }
+.moon-zh, .jie-zh, .fl-zh, .sq-zh, .dev-zh { font-family: "Noto Serif SC", "Songti SC", "STSong", "SimSun", var(--body); font-weight: 700; font-size: 1.375rem; letter-spacing: 0.04em; }
+.moon-en, .jie-en, .fl-en, .sq-en, .dev-en { font-style: italic; font-size: 1.25rem; }
 .moon-live, .jie-live {
   display: flex; align-items: center; gap: 0.5rem;
   font-family: var(--display); font-weight: 650; font-size: var(--ui);
   color: var(--wm);
 }
 .moon-dot { width: 0.75rem; height: 0.75rem; border-radius: 50%; background: var(--wm); flex: none; }
-.moon-desc, .jie-desc, .fl-desc, .sq-desc { font-size: var(--ui); line-height: 1.5; color: var(--ink-2); }
-.moon-cta, .jie-cta, .fl-cta, .sq-cta {
+.moon-desc, .jie-desc, .fl-desc, .sq-desc, .dev-desc { font-size: var(--ui); line-height: 1.5; color: var(--ink-2); }
+.moon-cta, .jie-cta, .fl-cta, .sq-cta, .dev-cta {
   font-family: var(--display); font-weight: 650; font-size: var(--small);
   text-decoration: underline; text-decoration-color: var(--film-mark); text-decoration-thickness: 2px; text-underline-offset: 0.2em;
 }
@@ -449,6 +437,19 @@ a:focus-visible, button:focus-visible {
   font-family: var(--display); font-weight: 650; font-size: var(--ui);
 }
 .fl-strip, .sq-strip { width: 4.5rem; height: 0.75rem; flex: none; background: linear-gradient(90deg, var(--bands)); }
+/* Developed, the photography gallery, in the amber of a darkroom safelight. Its strip shows the
+   first photographs at one height: each frame's width is its share of the strip's widths over
+   heights (--s). photography/tools/build.mjs writes the strip between the photos markers. */
+.dev { --wm: var(--dev); }
+.dev-frames { display: flex; gap: 4px; min-width: 0; margin-block: 0.25rem 0.125rem; }
+.dev-frames > span {
+  flex: none;
+  width: calc((100% - (var(--n) - 1) * 4px) * var(--a) / var(--s));
+  aspect-ratio: var(--a);
+}
+.dev-frames picture, .dev-frames img { display: block; width: 100%; height: 100%; }
+.dev-frames img { object-fit: cover; background: var(--c, var(--rule)); }
+.dev-live { font-family: var(--display); font-weight: 650; font-size: var(--ui); color: var(--wm); }
 
 /* Contact */
 .contact { display: grid; gap: 1rem; justify-items: start; }
@@ -527,7 +528,7 @@ button.copy:hover { background: var(--ink); color: var(--bg); }
   .edu, .hobbies { gap: 0.75rem; }
   .row { grid-template-columns: 8rem minmax(0, 1fr); column-gap: 1.5rem; }
   .row h2 { padding-top: 0.28em; }
-  .theme-toggle, .copy, .material, .tabs, .moon, .jie, .fl, .sq, .sheet, .film-cursor, .spectrum, #visitors { display: none !important; }
+  .theme-toggle, .copy, .material, .tabs, .moon, .jie, .fl, .sq, .dev, .film-cursor, .spectrum, #visitors { display: none !important; }
   .hobbies .panel[hidden] { display: grid !important; }
   .panel::before { content: attr(data-title); font-family: var(--display); font-weight: 650; font-size: var(--ui); }
   .film-strip, .swatch { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -713,14 +714,18 @@ button.copy:hover { background: var(--ink); color: var(--bg); }
 
       <div class="panel" role="tabpanel" id="panel-photography" aria-labelledby="tab-photography" data-title="Photography">
         <p>Mostly film. 35 mm on a Leica M3 and a Nikon 35Ti, panoramas on a Fuji TX-1; 6&times;6 on a Rolleiflex 2.8F; 4&times;5 on a large-format camera that also takes an Instax Wide back. Provia and Portra, and Kodak 5294 in 35 mm. I develop the film myself, scan it on an Epson V800, and print in the darkroom under an enlarger. Astrophotography when the sky cooperates.</p>
-        <!-- photos:start -->
-        <div class="sheet">
-          <div class="sheet-row" style="--n:1;--s:2.7435">
-            <a href="photography/#xpan-01" style="--a:2.7435;--c:color(display-p3 0.357 0.331 0.295)"><picture><source type="image/avif" srcset="photography/img/xpan-01-600.avif 600w, photography/img/xpan-01-800.avif 800w, photography/img/xpan-01-1200.avif 1200w, photography/img/xpan-01-1600.avif 1600w" sizes="(min-width: 46rem) 640px, calc(100vw - 2rem)"><img src="photography/img/xpan-01-600.jpg" srcset="photography/img/xpan-01-600.jpg 600w, photography/img/xpan-01-800.jpg 800w, photography/img/xpan-01-1200.jpg 1200w, photography/img/xpan-01-1600.jpg 1600w" sizes="(min-width: 46rem) 640px, calc(100vw - 2rem)" width="2000" height="729" alt="A sandy cove below dark, rocky cliffs, with blue-green surf breaking on the beach and dry golden grass in the foreground" loading="lazy" decoding="async"></picture></a>
-          </div>
-        </div>
-        <p class="sheet-more"><a href="photography/">See it full size</a></p>
-        <!-- photos:end -->
+        <a class="dev" href="photography/">
+          <span class="dev-head"><span class="dev-zh" lang="zh-CN">显影</span><span class="dev-en">Developed</span></span>
+          <!-- photos:start -->
+          <span class="dev-frames" style="--n:2;--s:3.5305">
+            <span style="--a:2.7435;--c:color(display-p3 0.357 0.331 0.295)"><picture><source type="image/avif" srcset="photography/img/xpan-01-600.avif 600w, photography/img/xpan-01-800.avif 800w, photography/img/xpan-01-1200.avif 1200w, photography/img/xpan-01-1600.avif 1600w" sizes="(min-width: 46rem) 461px, calc(77.71vw - 1.554rem - 36.5px)"><img src="photography/img/xpan-01-600.jpg" srcset="photography/img/xpan-01-600.jpg 600w, photography/img/xpan-01-800.jpg 800w, photography/img/xpan-01-1200.jpg 1200w, photography/img/xpan-01-1600.jpg 1600w" sizes="(min-width: 46rem) 461px, calc(77.71vw - 1.554rem - 36.5px)" width="2000" height="729" alt="" loading="lazy" decoding="async"></picture></span>
+            <span style="--a:0.787;--c:color(display-p3 0.452 0.463 0.441)"><picture><source type="image/avif" srcset="photography/img/4x5-01-282.avif 282w, photography/img/4x5-01-376.avif 376w, photography/img/4x5-01-564.avif 564w, photography/img/4x5-01-752.avif 752w" sizes="(min-width: 46rem) 132px, calc(22.29vw - 0.446rem - 10.5px)"><img src="photography/img/4x5-01-282.jpg" srcset="photography/img/4x5-01-282.jpg 282w, photography/img/4x5-01-376.jpg 376w, photography/img/4x5-01-564.jpg 564w, photography/img/4x5-01-752.jpg 752w" sizes="(min-width: 46rem) 132px, calc(22.29vw - 0.446rem - 10.5px)" width="1574" height="2000" alt="" loading="lazy" decoding="async"></picture></span>
+          </span>
+          <span class="dev-live">2 photographs so far</span>
+          <!-- photos:end -->
+          <span class="dev-desc">A gallery of my film photographs, from XPan panoramas to 4&times;5 sheets, developed and scanned at home. Each screen is sent every photograph at exactly the size it shows, so each pixel of the scan lands on one pixel of yours.</span>
+          <span class="dev-cta">Open the gallery</span>
+        </a>
       </div>
     </div>
   </section>
