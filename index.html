@@ -384,6 +384,22 @@ a:focus-visible, button:focus-visible {
 }
 .kit dt { font-family: var(--display); font-weight: 650; color: var(--ink-2); }
 
+/* Photography: a contact sheet of the first photographs in the gallery, each a link to it there.
+   Every frame in a row has the same height: its width is its share of the row's widths over
+   heights (--s). Made by photography/tools/build.mjs, which writes between the photos markers. */
+.sheet { --gap: 4px; min-width: 0; }
+.sheet-row { display: flex; gap: var(--gap); }
+.sheet-row + .sheet-row { margin-top: var(--gap); }
+.sheet-row > a {
+  flex: none;
+  width: calc((100% - (var(--n) - 1) * var(--gap)) * var(--a) / var(--s));
+  aspect-ratio: var(--a);
+}
+.sheet picture { display: block; width: 100%; height: 100%; }
+.sheet img { display: block; width: 100%; height: 100%; object-fit: cover; background: var(--c, var(--rule)); }
+.sheet a:hover img { opacity: 0.85; }
+.sheet-more { font-size: var(--ui); }
+
 /* Tool cards (Wine Moon, Jieshen Simulator, Fall Line, All Square): the only boxed objects on the page, because each leads to a separate tool */
 .moon, .jie, .fl, .sq {
   --wm: var(--ink-2);
@@ -511,7 +527,7 @@ button.copy:hover { background: var(--ink); color: var(--bg); }
   .edu, .hobbies { gap: 0.75rem; }
   .row { grid-template-columns: 8rem minmax(0, 1fr); column-gap: 1.5rem; }
   .row h2 { padding-top: 0.28em; }
-  .theme-toggle, .copy, .material, .tabs, .moon, .jie, .fl, .sq, .film-cursor, .spectrum, #visitors { display: none !important; }
+  .theme-toggle, .copy, .material, .tabs, .moon, .jie, .fl, .sq, .sheet, .film-cursor, .spectrum, #visitors { display: none !important; }
   .hobbies .panel[hidden] { display: grid !important; }
   .panel::before { content: attr(data-title); font-family: var(--display); font-weight: 650; font-size: var(--ui); }
   .film-strip, .swatch { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -697,6 +713,14 @@ button.copy:hover { background: var(--ink); color: var(--bg); }
 
       <div class="panel" role="tabpanel" id="panel-photography" aria-labelledby="tab-photography" data-title="Photography">
         <p>Mostly film. 35 mm on a Leica M3 and a Nikon 35Ti, panoramas on a Fuji TX-1; 6&times;6 on a Rolleiflex 2.8F; 4&times;5 on a large-format camera that also takes an Instax Wide back. Provia and Portra, and Kodak 5294 in 35 mm. I develop the film myself, scan it on an Epson V800, and print in the darkroom under an enlarger. Astrophotography when the sky cooperates.</p>
+        <!-- photos:start -->
+        <div class="sheet">
+          <div class="sheet-row" style="--n:1;--s:2.7435">
+            <a href="photography/#xpan-01" style="--a:2.7435;--c:color(display-p3 0.357 0.331 0.295)"><picture><source type="image/avif" srcset="photography/img/xpan-01-600.avif 600w, photography/img/xpan-01-800.avif 800w, photography/img/xpan-01-1200.avif 1200w, photography/img/xpan-01-1600.avif 1600w" sizes="(min-width: 46rem) 640px, calc(100vw - 2rem)"><img src="photography/img/xpan-01-600.jpg" srcset="photography/img/xpan-01-600.jpg 600w, photography/img/xpan-01-800.jpg 800w, photography/img/xpan-01-1200.jpg 1200w, photography/img/xpan-01-1600.jpg 1600w" sizes="(min-width: 46rem) 640px, calc(100vw - 2rem)" width="2000" height="729" alt="A sandy cove below dark, rocky cliffs, with blue-green surf breaking on the beach and dry golden grass in the foreground" loading="lazy" decoding="async"></picture></a>
+          </div>
+        </div>
+        <p class="sheet-more"><a href="photography/">See it full size</a></p>
+        <!-- photos:end -->
       </div>
     </div>
   </section>
