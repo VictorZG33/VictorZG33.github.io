@@ -48,10 +48,11 @@ const FLUID_HEIGHT = 0.88;
 
 // Widths made, as multiples of the photograph's width in the 400 × 240 box: every box at 1x, 1.5x
 // and 2x, and 1.5 for the contact sheet. JPEG leaves out l at 1.5x and xl at 2x, which only
-// screens recent enough for AVIF ask for.
+// screens recent enough for AVIF ask for. The contact sheet offers up to 4, enough for a
+// panorama alone in a row, 640 px wide, on a 2x screen.
 const AVIF_WIDTHS = [1.5, 2, 3, 4, 4.5, 6, 8];
 const JPEG_WIDTHS = [1.5, 2, 3, 4, 6];
-const SHEET_WIDTHS = [1.5, 2, 3];
+const SHEET_WIDTHS = [1.5, 2, 3, 4];
 
 // Output sharpening, applied after each resize: a small radius, on edges only (m1: 0 leaves flat
 // areas, and so the grain, alone). AVIF at 72 keeps film grain that 60, or effort 4, smooths away.
@@ -170,8 +171,9 @@ async function makeFiles(p, master) {
   const meta = await sharp(master).metadata();
   ({ width: p.width, height: p.height } = meta.autoOrient);
   const b = base(p);
-  if (8 * b > p.width) {
-    warn(`${p.id}: the master is ${p.width} px wide; the largest windows on 2x screens show it at ${8 * b} px, so it will be enlarged there. Export it larger.`);
+  const short = AVIF_WIDTHS.map((k) => k * b).filter((w) => w > p.width);
+  if (short.length) {
+    warn(`${p.id}: the master is ${p.width} px wide, short of the ${short.join(' and ')} px some screens show it at, so they get it enlarged. Export it at least ${8 * b} px wide.`);
   }
   const masterTime = await mtime(master);
   const todo = [];
@@ -376,7 +378,7 @@ await writeFile(LIST, JSON.stringify(photos.map(({ color, ...p }) => tidy(p)), n
 
 let bytes = 0;
 for (const n of keep) bytes += (await stat(path.join(IMG, n))).size;
-console.log(`${shown.length} photographs on the pages, ${keep.size} files, ${(bytes / 1e6).toFixed(1)} MB in photography/img`);
+console.log(`${shown.length} photograph${shown.length === 1 ? '' : 's'} on the pages, ${keep.size} files, ${(bytes / 1e6).toFixed(1)} MB in photography/img`);
 const untitled = shown.filter((p) => !p.alt);
 if (untitled.length) {
   warn(`No alt text (a description for people who can't see the photograph) for ${untitled.map((p) => p.id).join(', ')}; add "alt" in photos.json${untitled.some((p) => p.title) ? ' (the title stands in for now)' : ''}.`);
