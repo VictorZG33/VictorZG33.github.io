@@ -1,14 +1,42 @@
 {
- "updated": "2026-10-28",
+ "updated": "2026-10-29",
  "since": "2026-10-23",
- "total": 31,
+ "total": 49,
  "countries": [
   {
    "code": "US",
    "name": "United States",
-   "count": 31,
+   "count": 41,
    "lat": 38,
    "lon": -97
+  },
+  {
+   "code": "NL",
+   "name": "Netherlands",
+   "count": 3,
+   "lat": 52.5,
+   "lon": 5.75
+  },
+  {
+   "code": "VN",
+   "name": "Vietnam",
+   "count": 3,
+   "lat": 16.17,
+   "lon": 107.83
+  },
+  {
+   "code": "AT",
+   "name": "Austria",
+   "count": 1,
+   "lat": 47.33,
+   "lon": 13.33
+  },
+  {
+   "code": "CA",
+   "name": "Canada",
+   "count": 1,
+   "lat": 60,
+   "lon": -95
   }
  ]
 }
