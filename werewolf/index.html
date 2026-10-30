@@ -187,6 +187,13 @@ input[type="text"]::placeholder { color: var(--muted); opacity: 0.8; }
 .ev button { appearance: none; flex: none; width: 32px; height: 32px; border: 0; border-radius: 50%; background: none; color: var(--muted); font-size: 18px; line-height: 1; cursor: pointer; }
 .ev button:hover { background: var(--rule); color: var(--fg); }
 .round-foot { display: flex; justify-content: flex-end; }
+.sub-label { margin: 4px 0 0; font-size: 13px; font-weight: 500; color: var(--muted); }
+.vote-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px 16px; }
+.vote-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.vote-row .who { flex: none; width: 4.4em; font-size: 14px; color: var(--muted); }
+.vote-row .chip { min-height: 34px; padding: 5px 12px; }
+.chief-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 14.5px; }
+.chief-row select { min-height: 38px; padding: 6px 10px; }
 #add-round { width: 100%; }
 
 /* the composer: a line of text, read as it is typed, and a keypad that writes the same text */
@@ -361,7 +368,7 @@ footer .link-btn { margin-left: auto; }
     </form>
     <div class="preview" id="say-preview" aria-live="polite"></div>
     <div class="pad" id="pad" aria-label="快捷键盘"></div>
-    <p class="hint" id="say-hint">不同人的发言用逗号或换行隔开。能写：踩、狠踩、轻踩、保、站边、投；跳预言家（跳女巫、跳猎人、跳民…）；验2金水、查杀2、救2（银水）、毒2；开枪带走5、自爆、出局、翻牌。几个人一起写成 1、2、3投5，一人说几件事写成 3踩5保7。</p>
+    <p class="hint" id="say-hint">不同人的发言用逗号或换行隔开。能写：踩、狠踩、轻踩、保、站边、投；跳预言家（跳女巫、跳猎人、跳民…）；验2金水、查杀2、救2（银水）、毒2；开枪带走5、自爆、出局、翻牌。几个人一起写成 1、2、3投5，一人说几件事写成 3踩5保7。警长竞选可以在上面点，也可以写：上警：1、3、6，3退水，警下投票：2、4投6，6当选警长，6移交警徽给9。</p>
   </div>
 
   <section class="step" id="step-read" aria-labelledby="h-read">
@@ -389,6 +396,7 @@ footer .link-btn { margin-left: auto; }
       <p>把板子上的牌发给每个座位，有很多种发法，每一种都是一个可能的局面。一开始每种局面一样可能。之后每条信息都会按“这个局面下出现这条信息有多正常”去调整每种局面的分量，最后把所有局面加起来，就得到每个人是狼的可能、每个人是什么身份的可能、每两个人在同一边的可能。12 人局有 495 种狼坑，每种狼坑里神职的分法也全部算到。</p>
       <p><b>发言。</b>踩和投票说明两个人多半不在一边，但不说明谁是狼：好人踩狼、狼踩好人都很常见，狼踩、投自己队友很少见。保和站边反过来，说明两个人多半在一边。比例大致是：<span class="k">踩 好好 1 · 好狼 1.6 · 狼好 1.6 · 狼狼 0.3；投票 1 · 1.8 · 1.8 · 0.25；保 1.4 · 0.8 · 0.8 · 1.6；站边 1.6 · 0.6 · 0.7 · 2</span>。狠踩、强保按 1.7 倍算，轻踩、轻保、怀疑按一半算。同一句话每轮都说，就每轮都算一次。</p>
       <p><b>跳身份。</b>真预言家几乎一定会跳，狼队大约六成会派一只狼悍跳预言家，好人假跳预言家很少。别人跳了你的身份你却不出来对跳，真预言家很少这样，猎人、白痴可以先藏着。所以只有一个人跳预言家时，他多半是真的；两个人对跳，多半一真一狼。</p>
+      <p><b>警长竞选。</b>真预言家几乎一定上警，要拿警徽、留警徽流，也几乎不会退水，所以没上警或者退了水的人，基本可以排除是预言家。狼队一般派两只左右上警，悍跳的那只一定在警上；女巫、守卫常常留在警下藏身份。警下投给谁按站边算，只是弱一点；警长死前把警徽移交给谁，说明两人多半一边，比站边还强。</p>
       <p><b>验人。</b>真预言家的金水、查杀不会错。狼悍跳时，金水常常发给狼队友，查杀几乎总是打在好人身上。女巫说的银水是当晚的刀口，除非狼自刀，银水是好人。</p>
       <p><b>夜里。</b>被刀的人几乎都是好人（狼很少自刀）。有女巫的板子，一晚死两个，通常是一刀一毒，毒的那个更可能是狼。猎人开枪说明他是猎人，被带走的人更像狼；自爆的一定是狼；翻牌的是白痴。你填了自己的身份，就当作确定的：你是预言家，你的验人结果也是确定的；你是女巫，你看到的刀口就是好人。</p>
       <p>这些比例是按常见打法估的，不是从真实对局里统计出来的，所以结果是一个有依据的参考，不是定论。点开每个人，能看到哪几条信息对他的影响最大。所有计算都在你的浏览器里完成，记录只存在这台设备上。</p>
@@ -423,9 +431,11 @@ const PRESETS = [
   { name: '预女猎', n: 9, board: { villager: 3, wolf: 3, seer: 1, witch: 1, hunter: 1, idiot: 0, guard: 0 } },
   { name: '预猎', n: 6, board: { villager: 2, wolf: 2, seer: 1, witch: 0, hunter: 1, idiot: 0, guard: 0 } }
 ];
-const newRound = () => ({ deaths: [], check: null, knife: 0, poison: 0, events: [] });
+const emptySheriff = () => ({ run: [], quit: [], votes: {}, chief: 0 });
+// the first day opens with the sheriff election; a later day has one only if the badge was swallowed (吞警徽)
+const newRound = (first) => ({ deaths: [], check: null, knife: 0, poison: 0, sheriff: first ? emptySheriff() : null, events: [] });
 
-let state = { n: 12, board: Object.assign({}, PRESETS[0].board), me: { seat: 0, role: '', mates: [] }, rounds: [newRound()], active: 0 };
+let state = { n: 12, board: Object.assign({}, PRESETS[0].board), me: { seat: 0, role: '', mates: [] }, rounds: [newRound(true)], active: 0 };
 let result = null, open = 0, cell = null, explainToken = 0, explained = {};
 
 function game() { return { n: state.n, board: state.board, me: state.me, rounds: state.rounds }; }
@@ -437,17 +447,25 @@ function load() {
     const board = {};
     BOARD_ROLES.forEach((r) => { board[r] = Math.max(0, Math.min(MAX_PLAYERS, s.board[r] | 0)); });
     const seat = (v) => (Number.isInteger(v) && v >= 1 && v <= MAX_PLAYERS ? v : 0);
-    const rounds = s.rounds.filter((r) => r && typeof r === 'object').map((r) => ({
+    const list = (a) => (Array.isArray(a) ? a.map(seat).filter(Boolean) : []);
+    const sheriffOf = (x, k) => {
+      if (!x || typeof x !== 'object') return k === 0 ? emptySheriff() : null;
+      const votes = {};
+      if (x.votes && typeof x.votes === 'object') Object.keys(x.votes).forEach((v) => { if (seat(+v) && seat(x.votes[v])) votes[+v] = x.votes[v]; });
+      return { run: list(x.run), quit: list(x.quit), votes: votes, chief: seat(x.chief) };
+    };
+    const rounds = s.rounds.filter((r) => r && typeof r === 'object').map((r, k) => ({
       deaths: Array.isArray(r.deaths) ? r.deaths.map(seat).filter(Boolean) : [],
       check: r.check && seat(r.check.seat) ? { seat: r.check.seat, wolf: !!r.check.wolf } : null,
       knife: seat(r.knife), poison: seat(r.poison),
+      sheriff: sheriffOf(r.sheriff, k),
       events: Array.isArray(r.events) ? r.events.filter((e) => e && typeof e.t === 'string' && seat(e.a)) : []
     }));
     const me = s.me || {};
     state = {
       n: s.n, board: board,
       me: { seat: seat(me.seat), role: typeof me.role === 'string' && BOARD_ROLES.indexOf(me.role) >= 0 ? me.role : '', mates: Array.isArray(me.mates) ? me.mates.map(seat).filter(Boolean) : [] },
-      rounds: rounds.length ? rounds : [newRound()],
+      rounds: rounds.length ? rounds : [newRound(true)],
       active: Math.min(Math.max(0, s.active | 0), Math.max(0, rounds.length - 1))
     };
   } catch (e) {}
@@ -555,8 +573,9 @@ function deadBefore(k) {
   return gone;
 }
 function roundSummary(rd) {
-  const parts = [];
+  const parts = [], sh = rd.sheriff;
   parts.push(rd.deaths.length ? rd.deaths.slice().sort((a, b) => a - b).join('、') + ' 号夜里死了' : '平安夜');
+  if (sh && sh.run.length) parts.push(sh.run.length + ' 人上警' + (sh.chief ? '，' + sh.chief + ' 号当选警长' : ''));
   parts.push(rd.events.length ? rd.events.length + ' 条发言和结果' : '还没有发言');
   return parts.join(' · ');
 }
@@ -634,6 +653,7 @@ function renderRounds() {
         night.append(p);
       }
       body.append(night);
+      body.append(rd.sheriff ? sheriffPhase(rd, k) : addSheriff(rd));
       // day
       const day = h('div', 'phase');
       const dh = h('h4', 'phase-h');
@@ -676,6 +696,88 @@ function renderRounds() {
   $('rounds-count').textContent = state.rounds.length + ' 轮';
   renderPad();
 }
+function addSheriff(rd) {
+  const d = h('div'), b = h('button', 'link-btn', '这一天有警长竞选（比如前一天警徽被吞）');
+  b.type = 'button';
+  b.addEventListener('click', () => { rd.sheriff = emptySheriff(); changed(); });
+  d.append(b);
+  return d;
+}
+// the sheriff election: who ran, who withdrew, how the players who stayed down voted, and who won
+function sheriffPhase(rd, k) {
+  const sh = rd.sheriff, ph = h('div', 'phase'), gone = deadBefore(k);
+  const hh = h('h4', 'phase-h');
+  hh.append(h('span', 'sun', '★'), document.createTextNode('第 ' + (k + 1) + ' 天 · 警长竞选'));
+  ph.append(hh);
+  // on the first day the election comes before the night's deaths are read out, so last night's dead can run
+  const eligible = [];
+  for (let i = 1; i <= state.n; i++) if (!gone[i] && (k === 0 || rd.deaths.indexOf(i) < 0)) eligible.push(i);
+  const toggle = (arr, i) => (arr.indexOf(i) >= 0 ? arr.filter((x) => x !== i) : arr.concat(i).sort((a, b) => a - b));
+  const tidy = () => Object.keys(sh.votes).forEach((v) => { const c = sh.votes[v]; if (sh.run.indexOf(+v) >= 0 || sh.run.indexOf(c) < 0 || sh.quit.indexOf(c) >= 0) delete sh.votes[v]; });
+  const chipRow = (seats, on, click) => {
+    const c = h('div', 'chips');
+    seats.forEach((i) => {
+      const b = h('button', 'chip', i + ' 号');
+      b.type = 'button';
+      b.setAttribute('aria-pressed', on(i) ? 'true' : 'false');
+      b.addEventListener('click', () => { click(i); tidy(); changed(); });
+      c.append(b);
+    });
+    return c;
+  };
+  ph.append(h('p', 'sub-label', '谁上警' + (k === 0 ? '（第一天先竞选再公布死讯，昨晚死的人也可以上警。没竞选就不用点）' : '')));
+  ph.append(chipRow(eligible, (i) => sh.run.indexOf(i) >= 0, (i) => {
+    sh.run = toggle(sh.run, i);
+    if (sh.run.indexOf(i) < 0) { sh.quit = sh.quit.filter((x) => x !== i); if (sh.chief === i) sh.chief = 0; }
+  }));
+  if (sh.run.length) {
+    const down = eligible.filter((i) => sh.run.indexOf(i) < 0);
+    ph.append(h('p', 'phase-note', down.length ? '警下：' + down.join('、') + ' 号' : '全员上警，没有警下'));
+    ph.append(h('p', 'sub-label', '谁退水'));
+    ph.append(chipRow(sh.run, (i) => sh.quit.indexOf(i) >= 0, (i) => {
+      sh.quit = toggle(sh.quit, i);
+      if (sh.quit.indexOf(i) >= 0 && sh.chief === i) sh.chief = 0;
+    }));
+    const cands = sh.run.filter((i) => sh.quit.indexOf(i) < 0);
+    if (cands.length && down.length) {
+      ph.append(h('p', 'sub-label', '警下投票（不点就是弃票）'));
+      const grid = h('div', 'vote-grid');
+      down.forEach((v) => {
+        const row = h('div', 'vote-row');
+        row.append(h('span', 'who', v + ' 号投'));
+        cands.forEach((c) => {
+          const b = h('button', 'chip', c + ' 号');
+          b.type = 'button';
+          b.setAttribute('aria-pressed', sh.votes[v] === c ? 'true' : 'false');
+          b.setAttribute('aria-label', v + ' 号投给 ' + c + ' 号');
+          b.addEventListener('click', () => { if (sh.votes[v] === c) delete sh.votes[v]; else sh.votes[v] = c; changed(); });
+          row.append(b);
+        });
+        grid.append(row);
+      });
+      ph.append(grid);
+    }
+    if (cands.length) {
+      const row = h('div', 'chief-row'), sel = h('select');
+      sel.setAttribute('aria-label', '当选警长');
+      sel.append(new Option('没人当选（警徽流失）', '0'));
+      cands.forEach((c) => sel.append(new Option(c + ' 号', String(c))));
+      sel.value = String(cands.indexOf(sh.chief) >= 0 ? sh.chief : 0);
+      sel.addEventListener('change', () => { sh.chief = parseInt(sel.value, 10) || 0; changed(); });
+      row.append(document.createTextNode('当选警长'), sel);
+      ph.append(row);
+    }
+  }
+  if (k > 0) {
+    const del = h('button', 'link-btn', '这一天没有竞选');
+    del.type = 'button';
+    del.addEventListener('click', () => { rd.sheriff = null; changed(); });
+    const f = h('div');
+    f.append(del);
+    ph.append(f);
+  }
+  return ph;
+}
 $('add-round').addEventListener('click', () => {
   state.rounds.push(newRound());
   state.active = state.rounds.length - 1;
@@ -701,13 +803,25 @@ $('say-form').addEventListener('submit', (ev) => {
   ev.preventDefault();
   const r = preview();
   if (!r || !r.events.length) return;
-  state.rounds[state.active].events.push(...r.events);
+  fileEvents(state.rounds[state.active], r.events);
   input.value = '';
   pieces = [];
   $('say-preview').textContent = '';
   if (r.notes.length) $('say-preview').append(h('p', 'pv-note', '已记下能看懂的部分。' + r.notes.join('；')));
   changed();
 });
+// statements go on the day's list; 上警, 退水, 当选 and votes for the badge go into the day's election
+function fileEvents(rd, events) {
+  events.forEach((e) => {
+    if (['run', 'quit', 'chief', 'bvote'].indexOf(e.t) < 0) { rd.events.push(e); return; }
+    const sh = rd.sheriff || (rd.sheriff = emptySheriff());
+    const runs = (i) => { if (sh.run.indexOf(i) < 0) { sh.run.push(i); sh.run.sort((a, b) => a - b); } delete sh.votes[i]; };
+    if (e.t === 'run') runs(e.a);
+    else if (e.t === 'quit') { runs(e.a); if (sh.quit.indexOf(e.a) < 0) sh.quit.push(e.a); }
+    else if (e.t === 'chief') { runs(e.a); sh.chief = e.a; }
+    else { runs(e.b); sh.votes[e.a] = e.b; }
+  });
+}
 function typeIn(piece) {
   let v = input.value;
   if (pieces.join('') !== v) pieces = v ? [v] : [];
@@ -749,6 +863,7 @@ function renderPad() {
   acts.push(key('出局', '出局'), key('自爆', '自爆'));
   if (b.idiot > 0) acts.push(key('翻牌', '翻牌'));
   row(acts);
+  row([key('上警', '上警'), key('退水', '退水'), key('警下投', '投警徽'), key('当选警长', '当选警长'), key('移交警徽', '移交警徽给'), key('撕警徽', '撕警徽')]);
 }
 
 // ---------- step 3: the reading ----------
@@ -764,10 +879,26 @@ function rolesOf(i) {
   const r = result.role[i];
   return Object.keys(r).map((k) => ({ k: k, p: r[k] })).sort((a, b) => b.p - a.p);
 }
+// who holds the badge now: the winner of the last election, then whoever each dying sheriff passed it to
+function chiefNow() {
+  let chief = 0;
+  state.rounds.forEach((rd) => {
+    if (rd.sheriff && rd.sheriff.chief) chief = rd.sheriff.chief;
+    rd.events.forEach((e) => { if (e.a === chief && e.t === 'badge') chief = e.b; else if (e.a === chief && e.t === 'tear') chief = 0; });
+  });
+  return chief;
+}
 function tagsOf(seat, st) {
   const tags = [], claimed = {}, s = st[seat];
   if (state.me.seat === seat) tags.push({ t: '你', hard: true });
+  if (chiefNow() === seat) tags.push({ t: '警长', hard: true });
   state.rounds.forEach((rd, k) => {
+    const sh = rd.sheriff;
+    if (sh && sh.run.length) {
+      if (sh.quit.indexOf(seat) >= 0) tags.push({ t: '上警后退水' });
+      else if (sh.run.indexOf(seat) >= 0) tags.push({ t: '上警' });
+      if (sh.votes[seat]) tags.push({ t: '警下投 ' + sh.votes[seat] });
+    }
     rd.events.forEach((e) => {
       if (e.a === seat && e.t === 'claim' && !claimed[e.r]) { claimed[e.r] = 1; tags.push({ t: '跳' + ROLE_ZH[e.r] }); }
       if (e.a === seat && e.t === 'check' && !claimed.seer) { claimed.seer = 1; tags.push({ t: '跳预言家' }); }
@@ -989,7 +1120,7 @@ $('reset').addEventListener('click', (ev) => {
   }
   b.classList.remove('sure');
   b.textContent = '重开一局';
-  state.rounds = [newRound()];
+  state.rounds = [newRound(true)];
   state.active = 0;
   state.me.role = '';
   state.me.mates = [];

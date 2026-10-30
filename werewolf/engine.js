@@ -24,8 +24,20 @@ const SPEECH = {
   sup: [1.4, 0.8, 0.8, 1.6],      // 保: vouches for the target
   side: [1.6, 0.6, 0.7, 2.0],     // 站边: takes the target's side in a dispute, usually between two seers
   vote: [1.0, 1.8, 1.8, 0.25],    // 投: votes the target out
-  poison: [1.0, 1.8, 1.6, 0.3]    // 毒: says they poisoned the target
+  poison: [1.0, 1.8, 1.6, 0.3],   // 毒: says they poisoned the target
+  bvote: [1.4, 0.7, 0.75, 1.8],   // 警下投票: votes for the target to be sheriff
+  badge: [1.6, 0.6, 0.6, 2.2]     // 移交警徽: a dying sheriff hands the target the badge
 };
+
+// The sheriff election (警长竞选). The chance that each role runs (上警): the true seer nearly always runs,
+// to win the badge and leave a check order; a wolf team usually sends two, the fake seer among them; the
+// witch and the guard often stay down to keep hidden.
+const RUN = { seer: 0.92, wolf: 0.5, witch: 0.35, hunter: 0.55, idiot: 0.6, guard: 0.35, villager: 0.45 };
+// The chance that a candidate withdraws (退水). A true seer almost never does.
+const QUIT = { seer: 0.05, wolf: 0.35, witch: 0.45, hunter: 0.4, idiot: 0.4, guard: 0.45, villager: 0.45 };
+// A wolf posing as the seer runs as surely as the real one, so for a seer claimant running says nothing;
+// withdrawing still does, as the fake one gives up more easily.
+const CLAIMANT_QUIT = 0.2;
 
 // Claims. The chance that a player with each real role makes a claim:
 const CLAIM_TRUE = { seer: 0.9, witch: 0.8, hunter: 0.7, idiot: 0.6, guard: 0.6, villager: 0.6 };
@@ -73,6 +85,14 @@ const LEX = [
   ['预言家', 'role', 'seer'], ['预', 'role', 'seer'], ['女巫', 'role', 'witch'], ['巫', 'role', 'witch'],
   ['猎人', 'role', 'hunter'], ['猎', 'role', 'hunter'], ['白痴', 'role', 'idiot'], ['守卫', 'role', 'guard'], ['守', 'role', 'guard'],
   ['村民', 'role', 'villager'], ['平民', 'role', 'villager'], ['民', 'role', 'villager'],
+  // the sheriff election, and the badge after it
+  ['竞选警长', 'run'], ['上警', 'run'], ['退水', 'quit'], ['退出竞选', 'quit'],
+  ['投警徽', 'bvote'], ['投警长', 'bvote'], ['警徽票', 'bvote'], ['警票', 'bvote'],
+  ['当选警长', 'chief'], ['当警长', 'chief'], ['拿到警徽', 'chief'], ['拿警徽', 'chief'], ['当选', 'chief'],
+  ['移交警徽', 'badge'], ['警徽交给', 'badge'], ['警徽给', 'badge'], ['传警徽', 'badge'], ['交警徽', 'badge'],
+  ['撕掉警徽', 'tear'], ['撕警徽', 'tear'], ['警徽流', 'flow'],
+  // votes after these words are for the badge, until 放逐投票
+  ['警下投票', 'bctx'], ['警长投票', 'bctx'], ['警徽投票', 'bctx'], ['警下', 'bctx'], ['放逐投票', 'pctx'],
   // what happened to the speaker
   ['自爆', 'boom'], ['爆', 'boom'], ['被投出局', 'out'], ['投出局', 'out'], ['被投出', 'out'], ['被放逐', 'out'], ['被票出', 'out'], ['票出', 'out'],
   ['放逐', 'out'], ['出局', 'out'], ['翻牌白痴', 'flip'], ['翻白痴', 'flip'], ['翻牌', 'flip'],
@@ -83,10 +103,11 @@ const LEX = [
   ['号', 'fill'], ['玩家', 'fill'], ['发言', 'fill'], ['认为', 'fill'], ['觉得', 'fill'], ['感觉', 'fill'], ['说', 'fill'], ['是', 'fill'],
   ['了', 'fill'], ['给', 'fill'], ['发', 'fill'], ['对', 'fill'], ['把', 'fill'], ['的', 'fill'], ['在', 'fill'], ['像', 'fill'],
   ['很', 'fill'], ['比较', 'fill'], ['都', 'fill'], ['也', 'fill'], ['再', 'fill'], ['又', 'fill'], ['就', 'fill'], ['还', 'fill'],
-  ['警长', 'fill'], ['警上', 'fill'], ['警下', 'fill'], ['遗言', 'fill'], ['昨晚', 'fill'], ['今晚', 'fill'], ['：', 'fill'], [':', 'fill'], ['#', 'fill'], ['-', 'fill']
+  ['警长', 'fill'], ['警徽', 'fill'], ['警上', 'fill'], ['遗言', 'fill'], ['昨晚', 'fill'], ['今晚', 'fill'], ['：', 'fill'], [':', 'fill'], ['#', 'fill'], ['-', 'fill']
 ].sort((a, b) => b[0].length - a[0].length);
 const SEPARATORS = '，,；;。.！!？?\n|';
-const VERBS = { atk: 1, sup: 1, side: 1, vote: 1, chk: 1, save: 1, poison: 1, shoot: 1, claim: 1, boom: 1, out: 1, flip: 1 };
+const VERBS = { atk: 1, sup: 1, side: 1, vote: 1, chk: 1, save: 1, poison: 1, shoot: 1, claim: 1, boom: 1, out: 1, flip: 1,
+  run: 1, quit: 1, chief: 1, tear: 1, bvote: 1, badge: 1, flow: 1 };
 const CN_DIGIT = { 一: 1, 二: 2, 两: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
 
 // 三号 → 3号, 十二号 → 12号. Only before 号, so 一 elsewhere is left alone.
@@ -133,10 +154,12 @@ function lex(text) {
 
 // parse('3踩5，6跳预言家验2金水', 12) → { events: [...], notes: ['...'] }
 // Events: {t:'atk'|'sup'|'side'|'vote', a, b, s} · {t:'claim', a, r} · {t:'check', a, b, wolf}
-// {t:'save'|'poison'|'shoot', a, b} · {t:'boom'|'out'|'flip', a}. Seats are 1-based.
+// {t:'save'|'poison'|'shoot'|'badge', a, b} · {t:'boom'|'out'|'flip'|'tear', a}. Seats are 1-based.
+// The sheriff election comes back as {t:'run'|'quit'|'chief', a} and {t:'bvote', a, b}; the page files
+// those under the round's election rather than its statements.
 export function parse(text, n) {
   const toks = lex(text), events = [], notes = [];
-  let actors = [], verb = null, targets = [], claim = false, lastActors = [], lead = null;
+  let actors = [], verb = null, targets = [], claim = false, lastActors = [], lead = null, badgeVotes = false;
   const okSeat = (v) => v >= 1 && v <= n;
 
   function emit(ev) {
@@ -153,12 +176,14 @@ export function parse(text, n) {
         if (verb.wolf === undefined) notes.push('验了 ' + targets.join('、') + ' 号，但没写金水还是查杀');
         else pairs((a, b) => ({ t: 'check', a: a, b: b, wolf: verb.wolf }));
       } else if (k === 'save' || k === 'poison' || k === 'shoot') pairs((a, b) => ({ t: k, a: a, b: b }));
+      // 警徽流 is the order the seer would check in: nothing to weigh
     } else if (!verb && targets.length) notes.push('没看懂 ' + actors.join('、') + ' 号对 ' + targets.join('、') + ' 号做了什么');
     targets = [];
   }
   function endStatement() {
     flush();
     if (claim === true) notes.push('跳了什么身份没写');
+    if (lead) notes.push('「' + lead.w + '」后面要写是几号');
     if (actors.length) lastActors = actors;
     actors = []; verb = null; claim = false; lead = null;
   }
@@ -175,8 +200,11 @@ export function parse(text, n) {
       case 'sep': endStatement(); break;
       case 'unk': notes.push('没看懂「' + t.w + '」，跳过了'); break;
       case 'join': break;
+      case 'bctx': badgeVotes = true; break;
+      case 'pctx': badgeVotes = false; break;
       case 'num':
-        if (lead) { emit({ t: lead, a: t.v }); lead = null; break; }
+        // 放逐5, 上警：1、3、6
+        if (lead) { emit({ t: lead.k, a: t.v }); if (!toks[i + 1] || toks[i + 1].k !== 'join') lead = null; break; }
         if (actors.length && t.space && (verb || targets.length || claim === 'done') && VERBS[nextKind(i)]) { endStatement(); actors = [t.v]; break; }
         if (!actors.length) actors = [t.v];
         else if (!verb && !targets.length && !claim && (toks[i - 1].k === 'join' || t.space)) actors.push(t.v);
@@ -205,22 +233,21 @@ export function parse(text, n) {
         }
         break;
       }
-      case 'boom': case 'out': case 'flip':
+      case 'boom': case 'out': case 'flip': case 'run': case 'quit': case 'chief': case 'tear':
         if (targets.length) { const tg = targets; flush(); tg.forEach((b) => emit({ t: t.k, a: b })); verb = null; break; }   // 3投5出局: 5 is out
         flush(); verb = null;
         if (actors.length) actors.forEach((a) => emit({ t: t.k, a: a }));
-        else lead = t.k;                                                              // 放逐5
+        else lead = t;
         break;
       default:   // a verb with targets to follow
         if (t.k === 'save' && targets.length && !verb) { verb = { k: 'save' }; flush(); verb = null; break; }   // 7给2银水
         flush();
         if (!needActor()) { notes.push('「' + t.w + '」前面要写是几号'); verb = null; break; }
-        verb = { k: t.k, s: t.x || 1 };
+        verb = { k: t.k === 'vote' && badgeVotes ? 'bvote' : t.k, s: t.x || 1 };
         claim = false;
     }
   }
   endStatement();
-  if (lead) notes.push('「出局」后面要写是几号');
   return { events: events, notes: notes };
 }
 
@@ -239,15 +266,24 @@ export function describe(ev) {
     case 'boom': return ev.a + ' 自爆';
     case 'out': return ev.a + ' 出局';
     case 'flip': return ev.a + ' 翻牌白痴';
+    case 'badge': return ev.a + ' 移交警徽给 ' + ev.b;
+    case 'tear': return ev.a + ' 撕警徽';
+    case 'run': return ev.a + ' 上警';
+    case 'quit': return ev.a + ' 退水';
+    case 'chief': return ev.a + ' 当选警长';
+    case 'bvote': return ev.a + ' 警下投 ' + ev.b;
   }
   return '';
 }
 
 // ---------- the game ----------
 // game = { n, board: { villager, wolf, seer, witch, hunter, idiot, guard }, me: { seat, role, mates: [] },
-//          rounds: [{ deaths: [seats], check: { seat, wolf } | null, knife, poison, events: [...] }] }
+//          rounds: [{ deaths: [seats], check: { seat, wolf } | null, knife, poison,
+//                     sheriff: { run: [seats], quit: [seats], votes: { voter: candidate }, chief } | null,
+//                     events: [...] }] }
 // Round k is night k then day k. check is the user's own check when they are the seer; knife and
-// poison are what the user saw and did when they are the witch. Seats are 1-based, 0 means none.
+// poison are what the user saw and did when they are the witch. sheriff is that day's election: who ran,
+// who withdrew, how the players who stayed down voted, and who won. Seats are 1-based, 0 means none.
 
 export function boardSize(board) { return ROLES.reduce((a, r) => a + (board[r] || 0), 0); }
 
@@ -346,6 +382,8 @@ function compile(game, skip) {
     else if (s.state !== 'alive' && s.state !== 'flipped') lastDay[i - 1] = s.round;
   }
 
+  const ran = [];                                // the election, weighed once every claim is known
+
   const K = [0.96 / g, SELF_KNIFE / w];                       // knife target: good, wolf
   const P = [(1 - POISON_AT_WOLF) / Math.max(1, g - 1), POISON_AT_WOLF / w];   // poison target
   const hasWitch = b.witch > 0;
@@ -374,6 +412,24 @@ function compile(game, skip) {
       addPair(deaths[0] - 1, deaths[1] - 1, t, 1);
     } else deaths.forEach((d) => addSingle(d - 1, hasWitch ? 0.5 * (K[0] + P[0]) : K[0], hasWitch ? 0.5 * (K[1] + P[1]) : K[1]));
 
+    // the election: who ran says something about every role, most of all the seer's. On the first day it
+    // comes before the night's deaths are read out, so last night's dead can run too.
+    const sh = rd.sheriff;
+    if (sh && Array.isArray(sh.run) && sh.run.length) {
+      const before = statuses({ n, rounds: game.rounds.slice(0, k) });
+      for (let s = 1; s <= n; s++) {
+        const bs = before[s].state;
+        if ((bs !== 'alive' && bs !== 'flipped') || (k > 0 && (rd.deaths || []).indexOf(s) >= 0) || no('run', k, s)) continue;
+        const up = sh.run.indexOf(s) >= 0;
+        ran.push({ i: s - 1, up: up, quit: up && (sh.quit || []).indexOf(s) >= 0 });
+        if (up) lastSpoke[s - 1] = Math.max(lastSpoke[s - 1], day);
+      }
+      Object.keys(sh.votes || {}).forEach((v) => {
+        const voter = +v, c = sh.votes[v];
+        if (okSeat(voter) && okSeat(c) && voter !== c && !no('bvote', k, voter)) addPair(voter - 1, c - 1, SPEECH.bvote, 1);
+      });
+    }
+
     if (meSeer && rd.check && okSeat(rd.check.seat) && rd.check.seat !== me.seat && !no('check', k, 0))
       setTeam(rd.check.seat - 1, rd.check.wolf ? 2 : 1, '你验' + rd.check.seat + '号是' + (rd.check.wolf ? '狼' : '好人'));
 
@@ -381,7 +437,7 @@ function compile(game, skip) {
       if (no('event', k, j) || !okSeat(e.a) || (e.b !== undefined && (!okSeat(e.b) || e.b === e.a))) return;
       const a = e.a - 1, t = e.b - 1;
       switch (e.t) {
-        case 'atk': case 'sup': case 'side': case 'vote':
+        case 'atk': case 'sup': case 'side': case 'vote': case 'bvote': case 'badge':
           addPair(a, t, SPEECH[e.t], e.s > 0 ? e.s : 1); break;
         case 'claim':
           if (ROLES.indexOf(e.r) >= 0 && e.r !== 'wolf') claim(a, e.r, day); break;
@@ -416,6 +472,13 @@ function compile(game, skip) {
       for (let x = 0; x < R; x++) base[i][x] *= roles[x] === r ? CLAIM_TRUE[r] : CLAIM_LIE[r];
     });
   }
+  ran.forEach((o) => {
+    const claimant = claims[o.i].seer;
+    const f = (r) => claimant ? (o.quit ? (r === 'seer' ? QUIT.seer : CLAIMANT_QUIT) : 1)
+      : o.up ? RUN[r] * (o.quit ? QUIT[r] : 1 - QUIT[r]) : 1 - RUN[r];
+    wolfLog[o.i] += Math.log(f('wolf'));
+    for (let x = 0; x < R; x++) base[o.i][x] *= f(roles[x]);
+  });
   // a real god who let someone else claim their role and said nothing
   gods.forEach((r) => {
     const day = firstClaim[r];
@@ -590,6 +653,14 @@ export function explainItems(game, seat) {
     (rd.deaths || []).forEach((d, j) => { if (d === seat) items.push({ label: '第' + (k + 1) + '夜 ' + d + ' 号死了', kind: 'death', k, j }); });
     (rd.events || []).forEach((e, j) => { if (touch(e)) items.push({ label: '第' + (k + 1) + '天 ' + describe(e), kind: 'event', k, j }); });
     if (game.me && game.me.role === 'seer' && rd.check && rd.check.seat === seat) items.push({ label: '第' + (k + 1) + '夜 你验 ' + seat + ' 号' + (rd.check.wolf ? '是狼' : '是好人'), kind: 'check', k, j: 0 });
+    const sh = rd.sheriff;
+    if (sh && Array.isArray(sh.run) && sh.run.length) {
+      const ran = sh.run.indexOf(seat) >= 0, quit = ran && (sh.quit || []).indexOf(seat) >= 0;
+      items.push({ label: '第' + (k + 1) + '天 ' + seat + ' 号' + (quit ? '上警后退水' : ran ? '上警' : '没上警'), kind: 'run', k, j: seat });
+      Object.keys(sh.votes || {}).forEach((v) => {
+        if (+v === seat || sh.votes[v] === seat) items.push({ label: '第' + (k + 1) + '天 ' + v + ' 号警下投 ' + sh.votes[v] + ' 号', kind: 'bvote', k, j: +v });
+      });
+    }
     if (game.me && game.me.role === 'witch' && rd.knife === seat) items.push({ label: '第' + (k + 1) + '夜 刀口是 ' + seat + ' 号', kind: 'knife', k, j: 0 });
   });
   items.forEach((it) => { it.skip = (kind, k, j) => kind === it.kind && k === it.k && j === it.j; });
