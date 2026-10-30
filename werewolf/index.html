@@ -1,0 +1,1028 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="盘狼 Table Read: a werewolf (狼人杀) reasoning tool by Wentao Zhang. Enter the board, each night's deaths and who attacked or vouched for whom, and it works out how likely each player is to be a wolf and which players are on the same side. Everything runs in the browser.">
+<meta property="og:title" content="盘狼 Table Read">
+<meta property="og:description" content="盘狼 Table Read: a werewolf (狼人杀) reasoning tool by Wentao Zhang. Enter the board, each night's deaths and who attacked or vouched for whom, and it works out how likely each player is to be a wolf and which players are on the same side. Everything runs in the browser.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://wentaoz.com/werewolf/">
+<meta property="og:site_name" content="Wentao Zhang">
+<meta property="og:image" content="https://wentaoz.com/werewolf/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="盘狼 Table Read, reading a game of werewolf: each player's chance of being a wolf and who sides with whom.">
+<meta name="twitter:card" content="summary_large_image">
+<script>
+/* Apply the theme picked with the Dark button (here or on the homepage) before first paint */
+(function () { try { var t = localStorage.getItem('wentaoz.theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {} })();
+</script>
+<link rel="canonical" href="https://wentaoz.com/werewolf/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20fill%3D%22%2310131A%22%2F%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%2214%22%20r%3D%228%22%20fill%3D%22%23E4E6EC%22%2F%3E%3Crect%20x%3D%226%22%20y%3D%2224%22%20width%3D%229%22%20height%3D%223%22%20fill%3D%22%23E46B5A%22%2F%3E%3Crect%20x%3D%2217%22%20y%3D%2224%22%20width%3D%229%22%20height%3D%223%22%20fill%3D%22%235F92E8%22%2F%3E%3C%2Fsvg%3E">
+<title>盘狼 Table Read</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=STIX+Two+Text:ital,wght@0,400;1,400&display=swap">
+<!-- The Chinese serif is cut down to the two characters of the name (盘狼), so new wording there needs adding to text= -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&text=%E7%9B%98%E7%8B%BC&display=swap">
+<style>
+/* Layout: one 760px column. Three numbered steps run down it: the board, the rounds as they are played,
+   and the reading. Red for wolves, blue for the good side; purple for two players on the same side and
+   orange for two on opposite sides, so the pair colours never read as a verdict on either player. */
+:root {
+  --bg: #F2F0EA;            /* paper under a lamp */
+  --surface: #FBFAF7;
+  --fg: #1B1D24;
+  --muted: #62656F;
+  --rule: #DAD8D0;
+  --rule-strong: #A3A198;
+  --wolf: #B3261E;
+  --wolf-soft: #F3DCD8;
+  --good: #2D5B9A;
+  --good-soft: #DCE5F2;
+  --same: #7A4FB0;          /* two players on the same side */
+  --opp: #C0631A;           /* two players on opposite sides */
+  --mid: #E9E7E1;           /* neither: a coin toss */
+  --font-cjk: "Noto Serif SC", "Songti SC", "STSong", "Source Han Serif SC", "SimSun", serif;
+  --font-latin: "STIX Two Text", "STIXGeneral", Cambria, "Times New Roman", serif;
+  --font-body: "IBM Plex Sans", -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10131A; --surface: #171B24; --fg: #E4E6EC; --muted: #979BA7; --rule: #262B36; --rule-strong: #4A5264;
+    --wolf: #E46B5A; --wolf-soft: #3A2220; --good: #5F92E8; --good-soft: #1C2840;
+    --same: #9670DA; --opp: #CC7A38; --mid: #252A35;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10131A; --surface: #171B24; --fg: #E4E6EC; --muted: #979BA7; --rule: #262B36; --rule-strong: #4A5264;
+  --wolf: #E46B5A; --wolf-soft: #3A2220; --good: #5F92E8; --good-soft: #1C2840;
+  --same: #9670DA; --opp: #CC7A38; --mid: #252A35;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+.page {
+  max-width: 760px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 56px;
+}
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--good); outline-offset: 2px; }
+
+.home { display: inline-block; margin-bottom: 8px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); text-decoration: none; }
+.home:hover, .home:focus-visible { color: var(--fg); }
+.top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--rule-strong); }
+.brand { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.brand .name { font-family: var(--font-cjk); font-weight: 900; font-size: 20px; letter-spacing: 0.04em; }
+.brand .name-latin { font-family: var(--font-latin); font-style: italic; font-size: 20px; }
+.eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; color: var(--muted); margin-top: 4px; }
+.theme {
+  appearance: none; flex: none; border: 1px solid var(--rule-strong); border-radius: 999px; background: transparent; color: var(--muted);
+  font: 500 12px/1 var(--font-body); padding: 7px 11px; cursor: pointer; letter-spacing: 0.04em;
+}
+.theme[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+
+/* the three steps */
+.step { padding-block: 32px 4px; }
+.step-h { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; font-size: 19px; font-weight: 600; line-height: 1.3; }
+.step-h .no {
+  display: inline-grid; place-items: center; flex: none; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--fg); color: var(--bg); font: 500 13px/1 var(--font-mono);
+}
+.step-h .count { font: 400 13px/1 var(--font-mono); color: var(--muted); margin-left: 2px; }
+.step.locked .step-h { color: var(--muted); }
+.step.locked .step-h .no { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1.5px var(--rule-strong); }
+.locked-note { margin: 0; font-size: 14.5px; color: var(--muted); }
+.hint { margin: 10px 0 0; font-size: 13px; color: var(--muted); }
+.msg { margin: 8px 0 0; font-size: 14px; }
+.msg:empty { display: none; }
+.msg.bad { color: var(--wolf); }
+.label { display: block; margin: 0 0 8px; font-size: 13px; font-weight: 500; color: var(--muted); }
+.card { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; padding: 16px; background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; }
+
+input[type="text"], select {
+  min-width: 0; min-height: 44px; padding: 10px 12px; font-size: 16px; line-height: 1.3;
+  background: var(--bg); border: 1px solid var(--rule-strong); border-radius: 8px;
+}
+select { cursor: pointer; }
+input[type="text"]::placeholder { color: var(--muted); opacity: 0.8; }
+.btn {
+  appearance: none; min-height: 44px; padding: 10px 16px; border: 1px solid var(--rule-strong); border-radius: 8px;
+  background: var(--surface); font-size: 15px; font-weight: 500; line-height: 1.2; white-space: nowrap; cursor: pointer;
+}
+.btn:hover { border-color: var(--fg); }
+.btn.primary { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.link-btn {
+  appearance: none; border: 0; background: none; padding: 4px 2px; cursor: pointer;
+  font-size: 13.5px; font-weight: 500; color: var(--muted);
+  text-decoration: underline; text-decoration-color: var(--rule-strong); text-underline-offset: 3px;
+}
+.link-btn:hover { color: var(--fg); }
+.link-btn.sure { color: var(--wolf); text-decoration-color: currentColor; }
+
+/* step 1: the board */
+.stepper { display: inline-flex; align-items: center; border: 1px solid var(--rule-strong); border-radius: 8px; overflow: hidden; background: var(--bg); }
+.stepper button { appearance: none; border: 0; background: none; width: 40px; height: 40px; font-size: 18px; line-height: 1; cursor: pointer; color: var(--muted); }
+.stepper button:hover:not(:disabled) { color: var(--fg); background: var(--rule); }
+.stepper button:disabled { opacity: 0.35; cursor: default; }
+.stepper output { min-width: 2.2em; text-align: center; font: 500 16px/1 var(--font-mono); font-variant-numeric: tabular-nums; }
+.n-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.n-row .label { margin: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  appearance: none; display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 7px 14px;
+  border: 1px solid var(--rule-strong); border-radius: 999px; background: none; font-size: 14.5px; line-height: 1.3; color: var(--muted); cursor: pointer;
+}
+.chip:hover:not(:disabled) { border-color: var(--fg); color: var(--fg); }
+.chip[aria-pressed="true"], .chip[aria-pressed="true"]:hover { background: var(--fg); border-color: var(--fg); color: var(--bg); }
+.chip:disabled { cursor: default; opacity: 0.4; text-decoration: line-through; }
+.chip .k { font-family: var(--font-mono); font-size: 12.5px; }
+.board { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 560px) { .board { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.role-box { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 4px 4px 4px 12px; border: 1px solid var(--rule); border-radius: 10px; background: var(--bg); }
+.role-box.zero .role-name { color: var(--muted); }
+.role-name { font-size: 15px; font-weight: 500; white-space: nowrap; }
+.role-box.wolfish .role-name::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 50%; background: var(--wolf); vertical-align: 1px; }
+.role-box .stepper { border: 0; background: none; }
+.role-box .stepper button { width: 32px; height: 36px; }
+.role-box .stepper output { min-width: 1.6em; }
+.calc { margin: 10px 0 0; font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.calc.bad { color: var(--wolf); }
+.me-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.me-row select { flex: 1 1 10em; }
+#mates-box { margin-top: 12px; }
+
+/* step 2: rounds */
+.round { border: 1px solid var(--rule); border-radius: 12px; background: var(--surface); margin-bottom: 12px; }
+.round.active { border-color: var(--rule-strong); }
+.round-h { display: flex; align-items: baseline; gap: 10px; padding: 12px 16px; }
+.round-h h3 { margin: 0; font-size: 16px; font-weight: 600; flex: none; }
+.round-sum { flex: 1 1 auto; min-width: 0; font-size: 13.5px; color: var(--muted); overflow-wrap: anywhere; }
+.round-open { flex: none; }
+.round-body { padding: 0 16px 16px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+.phase { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.phase-h { margin: 0; display: flex; align-items: baseline; gap: 8px; font-size: 13px; font-weight: 500; color: var(--muted); }
+.phase-h .moon, .phase-h .sun { font-family: var(--font-mono); }
+.phase-note { margin: 0; font-size: 13.5px; color: var(--muted); }
+.private { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 10px; background: var(--bg); font-size: 14.5px; }
+.private select { min-height: 38px; padding: 6px 10px; }
+.events { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--rule); }
+.events:empty { display: none; }
+.ev { display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 4px 0; border-bottom: 1px solid var(--rule); font-size: 15px; }
+.ev .ev-no { flex: none; width: 2em; font: 400 12px/1 var(--font-mono); color: var(--muted); }
+.ev .ev-text { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.ev .ev-text.off { color: var(--muted); text-decoration: line-through; }
+.ev button { appearance: none; flex: none; width: 32px; height: 32px; border: 0; border-radius: 50%; background: none; color: var(--muted); font-size: 18px; line-height: 1; cursor: pointer; }
+.ev button:hover { background: var(--rule); color: var(--fg); }
+.round-foot { display: flex; justify-content: flex-end; }
+#add-round { width: 100%; }
+
+/* the composer: a line of text, read as it is typed, and a keypad that writes the same text */
+.composer { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.add-row { display: flex; gap: 8px; }
+.add-row input { flex: 1 1 auto; }
+.preview { display: flex; flex-wrap: wrap; gap: 6px; min-height: 0; }
+.preview .pv { display: inline-flex; align-items: center; min-height: 28px; padding: 3px 10px; border-radius: 999px; background: var(--bg); border: 1px dashed var(--rule-strong); font-size: 13.5px; }
+.preview .pv-note { flex: 1 1 100%; margin: 0; font-size: 13px; color: var(--wolf); }
+.pad { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 10px; border-radius: 10px; background: var(--bg); }
+.pad-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.key {
+  appearance: none; min-width: 40px; min-height: 40px; padding: 6px 10px; border: 1px solid var(--rule); border-radius: 8px;
+  background: var(--surface); font-size: 14.5px; line-height: 1.2; cursor: pointer;
+}
+.key:hover { border-color: var(--fg); }
+.key.seat { font-family: var(--font-mono); font-weight: 500; font-variant-numeric: tabular-nums; }
+.key.gone { color: var(--muted); }
+.key.op { background: none; border-style: dashed; color: var(--muted); }
+.seats { display: grid; grid-template-columns: repeat(auto-fill, minmax(42px, 1fr)); gap: 6px; }
+
+/* step 3: the reading */
+.verdict { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 16px; margin: 0 0 6px; }
+.verdict .v-num { font-family: var(--font-mono); font-weight: 500; font-size: clamp(44px, 12vw, 76px); line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.verdict .v-num .dot { color: var(--wolf); }
+.verdict .v-cap { font-size: 15px; color: var(--muted); }
+.verdict.quiet .v-text { font-size: clamp(20px, 5vw, 26px); font-weight: 600; line-height: 1.3; }
+.alts { margin: 0 0 4px; font-size: 14px; color: var(--muted); }
+.alts b { font-family: var(--font-mono); font-weight: 500; color: var(--fg); }
+.sub-h { margin: 32px 0 0; padding-bottom: 8px; border-bottom: 1px solid var(--rule-strong); font-size: 13px; font-weight: 500; color: var(--muted); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.key-legend { display: inline-flex; gap: 12px; align-items: center; font-weight: 400; }
+.key-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.players { list-style: none; margin: 0; padding: 0; }
+.pl { border-bottom: 1px solid var(--rule); }
+.pl-btn {
+  appearance: none; display: grid; grid-template-columns: 2.4em minmax(0, 1fr); gap: 12px; align-items: start;
+  width: 100%; padding: 12px 0; border: 0; background: none; text-align: left; cursor: pointer;
+}
+.pl-btn:hover .pl-seat { background: var(--fg); color: var(--bg); }
+.pl-seat {
+  display: grid; place-items: center; width: 2.4em; height: 2.4em; border-radius: 50%; border: 1.5px solid var(--rule-strong);
+  font: 500 14px/1 var(--font-mono); font-variant-numeric: tabular-nums;
+}
+.pl.gone .pl-seat { border-style: dashed; color: var(--muted); }
+.pl.me .pl-seat { border-color: var(--fg); box-shadow: inset 0 0 0 1.5px var(--fg); }
+.pl-body { display: grid; gap: 6px; min-width: 0; }
+.pl-top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 12px; }
+.pl-lean { font-weight: 600; font-variant-numeric: tabular-nums; }
+.pl-lean i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+.pl-role { font-size: 13.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.bar { display: flex; gap: 2px; height: 8px; }
+.bar i { display: block; height: 100%; min-width: 0; }
+.bar .w { background: var(--wolf); border-radius: 4px 0 0 4px; }
+.bar .g { background: var(--good); border-radius: 0 4px 4px 0; flex: 1 1 auto; }
+.bar .w:last-child { border-radius: 4px; }
+.bar .g:first-child { border-radius: 4px; }
+.tags { display: flex; flex-wrap: wrap; gap: 4px 6px; }
+.tag { font-size: 12.5px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--rule); color: var(--muted); }
+.tag.hard { border-color: var(--rule-strong); color: var(--fg); }
+.pl-detail { padding: 0 0 16px calc(2.4em + 12px); display: grid; gap: 14px; font-size: 14px; }
+.pl-detail h4 { margin: 0 0 6px; font-size: 12.5px; font-weight: 500; color: var(--muted); }
+.roles-tbl { display: grid; grid-template-columns: max-content minmax(0, 1fr) 3.2em; gap: 4px 10px; align-items: center; }
+.roles-tbl .rb { height: 6px; border-radius: 3px; background: var(--good); min-width: 1px; }
+.roles-tbl .rb.wolf { background: var(--wolf); }
+.roles-tbl .pc { font-family: var(--font-mono); font-size: 12.5px; text-align: right; font-variant-numeric: tabular-nums; }
+.why { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.why li { display: flex; gap: 10px; align-items: baseline; }
+.why .d { flex: none; width: 6.6em; font-family: var(--font-mono); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.why .d i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; }
+.rel { margin: 0; }
+
+/* who sides with whom */
+.mx-wrap { margin-top: 14px; }
+.mx { display: grid; gap: 2px; max-width: 520px; }
+.mx .h { display: grid; place-items: center; font: 500 11.5px/1 var(--font-mono); color: var(--muted); aspect-ratio: 1; }
+.mx .h.on { color: var(--fg); }
+.mx button.c { appearance: none; aspect-ratio: 1; border: 0; border-radius: 3px; padding: 0; cursor: pointer; min-width: 0; }
+.mx button.c:hover, .mx button.c.on { outline: 2px solid var(--fg); outline-offset: 0; }
+.mx .self { aspect-ratio: 1; border-radius: 3px; background: none; box-shadow: inset 0 0 0 1px var(--rule); }
+.mx-legend { display: flex; align-items: center; gap: 10px; margin-top: 12px; font-size: 12.5px; color: var(--muted); max-width: 520px; }
+.mx-legend .ramp { flex: 1 1 auto; height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--opp), var(--mid), var(--same)); }
+.mx-note { margin: 12px 0 0; font-size: 14.5px; min-height: 1.55em; }
+.pairs { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; margin-top: 20px; }
+@media (max-width: 520px) { .pairs { grid-template-columns: minmax(0, 1fr); } }
+.pairs h4 { margin: 0 0 6px; font-size: 13px; font-weight: 500; color: var(--muted); }
+.pairs ol { list-style: none; margin: 0; padding: 0; }
+.pairs li { display: flex; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--rule); font-variant-numeric: tabular-nums; }
+.pairs li .who { font-family: var(--font-mono); font-weight: 500; }
+.pairs li .pc { font-family: var(--font-mono); font-size: 13px; color: var(--muted); }
+.pairs li .pc i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; }
+.pairs .empty { font-size: 13.5px; color: var(--muted); padding: 7px 0; }
+
+/* method */
+details { border-top: 1px solid var(--rule); margin-top: 36px; }
+summary { cursor: pointer; padding: 16px 0; font-weight: 600; font-size: 15px; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; font-family: var(--font-mono); color: var(--muted); font-size: 18px; }
+details[open] summary::after { content: "–"; }
+.method { padding: 0 0 18px; font-size: 14.5px; max-width: 64ch; }
+.method p { margin: 0 0 12px; }
+.method .k { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); }
+footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--rule-strong); font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; }
+footer .sig { font-family: var(--font-cjk); font-weight: 900; font-size: 15px; color: var(--fg); }
+footer .link-btn { margin-left: auto; }
+.nojs { margin: 22px 0 0; font-size: 17px; max-width: 34em; }
+</style>
+<noscript><style>.theme, .step, details, footer { display: none; }</style></noscript>
+</head>
+<body>
+<div class="page">
+  <header class="top">
+    <div>
+      <a class="home" href="../">← wentaoz.com</a>
+      <div class="brand"><span class="name" lang="zh-CN">盘狼</span><span class="name-latin" lang="en">Table Read</span></div>
+      <div class="eyebrow">狼人杀推理 · 记下夜里的结果和每轮发言 · 算出谁跟谁一边</div>
+    </div>
+    <button type="button" class="theme" id="btn-theme" aria-pressed="false" hidden>深色</button>
+  </header>
+
+  <noscript><p class="nojs">盘狼在你的浏览器里推理，需要 JavaScript。请开启后刷新页面。</p></noscript>
+
+  <section class="step" id="step-setup" aria-labelledby="h-setup">
+    <h2 class="step-h"><span class="no" aria-hidden="true">1</span><span id="h-setup">开局</span><span class="count" id="setup-count"></span></h2>
+    <div class="card">
+      <div class="n-row">
+        <span class="label" id="n-label">总人数</span>
+        <div class="stepper" role="group" aria-labelledby="n-label">
+          <button type="button" id="n-minus" aria-label="少一人">−</button>
+          <output id="n-val" aria-live="polite"></output>
+          <button type="button" id="n-plus" aria-label="多一人">+</button>
+        </div>
+      </div>
+      <div>
+        <span class="label">常用板子</span>
+        <div class="chips" id="presets"></div>
+      </div>
+      <div>
+        <span class="label">这一局的板子（狼王、白狼王都算狼人）</span>
+        <div class="board" id="board"></div>
+        <p class="calc" id="board-sum" aria-live="polite"></p>
+      </div>
+      <div>
+        <span class="label">你自己（可选。你的底牌是确定的信息，填了算得更准）</span>
+        <div class="me-row">
+          <label class="sr" for="me-seat">你的座位</label>
+          <select id="me-seat"></select>
+          <label class="sr" for="me-role">你的身份</label>
+          <select id="me-role"></select>
+        </div>
+        <div id="mates-box" hidden>
+          <span class="label" id="mates-label">你的狼队友</span>
+          <div class="chips" id="mates" role="group" aria-labelledby="mates-label"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="step" id="step-rounds" aria-labelledby="h-rounds">
+    <h2 class="step-h"><span class="no" aria-hidden="true">2</span><span id="h-rounds">每一轮</span><span class="count" id="rounds-count"></span></h2>
+    <p class="locked-note" id="rounds-locked" hidden>先把板子配到和总人数一样多。</p>
+    <div id="rounds-body">
+      <div id="rounds"></div>
+      <button type="button" class="btn" id="add-round"></button>
+    </div>
+  </section>
+
+  <div class="composer" id="composer">
+    <form class="add-row" id="say-form" novalidate>
+      <label class="sr" for="say-input">记一句发言</label>
+      <input type="text" id="say-input" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done" placeholder="3踩5，6跳预言家验2金水，1、2投5" aria-describedby="say-hint">
+      <button type="submit" class="btn primary">记下</button>
+    </form>
+    <div class="preview" id="say-preview" aria-live="polite"></div>
+    <div class="pad" id="pad" aria-label="快捷键盘"></div>
+    <p class="hint" id="say-hint">不同人的发言用逗号或换行隔开。能写：踩、狠踩、轻踩、保、站边、投；跳预言家（跳女巫、跳猎人、跳民…）；验2金水、查杀2、救2（银水）、毒2；开枪带走5、自爆、出局、翻牌。几个人一起写成 1、2、3投5，一人说几件事写成 3踩5保7。</p>
+  </div>
+
+  <section class="step" id="step-read" aria-labelledby="h-read">
+    <h2 class="step-h"><span class="no" aria-hidden="true">3</span><span id="h-read">推理</span><span class="count" id="read-count"></span></h2>
+    <p class="locked-note" id="read-locked" hidden></p>
+    <div id="read-body">
+      <div class="verdict" id="verdict"></div>
+      <p class="alts" id="alts"></p>
+      <h3 class="sub-h"><span>每个人：像狼还是像好人，最可能是什么身份</span><span class="key-legend"><span><i style="background:var(--wolf)"></i>狼</span><span><i style="background:var(--good)"></i>好人</span></span></h3>
+      <ol class="players" id="players"></ol>
+      <h3 class="sub-h"><span>谁跟谁一边（点格子看两个人）</span></h3>
+      <div class="mx-wrap"><div class="mx" id="mx" role="grid" aria-label="每两个人在同一边的可能性"></div></div>
+      <div class="mx-legend" aria-hidden="true"><span>对立</span><span class="ramp"></span><span>共边</span></div>
+      <p class="mx-note" id="mx-note" aria-live="polite"></p>
+      <div class="pairs">
+        <div><h4>最像一边的</h4><ol id="pairs-same"></ol></div>
+        <div><h4>最像对立的</h4><ol id="pairs-opp"></ol></div>
+      </div>
+    </div>
+  </section>
+
+  <details>
+    <summary>怎么算的</summary>
+    <div class="method">
+      <p>把板子上的牌发给每个座位，有很多种发法，每一种都是一个可能的局面。一开始每种局面一样可能。之后每条信息都会按“这个局面下出现这条信息有多正常”去调整每种局面的分量，最后把所有局面加起来，就得到每个人是狼的可能、每个人是什么身份的可能、每两个人在同一边的可能。12 人局有 495 种狼坑，每种狼坑里神职的分法也全部算到。</p>
+      <p><b>发言。</b>踩和投票说明两个人多半不在一边，但不说明谁是狼：好人踩狼、狼踩好人都很常见，狼踩、投自己队友很少见。保和站边反过来，说明两个人多半在一边。比例大致是：<span class="k">踩 好好 1 · 好狼 1.6 · 狼好 1.6 · 狼狼 0.3；投票 1 · 1.8 · 1.8 · 0.25；保 1.4 · 0.8 · 0.8 · 1.6；站边 1.6 · 0.6 · 0.7 · 2</span>。狠踩、强保按 1.7 倍算，轻踩、轻保、怀疑按一半算。同一句话每轮都说，就每轮都算一次。</p>
+      <p><b>跳身份。</b>真预言家几乎一定会跳，狼队大约六成会派一只狼悍跳预言家，好人假跳预言家很少。别人跳了你的身份你却不出来对跳，真预言家很少这样，猎人、白痴可以先藏着。所以只有一个人跳预言家时，他多半是真的；两个人对跳，多半一真一狼。</p>
+      <p><b>验人。</b>真预言家的金水、查杀不会错。狼悍跳时，金水常常发给狼队友，查杀几乎总是打在好人身上。女巫说的银水是当晚的刀口，除非狼自刀，银水是好人。</p>
+      <p><b>夜里。</b>被刀的人几乎都是好人（狼很少自刀）。有女巫的板子，一晚死两个，通常是一刀一毒，毒的那个更可能是狼。猎人开枪说明他是猎人，被带走的人更像狼；自爆的一定是狼；翻牌的是白痴。你填了自己的身份，就当作确定的：你是预言家，你的验人结果也是确定的；你是女巫，你看到的刀口就是好人。</p>
+      <p>这些比例是按常见打法估的，不是从真实对局里统计出来的，所以结果是一个有依据的参考，不是定论。点开每个人，能看到哪几条信息对他的影响最大。所有计算都在你的浏览器里完成，记录只存在这台设备上。</p>
+    </div>
+  </details>
+
+  <footer>
+    <span class="sig">盘狼</span>
+    <span>记录只存在这台设备上。</span>
+    <button type="button" class="link-btn" id="reset">重开一局</button>
+  </footer>
+</div>
+
+<script type="module">
+import { parse, describe, infer, explainItems, statuses, validate, boardSize, ROLE_ZH, GODS, MIN_PLAYERS, MAX_PLAYERS } from './engine.js';
+
+const $ = (id) => document.getElementById(id);
+const composer = $('composer');   // moved into whichever round is open, so kept by reference while it is out of the page
+function h(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined && text !== null) e.textContent = text;
+  return e;
+}
+const pct = (p) => Math.round(p * 100) + '%';
+const KEY = 'tableread.game';
+const BOARD_ROLES = ['villager', 'wolf'].concat(GODS);
+const PRESETS = [
+  { name: '预女猎白', n: 12, board: { villager: 4, wolf: 4, seer: 1, witch: 1, hunter: 1, idiot: 1, guard: 0 } },
+  { name: '预女猎守', n: 12, board: { villager: 4, wolf: 4, seer: 1, witch: 1, hunter: 1, idiot: 0, guard: 1 } },
+  { name: '预女猎白', n: 10, board: { villager: 3, wolf: 3, seer: 1, witch: 1, hunter: 1, idiot: 1, guard: 0 } },
+  { name: '预女猎', n: 9, board: { villager: 3, wolf: 3, seer: 1, witch: 1, hunter: 1, idiot: 0, guard: 0 } },
+  { name: '预猎', n: 6, board: { villager: 2, wolf: 2, seer: 1, witch: 0, hunter: 1, idiot: 0, guard: 0 } }
+];
+const newRound = () => ({ deaths: [], check: null, knife: 0, poison: 0, events: [] });
+
+let state = { n: 12, board: Object.assign({}, PRESETS[0].board), me: { seat: 0, role: '', mates: [] }, rounds: [newRound()], active: 0 };
+let result = null, open = 0, cell = null, explainToken = 0, explained = {};
+
+function game() { return { n: state.n, board: state.board, me: state.me, rounds: state.rounds }; }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (!s || !(s.n >= MIN_PLAYERS && s.n <= MAX_PLAYERS) || !s.board || !Array.isArray(s.rounds)) return;
+    const board = {};
+    BOARD_ROLES.forEach((r) => { board[r] = Math.max(0, Math.min(MAX_PLAYERS, s.board[r] | 0)); });
+    const seat = (v) => (Number.isInteger(v) && v >= 1 && v <= MAX_PLAYERS ? v : 0);
+    const rounds = s.rounds.filter((r) => r && typeof r === 'object').map((r) => ({
+      deaths: Array.isArray(r.deaths) ? r.deaths.map(seat).filter(Boolean) : [],
+      check: r.check && seat(r.check.seat) ? { seat: r.check.seat, wolf: !!r.check.wolf } : null,
+      knife: seat(r.knife), poison: seat(r.poison),
+      events: Array.isArray(r.events) ? r.events.filter((e) => e && typeof e.t === 'string' && seat(e.a)) : []
+    }));
+    const me = s.me || {};
+    state = {
+      n: s.n, board: board,
+      me: { seat: seat(me.seat), role: typeof me.role === 'string' && BOARD_ROLES.indexOf(me.role) >= 0 ? me.role : '', mates: Array.isArray(me.mates) ? me.mates.map(seat).filter(Boolean) : [] },
+      rounds: rounds.length ? rounds : [newRound()],
+      active: Math.min(Math.max(0, s.active | 0), Math.max(0, rounds.length - 1))
+    };
+  } catch (e) {}
+}
+
+// ---------- step 1: the board ----------
+function renderSetup() {
+  const n = state.n, b = state.board;
+  $('n-val').textContent = n;
+  $('n-minus').disabled = n <= MIN_PLAYERS;
+  $('n-plus').disabled = n >= MAX_PLAYERS;
+
+  const pre = $('presets');
+  pre.textContent = '';
+  PRESETS.forEach((p, k) => {
+    const c = h('button', 'chip');
+    c.type = 'button';
+    c.append(h('span', 'k', p.n + '人'), document.createTextNode(p.name));
+    const same = p.n === n && BOARD_ROLES.every((r) => (p.board[r] || 0) === (b[r] || 0));
+    c.setAttribute('aria-pressed', same ? 'true' : 'false');
+    c.addEventListener('click', () => { state.n = p.n; state.board = Object.assign({}, p.board); fixMe(); changed(); });
+    pre.append(c);
+  });
+
+  const box = $('board');
+  box.textContent = '';
+  BOARD_ROLES.forEach((r) => {
+    const c = b[r] || 0, row = h('div', 'role-box' + (c ? '' : ' zero') + (r === 'wolf' ? ' wolfish' : ''));
+    row.append(h('span', 'role-name', ROLE_ZH[r]));
+    const st = h('div', 'stepper');
+    const minus = h('button', '', '−'), out = h('output', '', c), plus = h('button', '', '+');
+    minus.type = plus.type = 'button';
+    minus.setAttribute('aria-label', ROLE_ZH[r] + '少一个');
+    plus.setAttribute('aria-label', ROLE_ZH[r] + '多一个');
+    minus.disabled = c <= 0;
+    plus.disabled = c >= MAX_PLAYERS;
+    minus.addEventListener('click', () => { state.board[r] = c - 1; fixMe(); changed(); });
+    plus.addEventListener('click', () => { state.board[r] = c + 1; fixMe(); changed(); });
+    st.append(minus, out, plus);
+    row.append(st);
+    box.append(row);
+  });
+  const bad = validate(game()), sum = boardSize(b);
+  $('board-sum').textContent = bad || ('一共 ' + sum + ' 张牌：' + b.wolf + ' 狼，' + (sum - b.wolf) + ' 好人');
+  $('board-sum').classList.toggle('bad', !!bad);
+  $('setup-count').textContent = n + ' 人';
+
+  const seatSel = $('me-seat');
+  seatSel.textContent = '';
+  seatSel.append(new Option('不填座位', '0'));
+  for (let i = 1; i <= n; i++) seatSel.append(new Option('我是 ' + i + ' 号', String(i)));
+  seatSel.value = String(state.me.seat || 0);
+  const roleSel = $('me-role');
+  roleSel.textContent = '';
+  roleSel.append(new Option('不填身份', ''));
+  BOARD_ROLES.forEach((r) => { if (b[r] > 0) roleSel.append(new Option('我是' + ROLE_ZH[r], r)); });
+  roleSel.value = state.me.role || '';
+  roleSel.disabled = !state.me.seat;
+
+  const wolfMe = state.me.seat && state.me.role === 'wolf';
+  $('mates-box').hidden = !wolfMe;
+  if (wolfMe) {
+    const m = $('mates');
+    m.textContent = '';
+    for (let i = 1; i <= n; i++) {
+      if (i === state.me.seat) continue;
+      const on = state.me.mates.indexOf(i) >= 0, c = h('button', 'chip', i + ' 号');
+      c.type = 'button';
+      c.setAttribute('aria-pressed', on ? 'true' : 'false');
+      c.disabled = !on && state.me.mates.length >= b.wolf - 1;
+      c.addEventListener('click', () => {
+        state.me.mates = on ? state.me.mates.filter((x) => x !== i) : state.me.mates.concat(i).sort((x, y) => x - y);
+        changed();
+      });
+      m.append(c);
+    }
+  }
+}
+// keep "who I am" valid after the board or the seat count changes
+function fixMe() {
+  const me = state.me;
+  if (me.seat > state.n) me.seat = 0;
+  if (!me.seat || (me.role && !(state.board[me.role] > 0))) me.role = '';
+  me.mates = me.role === 'wolf' ? me.mates.filter((x) => x <= state.n && x !== me.seat).slice(0, Math.max(0, state.board.wolf - 1)) : [];
+}
+$('n-minus').addEventListener('click', () => step(-1));
+$('n-plus').addEventListener('click', () => step(1));
+// one more or one fewer player is one more or one fewer villager, while there are villagers to take
+function step(d) {
+  const n = state.n + d;
+  if (n < MIN_PLAYERS || n > MAX_PLAYERS) return;
+  if (!validate(game()) && state.board.villager + d >= 0) state.board.villager += d;
+  state.n = n;
+  fixMe();
+  changed();
+}
+$('me-seat').addEventListener('change', (e) => { state.me.seat = parseInt(e.target.value, 10) || 0; fixMe(); changed(); });
+$('me-role').addEventListener('change', (e) => { state.me.role = e.target.value; fixMe(); changed(); });
+
+// ---------- step 2: the rounds ----------
+function deadBefore(k) {
+  // who had left the game before night k+1 began
+  const st = statuses({ n: state.n, rounds: state.rounds.slice(0, k) }), gone = {};
+  for (let i = 1; i <= state.n; i++) if (st[i].state !== 'alive' && st[i].state !== 'flipped') gone[i] = st[i];
+  return gone;
+}
+function roundSummary(rd) {
+  const parts = [];
+  parts.push(rd.deaths.length ? rd.deaths.slice().sort((a, b) => a - b).join('、') + ' 号夜里死了' : '平安夜');
+  parts.push(rd.events.length ? rd.events.length + ' 条发言和结果' : '还没有发言');
+  return parts.join(' · ');
+}
+function seatSelect(value, label, onChange, skip) {
+  const s = h('select');
+  s.setAttribute('aria-label', label);
+  s.append(new Option('没有', '0'));
+  for (let i = 1; i <= state.n; i++) if (i !== skip) s.append(new Option(i + ' 号', String(i)));
+  s.value = String(value || 0);
+  s.addEventListener('change', () => onChange(parseInt(s.value, 10) || 0));
+  return s;
+}
+function renderRounds() {
+  const bad = validate(game());
+  $('rounds-locked').hidden = !bad;
+  $('rounds-body').hidden = !!bad;
+  $('step-rounds').classList.toggle('locked', !!bad);
+  const box = $('rounds');
+  box.textContent = '';
+  const me = state.me;
+  state.rounds.forEach((rd, k) => {
+    const active = k === state.active;
+    const art = h('article', 'round' + (active ? ' active' : ''));
+    const head = h('div', 'round-h');
+    head.append(h('h3', '', '第 ' + (k + 1) + ' 轮'), h('span', 'round-sum', active ? '' : roundSummary(rd)));
+    if (!active) {
+      const b = h('button', 'link-btn round-open', '展开修改');
+      b.type = 'button';
+      b.addEventListener('click', () => { state.active = k; save(); renderRounds(); });
+      head.append(b);
+    }
+    art.append(head);
+    if (active) {
+      const body = h('div', 'round-body'), gone = deadBefore(k);
+      // night
+      const night = h('div', 'phase');
+      const nh = h('h4', 'phase-h');
+      nh.append(h('span', 'moon', '☾'), document.createTextNode('第 ' + (k + 1) + ' 夜 · 天亮后宣布谁死了'));
+      night.append(nh);
+      const chips = h('div', 'chips');
+      for (let i = 1; i <= state.n; i++) {
+        const on = rd.deaths.indexOf(i) >= 0, c = h('button', 'chip', i + ' 号');
+        c.type = 'button';
+        c.setAttribute('aria-pressed', on ? 'true' : 'false');
+        c.disabled = !!gone[i] && !on;
+        c.addEventListener('click', () => {
+          rd.deaths = on ? rd.deaths.filter((x) => x !== i) : rd.deaths.concat(i);
+          changed();
+        });
+        chips.append(c);
+      }
+      night.append(chips);
+      night.append(h('p', 'phase-note', rd.deaths.length ? '' : '没人死就是平安夜，不用点'));
+      if (me.seat && me.role === 'seer') {
+        const p = h('div', 'private');
+        p.append(document.createTextNode('你验了'));
+        p.append(seatSelect(rd.check && rd.check.seat, '你验的人', (v) => { rd.check = v ? { seat: v, wolf: !!(rd.check && rd.check.wolf) } : null; changed(); }, me.seat));
+        if (rd.check) {
+          [['好人', false], ['狼人', true]].forEach(([t, w]) => {
+            const c = h('button', 'chip', t);
+            c.type = 'button';
+            c.setAttribute('aria-pressed', rd.check.wolf === w ? 'true' : 'false');
+            c.addEventListener('click', () => { rd.check.wolf = w; changed(); });
+            p.append(c);
+          });
+        }
+        night.append(p);
+      }
+      if (me.seat && me.role === 'witch') {
+        const p = h('div', 'private');
+        p.append(document.createTextNode('刀口'));
+        p.append(seatSelect(rd.knife, '当晚被刀的人', (v) => { rd.knife = v; changed(); }));
+        p.append(document.createTextNode('你毒了'));
+        p.append(seatSelect(rd.poison, '你毒的人', (v) => { rd.poison = v; changed(); }, me.seat));
+        night.append(p);
+      }
+      body.append(night);
+      // day
+      const day = h('div', 'phase');
+      const dh = h('h4', 'phase-h');
+      dh.append(h('span', 'sun', '☀'), document.createTextNode('第 ' + (k + 1) + ' 天 · 发言、投票、出局'));
+      day.append(dh);
+      const list = h('ol', 'events');
+      rd.events.forEach((e, j) => {
+        const li = h('li', 'ev');
+        const off = e.a > state.n || (e.b !== undefined && e.b > state.n);
+        li.append(h('span', 'ev-no', String(j + 1).padStart(2, '0')), h('span', 'ev-text' + (off ? ' off' : ''), describe(e) + (off ? '（超出人数，不计）' : '')));
+        const x = h('button', '', '×');
+        x.type = 'button';
+        x.setAttribute('aria-label', '删掉：' + describe(e));
+        x.addEventListener('click', () => { rd.events.splice(j, 1); changed(); });
+        li.append(x);
+        list.append(li);
+      });
+      day.append(list);
+      const slot = h('div', 'slot');
+      day.append(slot);
+      body.append(day);
+      if (k === state.rounds.length - 1 && k > 0) {
+        const f = h('div', 'round-foot'), del = h('button', 'link-btn', '删掉这一轮');
+        del.type = 'button';
+        del.addEventListener('click', () => {
+          if (!del.classList.contains('sure') && (rd.events.length || rd.deaths.length)) { del.classList.add('sure'); del.textContent = '确定删？'; return; }
+          state.rounds.pop();
+          state.active = state.rounds.length - 1;
+          changed();
+        });
+        f.append(del);
+        body.append(f);
+      }
+      art.append(body);
+      slot.append(composer);
+    }
+    box.append(art);
+  });
+  $('add-round').textContent = '天黑请闭眼：进入第 ' + (state.rounds.length + 1) + ' 轮';
+  $('rounds-count').textContent = state.rounds.length + ' 轮';
+  renderPad();
+}
+$('add-round').addEventListener('click', () => {
+  state.rounds.push(newRound());
+  state.active = state.rounds.length - 1;
+  changed();
+  $('rounds').lastElementChild.scrollIntoView({ block: 'start', behavior: 'smooth' });
+});
+
+// ---------- the composer ----------
+const input = $('say-input');
+let pieces = [];   // what the keypad wrote, so ⌫ takes back a whole word
+function preview() {
+  const box = $('say-preview');
+  box.textContent = '';
+  const text = input.value.trim();
+  if (!text) return null;
+  const r = parse(text, state.n);
+  r.events.forEach((e) => box.append(h('span', 'pv', describe(e))));
+  if (r.notes.length) box.append(h('p', 'pv-note', r.notes.join('；')));
+  return r;
+}
+input.addEventListener('input', () => { pieces = []; preview(); });
+$('say-form').addEventListener('submit', (ev) => {
+  ev.preventDefault();
+  const r = preview();
+  if (!r || !r.events.length) return;
+  state.rounds[state.active].events.push(...r.events);
+  input.value = '';
+  pieces = [];
+  $('say-preview').textContent = '';
+  if (r.notes.length) $('say-preview').append(h('p', 'pv-note', '已记下能看懂的部分。' + r.notes.join('；')));
+  changed();
+});
+function typeIn(piece) {
+  let v = input.value;
+  if (pieces.join('') !== v) pieces = v ? [v] : [];
+  if (/^\d+$/.test(piece) && /\d$/.test(v)) { pieces.push('、'); v += '、'; }
+  if (piece === '，' && (!v || /[，,]$/.test(v))) return;
+  pieces.push(piece);
+  input.value = v + piece;
+  preview();
+}
+function backspace() {
+  const v = input.value;
+  if (pieces.join('') !== v) pieces = v ? v.split('') : [];
+  pieces.pop();
+  if (pieces[pieces.length - 1] === '、') pieces.pop();
+  input.value = pieces.join('');
+  preview();
+}
+function renderPad() {
+  const pad = $('pad'), b = state.board, gone = deadBefore(state.rounds.length);
+  pad.textContent = '';
+  const key = (label, piece, cls) => {
+    const k = h('button', 'key' + (cls ? ' ' + cls : ''), label);
+    k.type = 'button';
+    k.addEventListener('click', () => (piece === null ? backspace() : typeIn(piece)));
+    return k;
+  };
+  const seats = h('div', 'seats');
+  for (let i = 1; i <= state.n; i++) seats.append(key(String(i), String(i), 'seat' + (gone[i] ? ' gone' : '')));
+  pad.append(seats);
+  const row = (keys) => { const r = h('div', 'pad-row'); keys.forEach((k) => r.append(k)); pad.append(r); };
+  row([key('踩', '踩'), key('狠踩', '狠踩'), key('保', '保'), key('站边', '站边'), key('投', '投'), key('下一句', '，', 'op'), key('⌫', null, 'op')]);
+  const claims = GODS.filter((r) => b[r] > 0).map((r) => key('跳' + ROLE_ZH[r], '跳' + ROLE_ZH[r]));
+  claims.push(key('跳民', '跳民'));
+  row(claims);
+  const acts = [];
+  if (b.seer > 0) acts.push(key('验', '验'), key('金水', '金水'), key('查杀', '查杀'));
+  if (b.witch > 0) acts.push(key('银水', '救'), key('毒', '毒'));
+  if (b.hunter > 0) acts.push(key('开枪', '开枪带走'));
+  acts.push(key('出局', '出局'), key('自爆', '自爆'));
+  if (b.idiot > 0) acts.push(key('翻牌', '翻牌'));
+  row(acts);
+}
+
+// ---------- step 3: the reading ----------
+function lean(i) {
+  const r = result, ft = r.fixedTeam[i], fr = r.fixedRole[i];
+  if (fr) return { text: '确定是' + ROLE_ZH[fr], wolf: false };
+  if (ft === 2) return { text: '确定是狼', wolf: true };
+  if (ft === 1) return { text: '确定是好人', wolf: false };
+  const p = r.pWolf[i];
+  return p >= 0.5 ? { text: '像狼 ' + pct(p), wolf: true } : { text: '像好人 ' + pct(1 - p), wolf: false };
+}
+function rolesOf(i) {
+  const r = result.role[i];
+  return Object.keys(r).map((k) => ({ k: k, p: r[k] })).sort((a, b) => b.p - a.p);
+}
+function tagsOf(seat, st) {
+  const tags = [], claimed = {}, s = st[seat];
+  if (state.me.seat === seat) tags.push({ t: '你', hard: true });
+  state.rounds.forEach((rd, k) => {
+    rd.events.forEach((e) => {
+      if (e.a === seat && e.t === 'claim' && !claimed[e.r]) { claimed[e.r] = 1; tags.push({ t: '跳' + ROLE_ZH[e.r] }); }
+      if (e.a === seat && e.t === 'check' && !claimed.seer) { claimed.seer = 1; tags.push({ t: '跳预言家' }); }
+      if (e.a === seat && (e.t === 'save' || e.t === 'poison') && !claimed.witch) { claimed.witch = 1; tags.push({ t: '跳女巫' }); }
+      if (e.b === seat && e.t === 'check') tags.push({ t: e.a + ' 号的' + (e.wolf ? '查杀' : '金水') });
+      if (e.b === seat && e.t === 'save') tags.push({ t: e.a + ' 号的银水' });
+    });
+    if (state.me.role === 'seer' && rd.check && rd.check.seat === seat) tags.push({ t: '你验的' + (rd.check.wolf ? '查杀' : '金水'), hard: true });
+  });
+  const how = { night: '第' + s.round + '夜死', out: '第' + s.round + '天出局', shot: '第' + s.round + '天被枪', boom: '第' + s.round + '天自爆', flipped: '翻牌白痴' }[s.state];
+  if (how) tags.push({ t: how, hard: true });
+  return tags;
+}
+function renderRead() {
+  const bad = validate(game());
+  $('step-read').classList.toggle('locked', !!bad);
+  $('read-locked').hidden = !bad && result && result.ok;
+  $('read-body').hidden = !!bad || !result || !result.ok;
+  if (bad) { $('read-locked').textContent = '板子配好以后，这里就会给出推理。'; return; }
+  if (!result.ok) { $('read-locked').textContent = result.reason; $('read-locked').classList.add('msg', 'bad'); return; }
+  $('read-locked').classList.remove('msg', 'bad');
+  const n = state.n, r = result, st = statuses(game());
+  $('read-count').textContent = '';
+
+  // the likeliest wolf team
+  const v = $('verdict');
+  v.textContent = '';
+  const top = r.top[0];
+  if (top.p >= 0.02) {
+    v.className = 'verdict';
+    const num = h('span', 'v-num');
+    top.wolves.forEach((s, x) => { if (x) num.append(h('span', 'dot', '·')); num.append(document.createTextNode(s)); });
+    v.append(num, h('span', 'v-cap', '最可能的狼坑，可能性 ' + (top.p >= 0.995 ? '100%' : pct(top.p))));
+    const rest = r.top.slice(1, 4).filter((t) => t.p >= 0.01);
+    const alts = $('alts');
+    alts.textContent = '';
+    if (rest.length) {
+      alts.append(document.createTextNode('其次：'));
+      rest.forEach((t, x) => { if (x) alts.append(document.createTextNode('；')); alts.append(h('b', '', t.wolves.join(' '))); alts.append(document.createTextNode(' ' + pct(t.p))); });
+    }
+  } else {
+    v.className = 'verdict quiet';
+    const most = r.pWolf.map((p, i) => ({ p, i })).filter((x) => r.fixedTeam[x.i] !== 2).sort((a, b) => b.p - a.p).slice(0, 3);
+    v.append(h('span', 'v-text', '信息还不够，狼坑有几百种可能，没有哪一组明显领先'));
+    $('alts').textContent = '目前最像狼的是 ' + most.map((x) => (x.i + 1) + ' 号（' + pct(x.p) + '）').join('、') + '。记下更多发言和投票会更准。';
+  }
+
+  // each player
+  const list = $('players');
+  list.textContent = '';
+  for (let i = 0; i < n; i++) {
+    const seat = i + 1, s = st[seat], li = h('li', 'pl' + (s.state !== 'alive' && s.state !== 'flipped' ? ' gone' : '') + (state.me.seat === seat ? ' me' : ''));
+    const btn = h('button', 'pl-btn');
+    btn.type = 'button';
+    btn.setAttribute('aria-expanded', open === seat ? 'true' : 'false');
+    btn.append(h('span', 'pl-seat', seat));
+    const body = h('span', 'pl-body'), topLine = h('span', 'pl-top'), l = lean(i);
+    const le = h('span', 'pl-lean');
+    const dot = h('i');
+    dot.style.background = l.wolf ? 'var(--wolf)' : 'var(--good)';
+    le.append(dot, document.createTextNode(l.text));
+    const roles = rolesOf(i).filter((x, k) => k < 2 && x.p >= 0.05).map((x) => ROLE_ZH[x.k] + ' ' + pct(x.p)).join(' · ');
+    topLine.append(le, h('span', 'pl-role', roles));
+    const bar = h('span', 'bar'), pw = r.pWolf[i];
+    bar.setAttribute('aria-hidden', 'true');
+    if (pw > 0.005) { const w = h('i', 'w'); w.style.width = (pw * 100) + '%'; bar.append(w); }
+    if (pw < 0.995) bar.append(h('i', 'g'));
+    body.append(topLine, bar);
+    const tags = tagsOf(seat, st);
+    if (tags.length) { const t = h('span', 'tags'); tags.forEach((x) => t.append(h('span', 'tag' + (x.hard ? ' hard' : ''), x.t))); body.append(t); }
+    btn.append(body);
+    btn.addEventListener('click', () => { open = open === seat ? 0 : seat; renderRead(); });
+    li.append(btn);
+    if (open === seat) li.append(detail(i));
+    list.append(li);
+  }
+  renderMatrix();
+  renderPairs();
+}
+function detail(i) {
+  const n = state.n, seat = i + 1, r = result, d = h('div', 'pl-detail');
+  // every role
+  const rt = h('div');
+  rt.append(h('h4', '', seat + ' 号的身份'));
+  const tbl = h('div', 'roles-tbl');
+  rolesOf(i).forEach((x) => {
+    tbl.append(h('span', '', ROLE_ZH[x.k]));
+    const b = h('span', 'rb' + (x.k === 'wolf' ? ' wolf' : ''));
+    b.style.width = Math.max(0.5, x.p * 100) + '%';
+    tbl.append(b, h('span', 'pc', pct(x.p)));
+  });
+  rt.append(tbl);
+  d.append(rt);
+  // closest and furthest
+  const others = [];
+  for (let j = 0; j < n; j++) if (j !== i) others.push({ j, p: r.same[i * n + j] });
+  others.sort((a, b) => b.p - a.p);
+  const rel = h('div');
+  rel.append(h('h4', '', '跟 ' + seat + ' 号'));
+  const fmt = (xs) => xs.map((x) => (x.j + 1) + ' 号 ' + pct(x.p)).join('、');
+  rel.append(h('p', 'rel', '最像一边：' + fmt(others.slice(0, 3))));
+  rel.append(h('p', 'rel', '最像对立：' + fmt(others.slice(-3).reverse().map((x) => ({ j: x.j, p: 1 - x.p })))));
+  d.append(rel);
+  // what moved this seat most
+  const why = h('div');
+  why.append(h('h4', '', '影响最大的信息'));
+  const ul = h('ol', 'why');
+  why.append(ul);
+  d.append(why);
+  fillWhy(seat, ul);
+  return d;
+}
+// leave each piece of evidence out in turn and see how far this seat's wolf chance moves; slow on big
+// tables, so one piece per tick and the answer kept until the game changes
+function fillWhy(seat, ul) {
+  const show = (rows) => {
+    ul.textContent = '';
+    if (!rows.length) { ul.append(h('li', '', '还没有直接涉及 ' + seat + ' 号的信息。')); return; }
+    rows.slice(0, 6).forEach((x) => {
+      const li = h('li'), dd = h('span', 'd'), sw = h('i');
+      sw.style.background = x.d > 0 ? 'var(--wolf)' : 'var(--good)';
+      dd.append(sw, document.createTextNode((x.d > 0 ? '+' : '−') + Math.abs(x.d * 100).toFixed(x.d * 100 > -1 && x.d * 100 < 1 ? 1 : 0) + '%'));
+      li.append(dd, h('span', '', x.label + (x.d > 0 ? '，更像狼' : '，更像好人')));
+      ul.append(li);
+    });
+  };
+  if (explained[seat]) { show(explained[seat]); return; }
+  const items = explainItems(game(), seat), token = explainToken, g = game(), base = result.pWolf[seat - 1], rows = [];
+  ul.append(h('li', '', items.length ? '计算中…' : '还没有直接涉及 ' + seat + ' 号的信息。'));
+  let x = 0;
+  const tick = () => {
+    if (token !== explainToken) return;
+    if (x < items.length) {
+      const it = items[x++], r = infer(g, { light: true, skip: it.skip });
+      if (r.ok) rows.push({ label: it.label, d: base - r.pWolf[seat - 1] });
+      setTimeout(tick, 0);
+      return;
+    }
+    rows.sort((a, b) => Math.abs(b.d) - Math.abs(a.d));
+    explained[seat] = rows.filter((r) => Math.abs(r.d) >= 0.005);
+    if (open === seat) show(explained[seat]);
+  };
+  if (items.length) setTimeout(tick, 0);
+}
+function cellColor(p) {
+  const m = Math.min(100, Math.round(Math.abs(p - 0.5) * 200));
+  return 'color-mix(in oklab, ' + (p >= 0.5 ? 'var(--same)' : 'var(--opp)') + ' ' + m + '%, var(--mid))';
+}
+function pairText(i, j) {
+  const n = state.n, r = result, s = r.same[i * n + j], bw = r.bothWolf[i * n + j], bg = s - bw;
+  return (i + 1) + ' 号和 ' + (j + 1) + ' 号：共边 ' + pct(s) + '（都是好人 ' + pct(bg) + '，都是狼 ' + pct(bw) + '），对立 ' + pct(1 - s);
+}
+function renderMatrix() {
+  const n = state.n, mx = $('mx'), r = result;
+  mx.textContent = '';
+  mx.style.gridTemplateColumns = '1.8em repeat(' + n + ', minmax(0, 1fr))';
+  mx.append(h('span', 'h'));
+  for (let j = 0; j < n; j++) mx.append(h('span', 'h' + (cell && (cell[1] === j || cell[0] === j) ? ' on' : ''), j + 1));
+  for (let i = 0; i < n; i++) {
+    mx.append(h('span', 'h' + (cell && (cell[0] === i || cell[1] === i) ? ' on' : ''), i + 1));
+    for (let j = 0; j < n; j++) {
+      if (i === j) { mx.append(h('span', 'self')); continue; }
+      const p = r.same[i * n + j], c = h('button', 'c' + (cell && ((cell[0] === i && cell[1] === j) || (cell[0] === j && cell[1] === i)) ? ' on' : ''));
+      c.type = 'button';
+      c.style.background = cellColor(p);
+      c.title = pairText(i, j);
+      c.setAttribute('aria-label', pairText(i, j));
+      c.addEventListener('click', () => { cell = [i, j]; renderMatrix(); });
+      mx.append(c);
+    }
+  }
+  $('mx-note').textContent = cell && cell[0] < n && cell[1] < n ? pairText(cell[0], cell[1]) : '格子越紫，两人越像一边；越橙，越像对立；灰色是看不出来。';
+}
+function renderPairs() {
+  const n = state.n, r = result, all = [];
+  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+    if (r.fixedTeam[i] && r.fixedTeam[j]) continue;   // both already known: nothing to learn
+    all.push({ i, j, p: r.same[i * n + j] });
+  }
+  const fill = (id, rows, same) => {
+    const ol = $(id);
+    ol.textContent = '';
+    if (!rows.length) { ol.append(h('li', 'empty', '还没有特别明显的')); return; }
+    rows.forEach((x) => {
+      const li = h('li'), pc = h('span', 'pc'), sw = h('i');
+      sw.style.background = same ? 'var(--same)' : 'var(--opp)';
+      pc.append(sw, document.createTextNode(pct(same ? x.p : 1 - x.p)));
+      const who = h('button', 'link-btn who', (x.i + 1) + ' 和 ' + (x.j + 1));
+      who.type = 'button';
+      who.addEventListener('click', () => { cell = [x.i, x.j]; renderMatrix(); $('mx').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); });
+      li.append(who, pc);
+      ol.append(li);
+    });
+  };
+  fill('pairs-same', all.filter((x) => x.p >= 0.6).sort((a, b) => b.p - a.p).slice(0, 5), true);
+  fill('pairs-opp', all.filter((x) => x.p <= 0.4).sort((a, b) => a.p - b.p).slice(0, 5), false);
+}
+
+// ---------- everything ----------
+function changed() {
+  save();
+  explainToken++;
+  explained = {};
+  if (open > state.n) open = 0;
+  if (cell && (cell[0] >= state.n || cell[1] >= state.n)) cell = null;
+  renderSetup();
+  renderRounds();
+  result = validate(game()) ? null : infer(game());
+  renderRead();
+}
+
+$('reset').addEventListener('click', (ev) => {
+  const b = ev.currentTarget;
+  if (!b.classList.contains('sure')) {
+    b.classList.add('sure');
+    b.textContent = '确定清空这一局的记录？';
+    setTimeout(() => { b.classList.remove('sure'); b.textContent = '重开一局'; }, 4000);
+    return;
+  }
+  b.classList.remove('sure');
+  b.textContent = '重开一局';
+  state.rounds = [newRound()];
+  state.active = 0;
+  state.me.role = '';
+  state.me.mates = [];
+  input.value = '';
+  pieces = [];
+  $('say-preview').textContent = '';
+  open = 0; cell = null;
+  changed();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+// light / dark: follows the system until chosen; the choice is shared with the homepage
+const root = document.documentElement;
+const mqDark = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+function isDark() { const t = root.getAttribute('data-theme'); return t ? t === 'dark' : !!(mqDark && mqDark.matches); }
+function showTheme() { $('btn-theme').setAttribute('aria-pressed', isDark() ? 'true' : 'false'); }
+$('btn-theme').addEventListener('click', () => {
+  const next = isDark() ? 'light' : 'dark', system = mqDark && mqDark.matches ? 'dark' : 'light';
+  // picking what the system already shows clears the choice, so the page follows the system again
+  if (next === system) root.removeAttribute('data-theme'); else root.setAttribute('data-theme', next);
+  try {
+    if (next === system) localStorage.removeItem('wentaoz.theme'); else localStorage.setItem('wentaoz.theme', next);
+  } catch (e) {}
+  showTheme();
+});
+if (mqDark && mqDark.addEventListener) mqDark.addEventListener('change', showTheme);
+showTheme();
+$('btn-theme').hidden = false;
+
+load();
+changed();
+</script>
+<!-- GoatCounter: counts visits without cookies; the totals feed the visitor map on the homepage -->
+<script data-goatcounter="https://wentaoz.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>
