@@ -163,6 +163,7 @@ input[type="text"]::placeholder { color: var(--muted); opacity: 0.8; }
 .me-row { display: flex; flex-wrap: wrap; gap: 8px; }
 .me-row select { flex: 1 1 10em; }
 #mates-box { margin-top: 12px; }
+#mates-note { margin: -2px 0 10px; }
 
 /* step 2: rounds */
 .round { border: 1px solid var(--rule); border-radius: 12px; background: var(--surface); margin-bottom: 12px; }
@@ -331,7 +332,7 @@ footer .link-btn { margin-left: auto; }
         <div class="chips" id="presets"></div>
       </div>
       <div>
-        <span class="label">这一局的板子（狼王、白狼王都算狼人）</span>
+        <span class="label">这一局的板子（狼王、白狼王都算狼人；通灵师按预言家记）</span>
         <div class="board" id="board"></div>
         <p class="calc" id="board-sum" aria-live="polite"></p>
       </div>
@@ -345,6 +346,7 @@ footer .link-btn { margin-left: auto; }
         </div>
         <div id="mates-box" hidden>
           <span class="label" id="mates-label">你的狼队友</span>
+          <p class="hint" id="mates-note" hidden>机械狼和你们互不认识，不算在队友里。</p>
           <div class="chips" id="mates" role="group" aria-labelledby="mates-label"></div>
         </div>
       </div>
@@ -397,6 +399,7 @@ footer .link-btn { margin-left: auto; }
       <p><b>发言。</b>踩和投票说明两个人多半不在一边，但不说明谁是狼：好人踩狼、狼踩好人都很常见，狼踩、投自己队友很少见。保和站边反过来，说明两个人多半在一边。比例大致是：<span class="k">踩 好好 1 · 好狼 1.6 · 狼好 1.6 · 狼狼 0.3；投票 1 · 1.8 · 1.8 · 0.25；保 1.4 · 0.8 · 0.8 · 1.6；站边 1.6 · 0.6 · 0.7 · 2</span>。狠踩、强保按 1.7 倍算，轻踩、轻保、怀疑按一半算。同一句话每轮都说，就每轮都算一次。</p>
       <p><b>跳身份。</b>真预言家几乎一定会跳，狼队大约六成会派一只狼悍跳预言家，好人假跳预言家很少。别人跳了你的身份你却不出来对跳，真预言家很少这样，猎人、白痴可以先藏着。所以只有一个人跳预言家时，他多半是真的；两个人对跳，多半一真一狼。</p>
       <p><b>警长竞选。</b>真预言家几乎一定上警，要拿警徽、留警徽流，也几乎不会退水，所以没上警或者退了水的人，基本可以排除是预言家。狼队一般派两只左右上警，悍跳的那只一定在警上；女巫、守卫常常留在警下藏身份。警下投给谁按站边算，只是弱一点；警长死前把警徽移交给谁，说明两人多半一边，比站边还强。</p>
+      <p><b>机械狼。</b>机械狼是狼人阵营，但和其他狼互不认识，不能自爆，首夜学一个人的技能，其他狼都出局后才能刀人。所以机械狼和狼之间互踩、互保不说明什么；狼不认识它，可能把它刀了；开枪的人可能是猎人，也可能是学了猎人的机械狼。“像狼”和“狼坑”都把机械狼算在狼这边，每个人是机械狼的可能单独列在身份里。预言家验机械狼按查杀算。</p>
       <p><b>验人。</b>真预言家的金水、查杀不会错。狼悍跳时，金水常常发给狼队友，查杀几乎总是打在好人身上。女巫说的银水是当晚的刀口，除非狼自刀，银水是好人。</p>
       <p><b>夜里。</b>被刀的人几乎都是好人（狼很少自刀）。有女巫的板子，一晚死两个，通常是一刀一毒，毒的那个更可能是狼。猎人开枪说明他是猎人，被带走的人更像狼；自爆的一定是狼；翻牌的是白痴。你填了自己的身份，就当作确定的：你是预言家，你的验人结果也是确定的；你是女巫，你看到的刀口就是好人。</p>
       <p>这些比例是按常见打法估的，不是从真实对局里统计出来的，所以结果是一个有依据的参考，不是定论。点开每个人，能看到哪几条信息对他的影响最大。所有计算都在你的浏览器里完成，记录只存在这台设备上。</p>
@@ -423,10 +426,12 @@ function h(tag, cls, text) {
 }
 const pct = (p) => Math.round(p * 100) + '%';
 const KEY = 'tableread.game';
-const BOARD_ROLES = ['villager', 'wolf'].concat(GODS);
+const BOARD_ROLES = ['villager', 'wolf', 'mech'].concat(GODS);
+const MAX_COUNT = { mech: 1 };   // one mechanical wolf at most
 const PRESETS = [
   { name: '预女猎白', n: 12, board: { villager: 4, wolf: 4, seer: 1, witch: 1, hunter: 1, idiot: 1, guard: 0 } },
   { name: '预女猎守', n: 12, board: { villager: 4, wolf: 4, seer: 1, witch: 1, hunter: 1, idiot: 0, guard: 1 } },
+  { name: '机械狼', n: 12, board: { villager: 4, wolf: 3, mech: 1, seer: 1, witch: 1, hunter: 1, idiot: 0, guard: 1 } },
   { name: '预女猎白', n: 10, board: { villager: 3, wolf: 3, seer: 1, witch: 1, hunter: 1, idiot: 1, guard: 0 } },
   { name: '预女猎', n: 9, board: { villager: 3, wolf: 3, seer: 1, witch: 1, hunter: 1, idiot: 0, guard: 0 } },
   { name: '预猎', n: 6, board: { villager: 2, wolf: 2, seer: 1, witch: 0, hunter: 1, idiot: 0, guard: 0 } }
@@ -493,7 +498,7 @@ function renderSetup() {
   const box = $('board');
   box.textContent = '';
   BOARD_ROLES.forEach((r) => {
-    const c = b[r] || 0, row = h('div', 'role-box' + (c ? '' : ' zero') + (r === 'wolf' ? ' wolfish' : ''));
+    const c = b[r] || 0, row = h('div', 'role-box' + (c ? '' : ' zero') + (r === 'wolf' || r === 'mech' ? ' wolfish' : ''));
     row.append(h('span', 'role-name', ROLE_ZH[r]));
     const st = h('div', 'stepper');
     const minus = h('button', '', '−'), out = h('output', '', c), plus = h('button', '', '+');
@@ -501,7 +506,7 @@ function renderSetup() {
     minus.setAttribute('aria-label', ROLE_ZH[r] + '少一个');
     plus.setAttribute('aria-label', ROLE_ZH[r] + '多一个');
     minus.disabled = c <= 0;
-    plus.disabled = c >= MAX_PLAYERS;
+    plus.disabled = c >= (MAX_COUNT[r] || MAX_PLAYERS);
     minus.addEventListener('click', () => { state.board[r] = c - 1; fixMe(); changed(); });
     plus.addEventListener('click', () => { state.board[r] = c + 1; fixMe(); changed(); });
     st.append(minus, out, plus);
@@ -509,7 +514,8 @@ function renderSetup() {
     box.append(row);
   });
   const bad = validate(game()), sum = boardSize(b);
-  $('board-sum').textContent = bad || ('一共 ' + sum + ' 张牌：' + b.wolf + ' 狼，' + (sum - b.wolf) + ' 好人');
+  const wolves = b.wolf + (b.mech || 0);
+  $('board-sum').textContent = bad || ('一共 ' + sum + ' 张牌：' + wolves + ' 狼' + (b.mech ? '（含机械狼）' : '') + '，' + (sum - wolves) + ' 好人');
   $('board-sum').classList.toggle('bad', !!bad);
   $('setup-count').textContent = n + ' 人';
 
@@ -527,6 +533,7 @@ function renderSetup() {
 
   const wolfMe = state.me.seat && state.me.role === 'wolf';
   $('mates-box').hidden = !wolfMe;
+  $('mates-note').hidden = !(b.mech > 0);
   if (wolfMe) {
     const m = $('mates');
     m.textContent = '';
@@ -986,7 +993,7 @@ function detail(i) {
   const tbl = h('div', 'roles-tbl');
   rolesOf(i).forEach((x) => {
     tbl.append(h('span', '', ROLE_ZH[x.k]));
-    const b = h('span', 'rb' + (x.k === 'wolf' ? ' wolf' : ''));
+    const b = h('span', 'rb' + (x.k === 'wolf' || x.k === 'mech' ? ' wolf' : ''));
     b.style.width = Math.max(0.5, x.p * 100) + '%';
     tbl.append(b, h('span', 'pc', pct(x.p)));
   });
