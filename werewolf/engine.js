@@ -6,13 +6,17 @@
 // The method: every way the board's roles could be dealt to the seats is a possible world. Each world
 // starts equally likely; every piece of evidence then multiplies it by how likely that evidence would
 // be in that world (a wolf attacking a teammate is rare, a true seer's check is never wrong, and so
-// on). Summing the worlds gives the answers. Worlds are enumerated by their wolf team; for each team
-// the good roles are dealt by a small dynamic programme instead of one by one, so a 12-player game is
-// a few hundred teams and an 18-player one a few tens of thousands.
+// on). Summing the worlds gives the answers. Worlds are enumerated by their wolf team, then by which of
+// the team is the mechanical wolf if the board has one; for each team the good roles are dealt by a small
+// dynamic programme instead of one by one, so a 12-player game is a few hundred teams and an 18-player
+// one a few tens of thousands.
 
 export const GODS = ['seer', 'witch', 'hunter', 'idiot', 'guard'];
-export const ROLES = ['villager', 'wolf'].concat(GODS);
-export const ROLE_ZH = { villager: '村民', wolf: '狼人', seer: '预言家', witch: '女巫', hunter: '猎人', idiot: '白痴', guard: '守卫' };
+// mech is the mechanical wolf (机械狼): on the wolves' side, but it and the wolves don't know each other,
+// it can't blow itself up, and on the first night it learns one player's skill (the witch's poison, the
+// hunter's gun, the guard's shield, a check). It only knifes once every other wolf is out.
+export const ROLES = ['villager', 'wolf', 'mech'].concat(GODS);
+export const ROLE_ZH = { villager: '村民', wolf: '狼人', mech: '机械狼', seer: '预言家', witch: '女巫', hunter: '猎人', idiot: '白痴', guard: '守卫' };
 export const MIN_PLAYERS = 5, MAX_PLAYERS = 18;
 
 // ---------- how much each kind of evidence says ----------
@@ -32,9 +36,9 @@ const SPEECH = {
 // The sheriff election (警长竞选). The chance that each role runs (上警): the true seer nearly always runs,
 // to win the badge and leave a check order; a wolf team usually sends two, the fake seer among them; the
 // witch and the guard often stay down to keep hidden.
-const RUN = { seer: 0.92, wolf: 0.5, witch: 0.35, hunter: 0.55, idiot: 0.6, guard: 0.35, villager: 0.45 };
+const RUN = { seer: 0.92, wolf: 0.5, mech: 0.55, witch: 0.35, hunter: 0.55, idiot: 0.6, guard: 0.35, villager: 0.45 };
 // The chance that a candidate withdraws (退水). A true seer almost never does.
-const QUIT = { seer: 0.05, wolf: 0.35, witch: 0.45, hunter: 0.4, idiot: 0.4, guard: 0.45, villager: 0.45 };
+const QUIT = { seer: 0.05, wolf: 0.35, mech: 0.35, witch: 0.45, hunter: 0.4, idiot: 0.4, guard: 0.45, villager: 0.45 };
 // A wolf posing as the seer runs as surely as the real one, so for a seer claimant running says nothing;
 // withdrawing still does, as the fake one gives up more easily.
 const CLAIMANT_QUIT = 0.2;
@@ -43,6 +47,10 @@ const CLAIMANT_QUIT = 0.2;
 const CLAIM_TRUE = { seer: 0.9, witch: 0.8, hunter: 0.7, idiot: 0.6, guard: 0.6, villager: 0.6 };
 const CLAIM_WOLVES = { seer: 0.6, witch: 0.15, hunter: 0.2, idiot: 0.1, guard: 0.1 };  // for the whole wolf team; one wolf is this over the number of wolves
 const CLAIM_WOLF_VILLAGER = 0.5;   // a wolf calling themself a villager
+// The mechanical wolf usually poses as the god whose skill it learnt, and has a real skill to back it up
+const CLAIM_MECH = { seer: 0.3, witch: 0.3, hunter: 0.3, idiot: 0.1, guard: 0.25, villager: 0.5 };
+// The chance it learnt a given god's skill, for a shot that could be its own
+const MECH_LEARNT = 0.25;
 const CLAIM_LIE = { seer: 0.02, witch: 0.01, hunter: 0.03, idiot: 0.02, guard: 0.02, villager: 0.3 };  // a good player claiming a role they don't hold (a god hiding as a villager is the common case)
 // A real god who stays quiet after someone else claims their role. A true seer nearly always counters a
 // fake one; a hunter or an idiot can afford to wait.
@@ -277,7 +285,7 @@ export function describe(ev) {
 }
 
 // ---------- the game ----------
-// game = { n, board: { villager, wolf, seer, witch, hunter, idiot, guard }, me: { seat, role, mates: [] },
+// game = { n, board: { villager, wolf, mech, seer, witch, hunter, idiot, guard }, me: { seat, role, mates: [] },
 //          rounds: [{ deaths: [seats], check: { seat, wolf } | null, knife, poison,
 //                     sheriff: { run: [seats], quit: [seats], votes: { voter: candidate }, chief } | null,
 //                     events: [...] }] }
@@ -308,56 +316,68 @@ export function statuses(game) {
 }
 
 // Turn the game into factors. skip(kind, k, j) leaves one piece out, for explain().
+// Each player is in one of three states: good (0), wolf (1) or the mechanical wolf (2).
 function compile(game, skip) {
-  const n = game.n, b = game.board, w = b.wolf, g = n - w;
+  const n = game.n, b = game.board, w = b.wolf, mech = b.mech > 0 ? 1 : 0, wt = w + mech, g = n - wt;
   const gods = GODS.filter((r) => b[r] > 0);
   const roles = ['villager'].concat(gods), R = roles.length, ri = {};
   roles.forEach((r, k) => { ri[r] = k; });
-  const team = new Int8Array(n);                 // 0 unknown, 1 good, 2 wolf
-  const fixedRole = new Int8Array(n).fill(-1);
+  const mask = new Uint8Array(n).fill(mech ? 7 : 3);   // which states each player can still be in: 1 good, 2 wolf, 4 mechanical wolf
+  const fixedRole = new Int8Array(n).fill(-1);   // the good role a player must hold, if good
   const conflicts = [];
-  const single = [];                             // log factors [if good, if wolf]
-  for (let i = 0; i < n; i++) single.push([0, 0]);
-  const pairs = new Map();                       // i*n+j with i<j → log factors by 2*wolf(i)+wolf(j)
-  const wolfLog = new Float64Array(n);           // log factor when the player is a wolf
+  const single = [];                             // log factors by state
+  for (let i = 0; i < n; i++) single.push([0, 0, 0]);
+  const pairs = new Map();                       // i*n+j with i<j → log factors by 3*state(i)+state(j)
   const base = [];                               // factor for each good role
   for (let i = 0; i < n; i++) base.push(new Float64Array(R).fill(1));
-  const roleChecks = [];                         // per claimant: checks whose weight depends on their role and the target's side
+  const roleChecks = [];                         // per claimant: checks whose weight depends on their role and the target's state
   for (let i = 0; i < n; i++) roleChecks.push([]);
-  const wolfChecks = [];                         // the same checks, when the claimant is a wolf
+  const saveChecks = [];                         // claimed saves, the only checks that tell a wolf from the mechanical wolf
   const claims = [];
   for (let i = 0; i < n; i++) claims.push({});
   const firstClaim = {};
   const okSeat = (v) => Number.isInteger(v) && v >= 1 && v <= n;
   const no = (kind, k, j) => skip && skip(kind, k, j);
+  const other = 1 / (n - 1);
+  const perMate = (x) => (w > 1 ? x / (w - 1) : 1);   // a wolf's share for one teammate (unused when there is none)
 
-  function setTeam(i, t, why) {
-    if (team[i] && team[i] !== t) conflicts.push(why);
-    else team[i] = t;
+  function limit(i, bits, why) {
+    if (!(mask[i] & bits)) conflicts.push(why);
+    else mask[i] &= bits;
   }
-  function setRole(i, r, why) {
-    if (!(r in ri)) { conflicts.push(why + '，但板子里没有' + ROLE_ZH[r]); return; }
+  // orMech: the mechanical wolf could also have done it, having learnt the role's skill
+  function setRole(i, r, why, orMech) {
+    if (!(r in ri)) {
+      if (orMech && mech) limit(i, 4, why);
+      else conflicts.push(why + '，但板子里没有' + ROLE_ZH[r]);
+      return;
+    }
     if (fixedRole[i] >= 0 && fixedRole[i] !== ri[r]) { conflicts.push(why); return; }
     fixedRole[i] = ri[r];
-    setTeam(i, 1, why);
+    limit(i, orMech ? 5 : 1, why);
   }
-  function addSingle(i, good, wolf) { single[i][0] += Math.log(good); single[i][1] += Math.log(wolf); }
-  function addPair(a, c, table, s) {
+  function addSingle(i, t) { for (let x = 0; x < 3; x++) single[i][x] += Math.log(t[x]); }
+  // A speaker-first table of the four good/wolf cells, spread over the three states. The mechanical wolf
+  // and the wolves don't know each other, so between them speech carries no inside knowledge; towards
+  // good players the mechanical wolf pushes as a wolf does, and good players read it as one.
+  function nine(t) { return [t[0], t[1], t[1], t[2], t[3], t[2], t[2], t[0], t[0]]; }
+  function addPair(a, c, t9, s) {
     const i = Math.min(a, c), j = Math.max(a, c), key = i * n + j;
     let L = pairs.get(key);
-    if (!L) { L = new Float64Array(4); pairs.set(key, L); }
-    // the table is speaker-first; swap the two mixed cells when the speaker has the higher seat
-    const t = a < c ? table : [table[0], table[2], table[1], table[3]];
-    for (let x = 0; x < 4; x++) L[x] += s * Math.log(t[x]);
+    if (!L) { L = new Float64Array(9); pairs.set(key, L); }
+    for (let x = 0; x < 3; x++) for (let y = 0; y < 3; y++) L[3 * x + y] += s * Math.log(a < c ? t9[3 * x + y] : t9[3 * y + x]);
   }
   function claim(a, r, k) {
     if (!claims[a][r]) claims[a][r] = true;
     if (firstClaim[r] === undefined || k < firstClaim[r]) firstClaim[r] = k;
   }
-  // a check-like claim: the claimant says they learnt the target's side at night as role `as`
-  function roleCheck(a, t, as, ifGood, ifWolf, wolfGood, wolfWolf) {
-    roleChecks[a].push({ b: t, k: as in ri ? ri[as] : -1, good: ifGood, wolf: ifWolf, other: 1 / (n - 1) });
-    wolfChecks.push({ a: a, b: t, good: Math.log(wolfGood), wolf: w > 1 ? Math.log(wolfWolf) : -Infinity });
+  // A check-like claim: the claimant says they learnt the target's side at night as role `as`. truth is
+  // its weight when the claimant really holds that role, by the target's state; wolfGood and wolfMate
+  // when the claimant is a wolf posing as it. The wolves don't know the mechanical wolf, so to them it
+  // is one more good player; the mechanical wolf posing as a god picks targets blind.
+  function roleCheck(a, t, as, truth, wolfGood, wolfMate) {
+    roleChecks[a].push({ b: t, k: as in ri ? ri[as] : -1, good: truth[0], wolf: truth[1], mech: truth[2], other: other });
+    addPair(a, t, [1, 1, 1, wolfGood, wolfMate, wolfGood, other, other, other], 1);
   }
 
   // who the user is
@@ -365,10 +385,14 @@ function compile(game, skip) {
   if (okSeat(me.seat) && me.role && !no('me', 0, 0)) {
     const m = me.seat - 1;
     if (me.role === 'wolf') {
-      setTeam(m, 2, '你是狼');
+      limit(m, 2, '你是狼');
       const mates = (me.mates || []).filter((x) => okSeat(x) && x !== me.seat);
-      mates.forEach((x) => setTeam(x - 1, 2, '你的狼队友'));
-      if (mates.length === w - 1) for (let i = 0; i < n; i++) if (!team[i]) team[i] = 1;
+      mates.forEach((x) => limit(x - 1, 2, '你的狼队友'));
+      // the wolves know each other but not the mechanical wolf
+      if (mates.length === w - 1) for (let i = 0; i < n; i++) if (i !== m && mates.indexOf(i + 1) < 0) limit(i, 5, '你的狼队友');
+    } else if (me.role === 'mech') {
+      limit(m, 4, '你是机械狼');
+      for (let i = 0; i < n; i++) if (i !== m) limit(i, 3, '你是机械狼');
     } else setRole(m, me.role, '你是' + ROLE_ZH[me.role]);
   }
   const meSeer = okSeat(me.seat) && me.role === 'seer', meWitch = okSeat(me.seat) && me.role === 'witch';
@@ -384,9 +408,12 @@ function compile(game, skip) {
 
   const ran = [];                                // the election, weighed once every claim is known
 
-  const K = [0.96 / g, SELF_KNIFE / w];                       // knife target: good, wolf
-  const P = [(1 - POISON_AT_WOLF) / Math.max(1, g - 1), POISON_AT_WOLF / w];   // poison target
-  const hasWitch = b.witch > 0;
+  // by state: the wolves can knife the mechanical wolf as readily as a good player, not knowing it;
+  // a poison, or the hunter's bullet, aimed at a suspected wolf finds either kind
+  const K = [0.96 / g, SELF_KNIFE / w, 0.96 / g];
+  const P = [(1 - POISON_AT_WOLF) / Math.max(1, g - 1), POISON_AT_WOLF / wt, POISON_AT_WOLF / wt];
+  const mix = (f, x, y) => [0, 1, 2].map((s) => (1 - f) * x[s] + f * y[s]);
+  const hasPoison = b.witch > 0 || mech > 0;    // the mechanical wolf may have learnt the witch's poison
 
   (game.rounds || []).forEach((rd, k) => {
     const day = k + 1, events = (rd.events || []);
@@ -398,19 +425,17 @@ function compile(game, skip) {
     (rd.deaths || []).forEach((d, j) => { if (okSeat(d) && deaths.indexOf(d) < 0 && !shotAtDawn[d] && !no('death', k, j)) deaths.push(d); });
 
     if (meWitch) {
-      if (okSeat(rd.knife) && !no('knife', k, 0)) addSingle(rd.knife - 1, K[0], K[1]);
+      if (okSeat(rd.knife) && !no('knife', k, 0)) addSingle(rd.knife - 1, K);
       deaths = deaths.filter((d) => d !== rd.knife && d !== rd.poison);
-      deaths.forEach((d) => addSingle(d - 1, K[0], K[1]));
+      deaths.forEach((d) => addSingle(d - 1, mech ? mix(0.5, K, P) : K));
     } else if (deaths.length === 1) {
-      const d = deaths[0] - 1;
-      if (hasWitch) addSingle(d, (1 - LONE_DEATH_IS_POISON) * K[0] + LONE_DEATH_IS_POISON * P[0], (1 - LONE_DEATH_IS_POISON) * K[1] + LONE_DEATH_IS_POISON * P[1]);
-      else addSingle(d, K[0], K[1]);
-    } else if (deaths.length === 2 && hasWitch) {
+      addSingle(deaths[0] - 1, hasPoison ? mix(LONE_DEATH_IS_POISON, K, P) : K);
+    } else if (deaths.length === 2 && hasPoison) {
       // one knifed, one poisoned, either way round
       const t = [];
-      for (let x = 0; x < 4; x++) { const u = x >> 1, v = x & 1; t.push(0.5 * (K[u] * P[v] + K[v] * P[u])); }
+      for (let x = 0; x < 3; x++) for (let y = 0; y < 3; y++) t.push(0.5 * (K[x] * P[y] + K[y] * P[x]));
       addPair(deaths[0] - 1, deaths[1] - 1, t, 1);
-    } else deaths.forEach((d) => addSingle(d - 1, hasWitch ? 0.5 * (K[0] + P[0]) : K[0], hasWitch ? 0.5 * (K[1] + P[1]) : K[1]));
+    } else deaths.forEach((d) => addSingle(d - 1, hasPoison ? mix(0.5, K, P) : K));
 
     // the election: who ran says something about every role, most of all the seer's. On the first day it
     // comes before the night's deaths are read out, so last night's dead can run too.
@@ -426,38 +451,43 @@ function compile(game, skip) {
       }
       Object.keys(sh.votes || {}).forEach((v) => {
         const voter = +v, c = sh.votes[v];
-        if (okSeat(voter) && okSeat(c) && voter !== c && !no('bvote', k, voter)) addPair(voter - 1, c - 1, SPEECH.bvote, 1);
+        if (okSeat(voter) && okSeat(c) && voter !== c && !no('bvote', k, voter)) addPair(voter - 1, c - 1, nine(SPEECH.bvote), 1);
       });
     }
 
+    // the seer sees the mechanical wolf as a wolf
     if (meSeer && rd.check && okSeat(rd.check.seat) && rd.check.seat !== me.seat && !no('check', k, 0))
-      setTeam(rd.check.seat - 1, rd.check.wolf ? 2 : 1, '你验' + rd.check.seat + '号是' + (rd.check.wolf ? '狼' : '好人'));
+      limit(rd.check.seat - 1, rd.check.wolf ? 6 : 1, '你验' + rd.check.seat + '号是' + (rd.check.wolf ? '狼' : '好人'));
 
     events.forEach((e, j) => {
       if (no('event', k, j) || !okSeat(e.a) || (e.b !== undefined && (!okSeat(e.b) || e.b === e.a))) return;
       const a = e.a - 1, t = e.b - 1;
       switch (e.t) {
         case 'atk': case 'sup': case 'side': case 'vote': case 'bvote': case 'badge':
-          addPair(a, t, SPEECH[e.t], e.s > 0 ? e.s : 1); break;
+          addPair(a, t, nine(SPEECH[e.t]), e.s > 0 ? e.s : 1); break;
         case 'claim':
-          if (ROLES.indexOf(e.r) >= 0 && e.r !== 'wolf') claim(a, e.r, day); break;
+          if (ROLES.indexOf(e.r) >= 0 && e.r !== 'wolf' && e.r !== 'mech') claim(a, e.r, day); break;
         case 'check':
           claim(a, 'seer', day);
-          if (e.wolf) roleCheck(a, t, 'seer', CHECK_MISS / (n - 1), 1 / (n - 1), (1 - FAKE_KILL_ON_MATE) / g, FAKE_KILL_ON_MATE / (w - 1));
-          else roleCheck(a, t, 'seer', 1 / (n - 1), CHECK_MISS / (n - 1), (1 - FAKE_GOLD_TO_MATE) / g, FAKE_GOLD_TO_MATE / (w - 1));
+          if (e.wolf) roleCheck(a, t, 'seer', [CHECK_MISS * other, other, other], (1 - FAKE_KILL_ON_MATE) / g, perMate(FAKE_KILL_ON_MATE));
+          else roleCheck(a, t, 'seer', [other, CHECK_MISS * other, CHECK_MISS * other], (1 - FAKE_GOLD_TO_MATE) / g, perMate(FAKE_GOLD_TO_MATE));
           break;
         case 'save':
           claim(a, 'witch', day);
-          roleCheck(a, t, 'witch', K[0], K[1], (1 - FAKE_SAVE_ON_MATE) / g, FAKE_SAVE_ON_MATE / (w - 1));
+          roleCheck(a, t, 'witch', K, (1 - FAKE_SAVE_ON_MATE) / g, perMate(FAKE_SAVE_ON_MATE));
+          saveChecks.push({ a: a, b: t });
           break;
         case 'poison':
           claim(a, 'witch', day);
-          addPair(a, t, SPEECH.poison, 1); break;
+          addPair(a, t, nine(SPEECH.poison), 1); break;
         case 'shoot':
-          if (b.hunter > 0) setRole(a, 'hunter', e.a + '号开了枪，是猎人');
-          addSingle(t, (1 - SHOT_AT_WOLF) / Math.max(1, g - 1), SHOT_AT_WOLF / w); break;
-        case 'boom':
-          setTeam(a, 2, e.a + '号自爆了，是狼'); break;
+          if (b.hunter > 0 || mech) {
+            setRole(a, 'hunter', e.a + '号开了枪，是猎人' + (mech ? '或学了猎人的机械狼' : ''), true);
+            if (mech) single[a][2] += Math.log(MECH_LEARNT);
+          }
+          addSingle(t, [(1 - SHOT_AT_WOLF) / Math.max(1, g - 1), SHOT_AT_WOLF / wt, SHOT_AT_WOLF / wt]); break;
+        case 'boom':   // the mechanical wolf can't blow itself up
+          limit(a, 2, e.a + '号自爆了，是狼'); break;
         case 'flip':
           if (b.idiot > 0) setRole(a, 'idiot', e.a + '号翻牌是白痴'); break;
       }
@@ -466,9 +496,9 @@ function compile(game, skip) {
 
   // claims: what each claim costs each possible role
   for (let i = 0; i < n; i++) {
-    const mine = Object.keys(claims[i]);
-    mine.forEach((r) => {
-      wolfLog[i] += Math.log(r === 'villager' ? CLAIM_WOLF_VILLAGER : (CLAIM_WOLVES[r] || 0.05) / w);
+    Object.keys(claims[i]).forEach((r) => {
+      single[i][1] += Math.log(r === 'villager' ? CLAIM_WOLF_VILLAGER : (CLAIM_WOLVES[r] || 0.05) / w);
+      single[i][2] += Math.log(CLAIM_MECH[r] || 0.05);
       for (let x = 0; x < R; x++) base[i][x] *= roles[x] === r ? CLAIM_TRUE[r] : CLAIM_LIE[r];
     });
   }
@@ -476,7 +506,8 @@ function compile(game, skip) {
     const claimant = claims[o.i].seer;
     const f = (r) => claimant ? (o.quit ? (r === 'seer' ? QUIT.seer : CLAIMANT_QUIT) : 1)
       : o.up ? RUN[r] * (o.quit ? QUIT[r] : 1 - QUIT[r]) : 1 - RUN[r];
-    wolfLog[o.i] += Math.log(f('wolf'));
+    single[o.i][1] += Math.log(f('wolf'));
+    single[o.i][2] += Math.log(f('mech'));
     for (let x = 0; x < R; x++) base[o.i][x] *= f(roles[x]);
   });
   // a real god who let someone else claim their role and said nothing
@@ -489,7 +520,7 @@ function compile(game, skip) {
 
   const pairList = [];
   pairs.forEach((L, key) => { pairList.push({ i: Math.floor(key / n), j: key % n, L: L }); });
-  return { n, w, roles, R, team, fixedRole, conflicts, single, pairList, wolfLog, base, roleChecks, wolfChecks, gods, counts: gods.map((r) => b[r]), claims };
+  return { n, w, mech, roles, R, mask, fixedRole, conflicts, single, pairList, base, roleChecks, saveChecks, gods, counts: gods.map((r) => b[r]), claims };
 }
 
 export function validate(game) {
@@ -497,8 +528,9 @@ export function validate(game) {
   if (!(n >= MIN_PLAYERS && n <= MAX_PLAYERS)) return '人数要在 ' + MIN_PLAYERS + ' 到 ' + MAX_PLAYERS + ' 之间';
   const sum = boardSize(b);
   if (sum !== n) return sum < n ? '板子只有 ' + sum + ' 张牌，比总人数少 ' + (n - sum) + ' 张' : '板子有 ' + sum + ' 张牌，比总人数多 ' + (sum - n) + ' 张';
-  if (!(b.wolf >= 1)) return '至少要有一只狼';
-  if (b.wolf >= n) return '至少要有一个好人';
+  if (!(b.wolf >= 1)) return '至少要有一只狼人';
+  if (b.mech > 1) return '机械狼最多一只';
+  if (b.wolf + (b.mech || 0) >= n) return '至少要有一个好人';
   return '';
 }
 
@@ -508,7 +540,7 @@ export function infer(game, opts) {
   if (bad) return { ok: false, reason: bad };
   const light = opts && opts.light;
   const M = compile(game, opts && opts.skip);
-  const { n, w, R, team, single, pairList, wolfLog, base, roleChecks, wolfChecks, counts } = M;
+  const { n, w, mech, R, mask, single, pairList, base, roleChecks, saveChecks, counts } = M;
   if (M.conflicts.length) return { ok: false, reason: '确定的信息互相矛盾：' + M.conflicts.join('；') };
 
   // the deal of good roles is a walk through the good players, counting how many of each god are dealt
@@ -521,93 +553,134 @@ export function infer(game, opts) {
     next[s * R] = s;
     for (let x = 0; x < G; x++) next[s * R + x + 1] = Math.floor(s / strides[x]) % (counts[x] + 1) < counts[x] ? s + strides[x] : -1;
   }
-  const m = n - w;
+  const wt = w + mech, m = n - wt;
   const F = new Float64Array((m + 1) * S), B = new Float64Array((m + 1) * S), FI = new Float64Array(m * R);
-  const goods = new Int32Array(m), isWolf = new Uint8Array(n);
+  const goods = new Int32Array(m), state = new Uint8Array(n), inTeam = new Uint8Array(n);
 
+  // deal the good roles to the players in state 0; returns the total weight of the deals
+  function deal() {
+    let t = 0;
+    for (let i = 0; i < n; i++) if (!state[i]) goods[t++] = i;
+    F.fill(0); F[0] = 1;
+    for (t = 0; t < m; t++) {
+      const i = goods[t], f = base[i];
+      for (let x = 0; x < R; x++) {
+        let v = f[x];
+        if (v) for (const c of roleChecks[i]) v *= x === c.k ? (state[c.b] === 0 ? c.good : state[c.b] === 1 ? c.wolf : c.mech) : c.other;
+        FI[t * R + x] = v;
+      }
+      const o = t * S, o2 = o + S;
+      for (let s = 0; s < S; s++) {
+        const v = F[o + s];
+        if (!v) continue;
+        for (let x = 0; x < R; x++) {
+          const fx = FI[t * R + x], s2 = next[s * R + x];
+          if (fx && s2 >= 0) F[o2 + s2] += v * fx;
+        }
+      }
+    }
+    return F[m * S + full];
+  }
+  // the backward half of the walk gives each good player's chance of each role in the last deal()
+  function roleShares(wt, Rw) {
+    B.fill(0); B[m * S + full] = 1;
+    for (let t = m - 1; t >= 0; t--) {
+      const o = t * S, o2 = o + S;
+      for (let s = 0; s < S; s++) {
+        let acc = 0;
+        for (let x = 0; x < R; x++) { const fx = FI[t * R + x], s2 = next[s * R + x]; if (fx && s2 >= 0) acc += fx * B[o2 + s2]; }
+        B[o + s] = acc;
+      }
+    }
+    for (let t = 0; t < m; t++) {
+      const o = t * S, o2 = o + S, i = goods[t];
+      for (let x = 0; x < R; x++) {
+        const fx = FI[t * R + x];
+        if (!fx) continue;
+        let acc = 0;
+        for (let s = 0; s < S; s++) { const v = F[o + s], s2 = next[s * R + x]; if (v && s2 >= 0) acc += v * B[o2 + s2]; }
+        roleAcc[i * R + x] += wt * fx * acc / Rw;
+      }
+    }
+  }
+  function logT() {
+    let lt = 0;
+    for (let i = 0; i < n; i++) lt += single[i][state[i]];
+    for (const p of pairList) lt += p.L[3 * state[p.i] + state[p.j]];
+    return lt;
+  }
+
+  // the wolf team (wolves and the mechanical wolf together) is chosen from those who can be on it
   const free = [], must = [];
-  for (let i = 0; i < n; i++) { if (team[i] === 2) must.push(i); else if (team[i] === 0) free.push(i); }
-  const need = w - must.length;
-  if (need < 0 || need > free.length) return { ok: false, reason: '确定的信息互相矛盾：确定是狼的有 ' + must.length + ' 人，板子只有 ' + w + ' 只狼' + (need > free.length ? '，或者确定是好人的太多了' : '') };
+  for (let i = 0; i < n; i++) { if (!(mask[i] & 1)) must.push(i); else if (mask[i] !== 1) free.push(i); }
+  const need = wt - must.length;
+  if (need < 0 || need > free.length) return { ok: false, reason: '确定的信息互相矛盾：确定是狼的有 ' + must.length + ' 人，板子只有 ' + wt + ' 只狼' + (need > free.length ? '，或者确定是好人的太多了' : '') };
 
   let top = -Infinity, Z = 0, worlds = 0;
   const pW = new Float64Array(n), bothW = light ? null : new Float64Array(n * n), roleAcc = light ? null : new Float64Array(n * R);
+  const wolfAcc = new Float64Array(n), mechAcc = new Float64Array(n);
   const best = [];   // the likeliest wolf teams, log weight first
   const idx = [];
   for (let x = 0; x < need; x++) idx.push(x);
 
   function rescale(f) {
     Z *= f;
-    for (let i = 0; i < n; i++) pW[i] *= f;
+    for (let i = 0; i < n; i++) { pW[i] *= f; wolfAcc[i] *= f; mechAcc[i] *= f; }
     if (!light) { for (let x = 0; x < bothW.length; x++) bothW[x] *= f; for (let x = 0; x < roleAcc.length; x++) roleAcc[x] *= f; }
   }
 
   for (;;) {
-    isWolf.fill(0);
-    for (const i of must) isWolf[i] = 1;
-    for (const x of idx) isWolf[free[x]] = 1;
+    inTeam.fill(0);
+    for (const i of must) inTeam[i] = 1;
+    for (const x of idx) inTeam[free[x]] = 1;
 
-    let lt = 0;
-    for (let i = 0; i < n; i++) { lt += single[i][isWolf[i]]; if (isWolf[i]) lt += wolfLog[i]; }
-    for (const p of pairList) lt += p.L[2 * isWolf[p.i] + isWolf[p.j]];
-    for (const c of wolfChecks) if (isWolf[c.a]) lt += isWolf[c.b] ? c.wolf : c.good;
+    // which of the team is the mechanical wolf: anyone who can be, as long as the rest can be wolves
+    const options = [];
+    let notWolf = -1, many = false;
+    for (let i = 0; i < n; i++) if (inTeam[i] && !(mask[i] & 2)) { if (notWolf >= 0) many = true; notWolf = i; }
+    if (!mech) { if (notWolf < 0) options.push(-1); }
+    else if (!many) for (let i = 0; i < n; i++) if (inTeam[i] && (mask[i] & 4) && (notWolf < 0 || notWolf === i)) options.push(i);
 
-    if (lt > -Infinity) {
-      // deal the good roles
-      let t = 0;
-      for (let i = 0; i < n; i++) if (!isWolf[i]) goods[t++] = i;
-      F.fill(0); F[0] = 1;
-      for (t = 0; t < m; t++) {
-        const i = goods[t], f = base[i];
-        for (let x = 0; x < R; x++) {
-          let v = f[x];
-          if (v) for (const c of roleChecks[i]) v *= x === c.k ? (isWolf[c.b] ? c.wolf : c.good) : c.other;
-          FI[t * R + x] = v;
-        }
-        const o = t * S, o2 = o + S;
-        for (let s = 0; s < S; s++) {
-          const v = F[o + s];
-          if (!v) continue;
-          for (let x = 0; x < R; x++) {
-            const fx = FI[t * R + x], s2 = next[s * R + x];
-            if (fx && s2 >= 0) F[o2 + s2] += v * fx;
-          }
-        }
+    const ways = [];
+    for (const mi of options) {
+      for (let i = 0; i < n; i++) state[i] = inTeam[i];
+      if (mi >= 0) state[mi] = 2;
+      const lt = logT();
+      if (lt > -Infinity) ways.push({ mi: mi, lt: lt });
+    }
+    if (ways.length) {
+      // the deal of good roles is the same whichever is the mechanical wolf, unless a claimed save points into the team
+      const each = mech && saveChecks.some((c) => inTeam[c.b] && !inTeam[c.a]);
+      const setState = (mi) => { for (let i = 0; i < n; i++) state[i] = inTeam[i]; if (mi >= 0) state[mi] = 2; };
+      let shared = 0;
+      if (!each) { setState(ways[0].mi); shared = deal(); }
+      for (const v of ways) {
+        if (each) { setState(v.mi); v.R = deal(); } else v.R = shared;
+        v.lw = v.R > 0 ? v.lt + Math.log(v.R) : -Infinity;
       }
-      const Rw = F[m * S + full];
-      if (Rw > 0) {
-        const lw = lt + Math.log(Rw);
-        if (lw > top) { if (top > -Infinity) rescale(Math.exp(top - lw)); top = lw; }
-        const wt = Math.exp(lw - top);
-        worlds++;
-        Z += wt;
-        for (let i = 0; i < n; i++) if (isWolf[i]) pW[i] += wt;
-        if (!light) {
-          for (let i = 0; i < n; i++) if (isWolf[i]) for (let j = i + 1; j < n; j++) if (isWolf[j]) bothW[i * n + j] += wt;
-          // the backward half of the walk gives each good player's chance of each role in this world
-          B.fill(0); B[m * S + full] = 1;
-          for (t = m - 1; t >= 0; t--) {
-            const o = t * S, o2 = o + S;
-            for (let s = 0; s < S; s++) {
-              let acc = 0;
-              for (let x = 0; x < R; x++) { const fx = FI[t * R + x], s2 = next[s * R + x]; if (fx && s2 >= 0) acc += fx * B[o2 + s2]; }
-              B[o + s] = acc;
-            }
-          }
-          for (t = 0; t < m; t++) {
-            const o = t * S, o2 = o + S, i = goods[t];
-            for (let x = 0; x < R; x++) {
-              const fx = FI[t * R + x];
-              if (!fx) continue;
-              let acc = 0;
-              for (let s = 0; s < S; s++) { const v = F[o + s], s2 = next[s * R + x]; if (v && s2 >= 0) acc += v * B[o2 + s2]; }
-              roleAcc[i * R + x] += wt * fx * acc / Rw;
-            }
-          }
+      const live = ways.filter((v) => v.lw > -Infinity);
+      if (live.length) {
+        const hi = Math.max.apply(null, live.map((v) => v.lw));
+        if (hi > top) { if (top > -Infinity) rescale(Math.exp(top - hi)); top = hi; }
+        let sum = 0;
+        for (const v of live) {
+          v.wt = Math.exp(v.lw - top);
+          sum += v.wt;
+          if (v.mi >= 0) mechAcc[v.mi] += v.wt;
+          for (let i = 0; i < n; i++) if (inTeam[i] && i !== v.mi) wolfAcc[i] += v.wt;
+          if (!light && each) { setState(v.mi); deal(); roleShares(v.wt, v.R); }
         }
+        worlds += live.length;
+        Z += sum;
+        for (let i = 0; i < n; i++) if (inTeam[i]) pW[i] += sum;
+        if (!light) {
+          for (let i = 0; i < n; i++) if (inTeam[i]) for (let j = i + 1; j < n; j++) if (inTeam[j]) bothW[i * n + j] += sum;
+          if (!each) roleShares(sum, shared);   // F and FI still hold the shared deal
+        }
+        const lw = top + Math.log(sum);
         if (best.length < 6 || lw > best[best.length - 1].lw) {
           const set = [];
-          for (let i = 0; i < n; i++) if (isWolf[i]) set.push(i + 1);
+          for (let i = 0; i < n; i++) if (inTeam[i]) set.push(i + 1);
           best.push({ lw: lw, wolves: set });
           best.sort((x, y) => y.lw - x.lw);
           if (best.length > 6) best.pop();
@@ -624,12 +697,18 @@ export function infer(game, opts) {
   }
 
   if (!(Z > 0)) return { ok: false, reason: '找不到任何一种发牌能同时满足所有确定的信息，检查一下你的身份、验人结果、开枪、自爆和翻牌' };
-  const out = { ok: true, n, roles: M.roles, worlds, pWolf: Array.from(pW, (v) => v / Z), fixedTeam: Array.from(team), fixedRole: Array.from(M.fixedRole, (x) => x >= 0 ? M.roles[x] : null) };
+  const out = {
+    ok: true, n, roles: M.roles, worlds, pWolf: Array.from(pW, (v) => v / Z),
+    fixedTeam: Array.from(mask, (k) => (k === 1 ? 1 : k & 1 ? 0 : 2)),
+    fixedRole: Array.from(mask, (k, i) => (k === 2 ? 'wolf' : k === 4 ? 'mech' : k === 1 && M.fixedRole[i] >= 0 ? M.roles[M.fixedRole[i]] : null))
+  };
+  // best holds absolute log weights, Z is scaled by the final top
   out.top = best.map((e) => ({ wolves: e.wolves, p: Math.exp(e.lw - top) / Z }));
   if (!light) {
     out.role = [];
     for (let i = 0; i < n; i++) {
-      const r = { wolf: out.pWolf[i] };
+      const r = { wolf: wolfAcc[i] / Z };
+      if (mech) r.mech = mechAcc[i] / Z;
       M.roles.forEach((name, x) => { r[name] = roleAcc[i * R + x] / Z; });
       out.role.push(r);
     }
