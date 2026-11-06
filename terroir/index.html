@@ -43,6 +43,10 @@
   --sea: #E2E8EB; --land: #E8E1D4; --land-edge: #C7BCAC; --lake: #E2E8EB;
   --river: #9AB0BE; --border-line: #ADA192; --belt: rgba(142, 31, 53, 0.075);
   --dot: #8E1F35; --spot: #4E4547; --city: #84797B; --halo: rgba(245, 241, 234, 0.92);
+  /* appellations on the zoomed-in maps, regional (1) to grand cru (5): one hue, light to dark, and
+     in dark mode the other way, the higher tiers brighter. Checked as ordinal ramps against --land
+     (the dataviz validator: lightness monotone, steps of at least 0.06, the end nearest the land at 2:1) */
+  --ap1: #CD909A; --ap2: #C16F7C; --ap3: #B14E5E; --ap4: #993042; --ap5: #781C2F;
   /* the colour of each style of wine; checked as a set for colour-blind and normal-vision separation */
   --w-white: #C9A227; --w-rose: #E8829F; --w-red: #96203F; --w-amber: #C06212;
   --font-cjk: "Noto Serif SC", "Songti SC", "STSong", "Source Han Serif SC", "SimSun", serif;
@@ -57,6 +61,7 @@
     --sea: #171B21; --land: #2B2630; --land-edge: #433B48; --lake: #171B21;
     --river: #46606F; --border-line: #5F5563; --belt: rgba(224, 102, 122, 0.08);
     --dot: #E0667A; --spot: #D9D1CB; --city: #9A9094; --halo: rgba(22, 19, 26, 0.9);
+    --ap1: #7C4A53; --ap2: #A35764; --ap3: #C66876; --ap4: #E47F8B; --ap5: #F99DA5;
     --w-white: #B0902C; --w-rose: #D07090; --w-red: #A52F47; --w-amber: #CC7026;
     color-scheme: dark;
   }
@@ -67,6 +72,7 @@
   --sea: #171B21; --land: #2B2630; --land-edge: #433B48; --lake: #171B21;
   --river: #46606F; --border-line: #5F5563; --belt: rgba(224, 102, 122, 0.08);
   --dot: #E0667A; --spot: #D9D1CB; --city: #9A9094; --halo: rgba(22, 19, 26, 0.9);
+  --ap1: #7C4A53; --ap2: #A35764; --ap3: #C66876; --ap4: #E47F8B; --ap5: #F99DA5;
   --w-white: #B0902C; --w-rose: #D07090; --w-red: #A52F47; --w-amber: #CC7026;
   color-scheme: dark;
 }
@@ -285,8 +291,12 @@ a { color: inherit; text-decoration: underline; text-decoration-color: var(--acc
 .mapwrap { position: relative; margin-top: 14px; }
 .map {
   position: relative; width: 100%; aspect-ratio: 16 / 10; overflow: hidden; border-radius: 12px;
-  background: var(--sea); border: 1px solid var(--rule); touch-action: manipulation; user-select: none; -webkit-user-select: none;
+  background: var(--sea); border: 1px solid var(--rule); user-select: none; -webkit-user-select: none;
+  touch-action: pan-x pan-y;   /* one finger scrolls the page; two move and zoom the map */
+  cursor: grab;
 }
+.map.dragging { cursor: grabbing; }
+.map:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .map.world { background: var(--bg); }
 @media (max-width: 640px) { .map { aspect-ratio: 1 / 1; } }
 .map svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
@@ -298,7 +308,16 @@ a { color: inherit; text-decoration: underline; text-decoration-color: var(--acc
 .g-river { fill: none; stroke: var(--river); stroke-width: 1px; vector-effect: non-scaling-stroke; stroke-linejoin: round; stroke-linecap: round; }
 .g-border { fill: none; stroke: var(--border-line); stroke-width: 0.8px; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
 .g-belt { fill: var(--belt); }
-.marks { position: absolute; inset: 0; transition: opacity 0.18s ease; }
+.g-ap path { stroke: var(--land); stroke-width: 1px; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.g-ap .t1, .sw.t1 { fill: var(--ap1); background: var(--ap1); }
+.g-ap .t2, .sw.t2 { fill: var(--ap2); background: var(--ap2); }
+.g-ap .t3, .sw.t3 { fill: var(--ap3); background: var(--ap3); }
+.g-ap .t4, .sw.t4 { fill: var(--ap4); background: var(--ap4); }
+.g-ap .t5, .sw.t5 { fill: var(--ap5); background: var(--ap5); }
+.ap-hl { pointer-events: none; }
+.ap-hl path { fill: none; stroke: var(--fg); stroke-width: 2px; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.marks { position: absolute; inset: 0; transition: opacity 0.18s ease; pointer-events: none; }
+.marks button { pointer-events: auto; }
 .map.moving .lb { opacity: 0; }
 .mk { position: absolute; left: 0; top: 0; width: 0; height: 0; }
 button.mk { appearance: none; border: 0; padding: 0; background: none; cursor: pointer; }
@@ -331,6 +350,9 @@ button.mk.area:focus-visible .lb { box-shadow: 0 0 0 2px var(--accent); }
 .mk.city .dot::before, .mk.ref .dot::before { width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; border-radius: 1px; background: var(--city); box-shadow: 0 0 0 1px var(--halo); }
 .mk.city .lb, .mk.ref .lb { font-weight: 400; font-size: 11.5px; color: var(--city); }
 .mk.belt .lb, .mk.area .lb { position: absolute; }
+.mk.ap .lb { font-size: 11.5px; font-weight: 500; line-height: 16px; }
+.mk.ap.t1 .lb, .mk.ap.t2 .lb, .mk.ap.t3 .lb { font-size: 12.5px; font-weight: 600; line-height: 18px; }
+.mk.ap.t5 .lb { font-weight: 700; }
 .mk.belt .lb { font: 500 10.5px/1 var(--font-mono); color: var(--muted); letter-spacing: 0.06em; }
 button.mk.area .lb { pointer-events: auto; font-size: 13px; font-weight: 600; padding: 3px 8px; line-height: 18px; border-radius: 999px; background: var(--halo); text-shadow: none; box-shadow: 0 0 0 1px var(--rule-strong); }
 button.mk.area .lb b { font: 500 10.5px/1 var(--font-mono); color: var(--muted); margin-left: 5px; }
@@ -339,6 +361,32 @@ button.mk.area:hover .lb { box-shadow: 0 0 0 1px var(--fg); }
 .mapbar button { appearance: none; border: 1px solid var(--rule-strong); border-radius: 999px; background: var(--surface); padding: 6px 12px; font-size: 13px; font-weight: 500; cursor: pointer; }
 .mapbar button:hover { border-color: var(--fg); }
 .mapmsg { position: absolute; inset: 0; display: grid; place-items: center; font-size: 14px; color: var(--muted); }
+.mapzoom {
+  position: absolute; right: 10px; top: 10px; z-index: 6; display: flex; flex-direction: column;
+  background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 10px; overflow: hidden;
+}
+.mapzoom button { appearance: none; border: 0; background: none; width: 34px; height: 34px; padding: 0; font: 400 20px/1 var(--font-body); color: var(--fg); cursor: pointer; }
+.mapzoom button + button { border-top: 1px solid var(--rule); }
+.mapzoom button:hover:not(:disabled) { background: var(--accent-soft); }
+.mapzoom button:disabled { color: var(--rule-strong); cursor: default; }
+.mapzoom button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.maplegend {
+  position: absolute; left: 10px; bottom: 10px; z-index: 5; display: grid; gap: 3px; padding: 7px 10px 8px; max-width: calc(100% - 20px);
+  background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; font-size: 12px; line-height: 16px; pointer-events: none;
+}
+.maplegend .lg-h { font: 500 10.5px/1.4 var(--font-mono); color: var(--muted); letter-spacing: 0.04em; }
+.maplegend .sw { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.maphint {
+  position: absolute; left: 50%; top: 50%; z-index: 7; transform: translate(-50%, -50%); max-width: calc(100% - 40px); margin: 0;
+  padding: 8px 14px; border-radius: 999px; background: var(--fg); color: var(--bg); font-size: 13.5px; text-align: center;
+  pointer-events: none; opacity: 0; transition: opacity 0.2s ease;
+}
+.maphint.on { opacity: 0.92; }
+@media (max-width: 640px) {   /* a phone's map is square: the legend runs along its foot */
+  .maplegend { left: 8px; bottom: 8px; display: flex; flex-wrap: wrap; gap: 2px 10px; padding: 5px 8px; font-size: 11px; line-height: 15px; max-width: calc(100% - 16px); }
+  .maplegend .lg-h { flex-basis: 100%; }
+  .maplegend .sw { width: 9px; height: 9px; margin-right: 4px; vertical-align: 0; }
+}
 .mapnote { margin-top: 10px; font-size: 13px; color: var(--muted); max-width: 62em; }
 .rlist { margin-top: 18px; }
 .rlist .label { display: block; margin-bottom: 8px; }
@@ -363,7 +411,7 @@ footer { margin-top: 48px; padding-top: 14px; border-top: 1px solid var(--rule-s
 footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 16px; color: var(--fg); }
 footer p { max-width: 52em; }
 .nojs { margin: 22px 0 0; font-size: 17px; max-width: 34em; }
-@media (prefers-reduced-motion: reduce) { .map .geo, .marks, .mk .lb { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .map .geo, .marks, .mk .lb, .maphint { transition: none; } }
 </style>
 <noscript><style>.tools, .toc, main { display: none; }</style></noscript>
 </head>
@@ -445,10 +493,14 @@ footer p { max-width: 52em; }
       <p class="intro" id="regionsIntro"></p>
       <div class="views chips" role="group" id="viewChips"></div>
       <div class="mapwrap">
-        <div class="map world" id="map">
+        <div class="map world" id="map" role="region" tabindex="0">
           <svg class="geo" id="mapSvg" aria-hidden="true" preserveAspectRatio="xMidYMid meet"></svg>
+          <div class="marks" id="apMarks" aria-hidden="true"></div>
           <div class="marks" id="mapMarks"></div>
           <div class="mapbar" id="mapBar" hidden><button type="button" id="mapBack"></button></div>
+          <div class="mapzoom"><button type="button" id="zoomIn">+</button><button type="button" id="zoomOut">−</button></div>
+          <div class="maplegend" id="mapLegend" hidden></div>
+          <p class="maphint" id="mapHint" aria-hidden="true"></p>
           <p class="mapmsg" id="mapMsg" hidden></p>
         </div>
       </div>
@@ -541,16 +593,24 @@ footer p { max-width: 52em; }
       lvl: ['低', '中低', '中', '中高', '高'],
       origin: '原产', notes: '常见香气', pair: '配餐', inRegions: '主要产区', aka: '又名',
       regionsH: '产区', regionsO: 'Regions',
-      regionsIntro: function (n) { return n + ' 个产区。点地图上的点，或下面的名字，地图会放大到它的村庄和子产区。世界上大多数葡萄园都在南北纬 30° 到 50° 之间（地图上的浅色带）：离赤道更近太热，离两极更近太冷，例外往往靠海拔，比如阿根廷的萨尔塔和云南的香格里拉。'; },
+      regionsIntro: function (n) { return n + ' 个产区。点地图上的点，或下面的名字，地图会放大到它的村庄和子产区。法国和美国的产区还能接着放大，看官方划定的产区边界，勃艮第一直细到一块块葡萄园。世界上大多数葡萄园都在南北纬 30° 到 50° 之间（地图上的浅色带）：离赤道更近太热，离两极更近太冷，例外往往靠海拔，比如阿根廷的萨尔塔和云南的香格里拉。'; },
       back: function (v) { return '‹ ' + v; },
       belts: ['北纬 30°–50°', '南纬 30°–50°'],
       inView: '这一带的产区', areas: '按地区看', restOfEurope: '欧洲其他产区，按国家看',
       hint: '在地图上点一个产区，或从上面的名字里选一个。',
       climate: '气候', grapesF: '主要品种', spotsF: '村庄与子产区', stylesF: '风格',
-      mapNote: '地图底图：Natural Earth。只画了各方都承认的陆地国界。',
+      mapNote: '底图：Natural Earth，只画了各方都承认的陆地国界。法国的产区边界来自 INAO（法国国家原产地与质量研究院，Licence Ouverte 开放许可），美国的 AVA 来自 UC Davis 的 AVA Project（CC0）。用 + 和 −、双指，或按住 Ctrl（Mac 上是 ⌘）滚动来缩放，拖动来移动。',
+      apTiers: { 1: '大区级', 2: '地区级', 3: '村庄级', 4: '一级园', 5: '特级园' },
+      apTiersUS: { 2: 'AVA', 3: '其中的子产区' },
+      apLegend: '法定产区等级', apLegendUS: '美国葡萄种植区 AVA', apLoading: '正在加载产区边界…',
+      apArea: function (ha) { return '划定范围 ' + ha + ' 公顷'; }, apAreaUS: function (ha) { return '面积 ' + ha + ' 公顷'; },
+      apUmbrella: '这些一级园，INAO 没有逐块划出边界',
+      hintWheel: function (mac) { return '按住 ' + (mac ? '⌘' : 'Ctrl') + ' 再滚动，可以缩放地图'; },
+      hintTouch: '用两根手指移动和缩放地图',
+      zoomIn: '放大', zoomOut: '缩小', mapLabel: '产区地图',
       loading: '地图加载中…', failed: '地图没能加载，请检查网络后刷新。',
       count2: function (n) { return n + ' 个'; },
-      footNote: '风土是我做的一份葡萄酒入门。地图底图来自 Natural Earth（公有领域），村镇位置核对自 OpenStreetMap。葡萄酒每个年份都在变，这里写的是大致、典型的样子。',
+      footNote: '风土是我做的一份葡萄酒入门。地图底图来自 Natural Earth（公有领域），村镇位置核对自 OpenStreetMap；法国的产区边界来自 INAO 的《葡萄酒 AOC 地块划定》（Licence Ouverte），美国的 AVA 来自 UC Davis AVA Project（CC0）。葡萄酒每个年份都在变，这里写的是大致、典型的样子。',
       theme: '深色',
       sep: '、', colon: '：'
     },
@@ -595,16 +655,24 @@ footer p { max-width: 52em; }
       lvl: ['low', 'medium−', 'medium', 'medium+', 'high'],
       origin: 'From', notes: 'Typical notes', pair: 'With food', inRegions: 'Main regions', aka: 'Also',
       regionsH: 'Regions', regionsO: '产区',
-      regionsIntro: function (n) { return n + ' regions. Pick a dot on the map, or a name below, and the map zooms in to its villages and sub-regions. Most of the world’s vineyards lie between 30° and 50° north and south (the pale bands on the map): nearer the equator is too hot, nearer the poles too cold, and the exceptions usually make it up with altitude, as Salta in Argentina and Shangri-La in Yunnan do.'; },
+      regionsIntro: function (n) { return n + ' regions. Pick a dot on the map, or a name below, and the map zooms in to its villages and sub-regions. In France and the United States you can keep zooming, to the official appellation boundaries, in Burgundy down to single vineyards. Most of the world’s vineyards lie between 30° and 50° north and south (the pale bands on the map): nearer the equator is too hot, nearer the poles too cold, and the exceptions usually make it up with altitude, as Salta in Argentina and Shangri-La in Yunnan do.'; },
       back: function (v) { return '‹ ' + v; },
       belts: ['30°–50° N', '30°–50° S'],
       inView: 'Regions here', areas: 'By area', restOfEurope: 'The rest of Europe, by country',
       hint: 'Pick a region on the map, or one of the names above.',
       climate: 'Climate', grapesF: 'Main grapes', spotsF: 'Villages and sub-regions', stylesF: 'Styles',
-      mapNote: 'Base map: Natural Earth. Only land borders that every side recognises are drawn.',
+      mapNote: 'Base map: Natural Earth; only land borders that every side recognises are drawn. French appellation boundaries are from INAO, France’s institute of origin and quality (Licence Ouverte); the American Viticultural Areas from the UC Davis AVA Project (CC0). Zoom with + and −, two fingers, or Ctrl (⌘ on a Mac) and scroll; drag to move.',
+      apTiers: { 1: 'Regional', 2: 'Sub-regional', 3: 'Village', 4: 'Premier cru', 5: 'Grand cru' },
+      apTiersUS: { 2: 'AVA', 3: 'AVA within it' },
+      apLegend: 'Appellation level', apLegendUS: 'American Viticultural Areas', apLoading: 'Loading the appellations…',
+      apArea: function (ha) { return ha + ' ha delimited'; }, apAreaUS: function (ha) { return ha + ' ha'; },
+      apUmbrella: 'premier cru land INAO does not map climat by climat',
+      hintWheel: function (mac) { return 'Hold ' + (mac ? '⌘' : 'Ctrl') + ' and scroll to zoom the map'; },
+      hintTouch: 'Use two fingers to move and zoom the map',
+      zoomIn: 'Zoom in', zoomOut: 'Zoom out', mapLabel: 'Map of the regions',
       loading: 'Loading the map…', failed: 'The map did not load. Check the connection and reload.',
       count2: function (n) { return String(n); },
-      footNote: 'Terroir is a wine primer I made. The base map is from Natural Earth (public domain) and the places on it were checked against OpenStreetMap. Wine changes with every vintage; this is the typical picture.',
+      footNote: 'Terroir is a wine primer I made. The base map is from Natural Earth (public domain) and the places on it were checked against OpenStreetMap; the French appellation boundaries are INAO’s parcel-by-parcel delimitation of the wine AOCs (Licence Ouverte), and the American Viticultural Areas are from the UC Davis AVA Project (CC0). Wine changes with every vintage; this is the typical picture.',
       theme: 'Dark',
       sep: ', ', colon: ': '
     }
@@ -840,8 +908,9 @@ footer p { max-width: 52em; }
     };
   }
 
-  var mapEl = $('map'), svg = $('mapSvg'), marks = $('mapMarks');
-  var cache = {}, cur = null, vb = null, anim = 0, items = [], loadingFor = null;
+  var mapEl = $('map'), svg = $('mapSvg'), marks = $('mapMarks'), apMarks = $('apMarks');
+  var cache = {}, cur = null, vb = null, anim = 0, animTarget = null, items = [], baseItems = [], loadingFor = null;
+  var free = null;   // where the reader has moved the map to: its centre and units per pixel
   var measure = document.createElement('canvas').getContext('2d');
   var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -867,6 +936,8 @@ footer p { max-width: 52em; }
   }
   function homeBox(v) { return v.id === 'world' ? [0, 0, v.w, v.h] : pad(v.focus, 0.06, 0); }
   function zoomBox(v, r) {
+    var ab = apBox(r);
+    if (!(r.spots && r.spots.length) && ab) return pad(ab, 0.06, 0);   // Chablis: no spots, the appellations show where
     var pts = [v.P(r.lon, r.lat)];
     (r.spots || []).forEach(function (s) { pts.push(v.P(s[3], s[2])); });
     var b = [Infinity, Infinity, -Infinity, -Infinity];
@@ -878,7 +949,7 @@ footer p { max-width: 52em; }
   function drawGeo(v) {
     var h = v.sphere ? '<path class="g-sea" d="' + v.sphere + '"/>' : '<rect class="g-sea" x="-5000" y="-5000" width="' + (v.w + 10000) + '" height="' + (v.h + 10000) + '"/>';
     if (v.belts) h += '<path class="g-belt" d="' + v.belts + '"/>';
-    h += '<path class="g-land" d="' + v.land + '"/>';
+    h += '<path class="g-land" d="' + v.land + '"/><g class="g-ap"></g>';   // appellations go on the land
     if (v.lakes) h += '<path class="g-lake" d="' + v.lakes + '"/>';
     if (v.rivers) h += '<path class="g-river" d="' + v.rivers + '"/>';
     if (v.borders) h += '<path class="g-border" d="' + v.borders + '"/>';
@@ -891,7 +962,7 @@ footer p { max-width: 52em; }
   function buildMarks() {
     var v = cur, l = L(), world = v.id === 'world';
     marks.textContent = '';
-    items = [];
+    baseItems = [];
     var add = function (it) {
       var el = document.createElement(it.button ? 'button' : 'span');
       el.className = 'mk ' + it.kind + (it.cls ? ' ' + it.cls : '');
@@ -902,7 +973,7 @@ footer p { max-width: 52em; }
       Object.keys(it.data || {}).forEach(function (k) { el.setAttribute('data-' + k, it.data[k]); });
       marks.appendChild(el);
       it.el = el;
-      items.push(it);
+      baseItems.push(it);
     };
     var sel = state.region ? REGION[state.region] : null, zoomed = state.zoomed && sel && sel.view === v.id;
     if (world) {
@@ -929,8 +1000,10 @@ footer p { max-width: 52em; }
       if (!inside(v, p)) return;
       var mine = r.view === v.id, isSel = sel && sel.id === r.id;
       var cls = (world ? 'tiny' : '') + (mine || world ? '' : ' away') + (isSel ? ' sel' : '') + (zoomed && !isSel ? ' dim' : '');
+      // once its appellations are on the map, with their names, the region's own label steps back
       add({ kind: 'rg', button: true, cls: cls, aria: T(r.name) + ', ' + T(D.countries[r.country]), x: p[0], y: p[1],
-        text: world ? null : T(r.name), prio: isSel ? 0 : (mine ? 2 : 5), data: { region: r.id }, r: isSel ? 9 : (world ? 5 : 7) });
+        text: world ? null : T(r.name), prio: apDrawn(r) ? 7 : isSel ? 0 : (mine ? 2 : 5), data: { region: r.id }, r: isSel ? 9 : (world ? 5 : 7),
+        hideBelow: apDrawn(r) ? 25 : 0 });   // metres per pixel: closer than this, the climats speak for it
     });
     if (zoomed) {
       (sel.spots || []).forEach(function (s) {
@@ -938,16 +1011,17 @@ footer p { max-width: 52em; }
         add({ kind: s[4] ? 'ref' : 'spot', x: p[0], y: p[1], text: state.lang === 'zh' ? s[0] : s[1], prio: s[4] ? 4 : 1, r: s[4] ? 3 : 4 });
       });
     }
-    items.sort(function (a, b) { return a.prio - b.prio; });
+    mergeItems();
   }
+  function mergeItems() { items = baseItems.concat(apItems); items.sort(function (a, b) { return a.prio - b.prio; }); }
 
   // Put every item where it belongs on screen, then give labels room: each tries the right, left,
   // above and below of its point in turn, and is hidden (shown on hover) if none is free
   function placeAll(labels) {
-    var cw = mapEl.clientWidth, ch = mapEl.clientHeight, s = cw / vb.w;
+    var cw = mapEl.clientWidth, ch = mapEl.clientHeight, s = cw / vb.w, mpp = 6371000 / cur.proj.scale / s;
     items.forEach(function (it) {
       it.sx = (it.x - vb.x) * s; it.sy = (it.y - vb.y) * s;
-      var out = it.sx < -30 || it.sy < -30 || it.sx > cw + 30 || it.sy > ch + 30;
+      var out = it.sx < -30 || it.sy < -30 || it.sx > cw + 30 || it.sy > ch + 30 || mpp < it.hideBelow || it.dup;
       it.el.style.transform = 'translate(' + it.sx.toFixed(1) + 'px,' + it.sy.toFixed(1) + 'px)';
       it.el.style.display = out ? 'none' : '';
       it.out = out;
@@ -971,13 +1045,14 @@ footer p { max-width: 52em; }
     items.forEach(function (it) { if (!it.out && it.r) taken.push([it.sx - it.r, it.sy - it.r, it.sx + it.r, it.sy + it.r]); });
     items.forEach(function (it) {
       if (!it.lb || it.out) return;
-      var w = textWidth(it), hgt = it.kind === 'area' ? 24 : (it.kind === 'belt' ? 12 : 18), r = it.r || 0, gap = 4;
+      var w = textWidth(it), hgt = it.kind === 'area' ? 24 : it.kind === 'belt' ? 12 : it.kind === 'ap' && it.tier > 3 ? 16 : 18, r = it.r || 0, gap = 4;
       var cands;
       if (it.box) {   // an area: above, below, right or left of its whole cluster of dots
         var s = mapEl.clientWidth / vb.w, bx0 = (it.box[0] - vb.x) * s - 6 - it.sx, bx1 = (it.box[2] - vb.x) * s + 6 - it.sx;
         var by0 = (it.box[1] - vb.y) * s - 6 - it.sy, by1 = (it.box[3] - vb.y) * s + 6 - it.sy;
         cands = [[-w / 2, by0 - hgt], [-w / 2, by1], [bx1 - w, by0 - hgt], [bx0, by0 - hgt], [bx1 - w, by1], [bx0, by1], [bx1, -hgt / 2], [bx0 - w, -hgt / 2]];
       } else if (it.anchor === 'right') cands = [[2, -hgt / 2]];
+      else if (it.kind === 'ap') cands = [[-w / 2, -hgt / 2]];   // centred on its appellation, or not at all
       else cands = [[r + gap, -hgt / 2], [-r - gap - w, -hgt / 2], [-w / 2, -r - gap - hgt + 2], [-w / 2, r + gap - 2]];
       var done = false;
       for (var i = 0; i < cands.length && !done; i++) {
@@ -997,10 +1072,11 @@ footer p { max-width: 52em; }
   }
 
   function setViewBox(b) { vb = b; svg.setAttribute('viewBox', b.x.toFixed(2) + ' ' + b.y.toFixed(2) + ' ' + b.w.toFixed(2) + ' ' + b.h.toFixed(2)); }
-  function animateTo(target) {
+  function animateTo(target, ms) {
     cancelAnimationFrame(anim);
-    if (reduceMotion || !vb) { setViewBox(target); placeAll(true); return; }
-    var from = vb, t0 = performance.now(), dur = 520;
+    if (reduceMotion || !vb) { animTarget = null; setViewBox(target); settled(); return; }
+    animTarget = target;
+    var from = vb, t0 = performance.now(), dur = ms || 520;
     // zoom in log space so the motion feels even at every scale
     var lw0 = Math.log(from.w), lw1 = Math.log(target.w);
     var cx0 = from.x + from.w / 2, cy0 = from.y + from.h / 2, cx1 = target.x + target.w / 2, cy1 = target.y + target.h / 2;
@@ -1012,11 +1088,12 @@ footer p { max-width: 52em; }
       setViewBox({ x: cx - w / 2, y: cy - h / 2, w: w, h: h });
       placeAll(false);
       if (t < 1) anim = requestAnimationFrame(step);
-      else { setViewBox(target); placeAll(true); mapEl.classList.remove('moving'); }
+      else { animTarget = null; setViewBox(target); mapEl.classList.remove('moving'); settled(); }
     };
     anim = requestAnimationFrame(step);
   }
   function targetBox() {
+    if (free) return clampBox(freeBox());
     var sel = state.region ? REGION[state.region] : null;
     if (state.zoomed && sel && sel.view === cur.id) return fit(zoomBox(cur, sel), cur);
     return fit(homeBox(cur), cur);
@@ -1033,9 +1110,10 @@ footer p { max-width: 52em; }
       clearTimeout(slow); msg.hidden = true;
       cur = v;
       drawGeo(v);
+      AP.shown = ''; apHot = null; apClearLabels(); renderLegend(); hideTip();
       buildMarks();
       setViewBox(targetBox());
-      placeAll(true);
+      settled();
       requestAnimationFrame(function () { mapEl.classList.remove('fading'); });
       renderMapChrome();
       if (then) then();
@@ -1048,6 +1126,7 @@ footer p { max-width: 52em; }
     opts = opts || {};
     if (!VIEW[id]) return;
     state.view = id;
+    free = null;
     if (!opts.keepRegion) { state.region = null; state.zoomed = false; }
     renderViewChips(); renderRegionList(); renderRegionCard();
     if (!opts.quiet) setHash(id === 'world' ? '' : 'map=' + id);
@@ -1057,7 +1136,8 @@ footer p { max-width: 52em; }
     opts = opts || {};
     var r = REGION[id]; if (!r) return;
     state.region = id;
-    state.zoomed = !!(r.spots && r.spots.length);
+    state.zoomed = !!(r.spots && r.spots.length) || !!apBox(r);
+    free = null;
     setHash('region=' + id);
     if (!cur || cur.id !== r.view || state.view !== r.view) { setView(r.view, { keepRegion: true, quiet: true }); }
     else {
@@ -1071,15 +1151,19 @@ footer p { max-width: 52em; }
   }
   function zoomOut() {
     state.zoomed = false;
+    free = null;
     buildMarks(); placeAll(false);
     animateTo(targetBox());
     renderMapChrome();
   }
   function renderMapChrome() {
     var sel = state.region ? REGION[state.region] : null;
-    var zoomed = state.zoomed && sel && cur && sel.view === cur.id;
-    $('mapBar').hidden = !zoomed;
-    if (zoomed) $('mapBack').textContent = L().back(T(VIEW[cur.id].name));
+    var zoomed = state.zoomed && sel && cur && sel.view === cur.id, l = L();
+    $('mapBar').hidden = !(cur && (zoomed || free));
+    if (cur && (zoomed || free)) $('mapBack').textContent = l.back(T(VIEW[cur.id].name));
+    ['zoomIn', 'zoomOut'].forEach(function (id) { $(id).setAttribute('aria-label', l[id]); $(id).title = l[id]; });
+    mapEl.setAttribute('aria-label', l.mapLabel);
+    renderZoomButtons();
   }
 
   function renderRegionsTop() {
@@ -1133,6 +1217,225 @@ footer p { max-width: 52em; }
     el.innerHTML = h;
   }
 
+  // ---------- the appellations: official boundaries, drawn once a view is zoomed in ----------
+  // map/appellations/index.json lists the areas (tools/build-appellations.mjs). An area is fetched
+  // the first time it fills a good part of the map and drawn under the dots, each tier over the one
+  // below, so every spot shows its highest classification.
+  var NS = 'http://www.w3.org/2000/svg';
+  var US_VIEWS = { california: 1, pnw: 1, nyon: 1 };
+  var AP_OF = { napa: 'north-coast', sonoma: 'north-coast' };   // regions whose area goes by another name
+  var AP = { index: null, req: null, areas: {}, shown: '', pending: 0 };
+  var apEls = {}, apItems = [], apHlG = null, apHot = null, apTipHtml = '', apFamily = '';
+  var AP_ZH = {};   // Chinese names: the spots', then data.js's own list
+  D.regions.forEach(function (r) { (r.spots || []).forEach(function (s) { if (!s[4]) AP_ZH[s[1]] = s[0]; }); });
+  Object.keys(D.appellationsZh || {}).forEach(function (k) { AP_ZH[k] = D.appellationsZh[k]; });
+
+  function apName(n) {
+    if (state.lang !== 'zh') return n;
+    return n.split(' / ').map(function (p) {
+      if (AP_ZH[p]) return AP_ZH[p];
+      var m = p.match(/^(.+) Premier Cru$/);
+      return m && AP_ZH[m[1]] ? AP_ZH[m[1]] + '一级园' : p;
+    }).join(' / ');
+  }
+  function apIndex() {
+    if (!AP.req) AP.req = fetch('map/appellations/index.json').then(function (r) { return r.ok ? r.json() : []; })
+      .catch(function () { return []; }).then(function (list) {
+        AP.index = list;
+        var r = state.region ? REGION[state.region] : null;   // opened at a region before the list came
+        if (r && !state.zoomed && apBox(r)) selectRegion(r.id);
+        return list;
+      });
+    return AP.req;
+  }
+  // an area of this view that is large on the map, a third of it one way or the other, and well in
+  // it, not just reaching into a corner (Burgundy's northern vineyards reach the edge of Champagne)
+  function apWanted(a) {
+    var b = a.box, ix = Math.min(b[2], vb.x + vb.w) - Math.max(b[0], vb.x), iy = Math.min(b[3], vb.y + vb.h) - Math.max(b[1], vb.y);
+    if (a.view !== cur.id || ix <= 0 || iy <= 0 || (b[2] - b[0] < vb.w / 3 && b[3] - b[1] < vb.h / 3)) return false;
+    return ix * iy > vb.w * vb.h * 0.08 || ix * iy > (b[2] - b[0]) * (b[3] - b[1]) * 0.3;
+  }
+  function apBox(r) {
+    var id = AP_OF[r.id] || r.id, a = AP.index && AP.index.filter(function (x) { return x.id === id; })[0];
+    return a && a.view === r.view ? a.box : null;
+  }
+  function apDrawn(r) { return !!r && (',' + AP.shown + ',').indexOf(',' + (AP_OF[r.id] || r.id) + ',') >= 0; }
+  function apUpdate() {
+    if (!cur || !vb) return;
+    if (!AP.index) { apIndex().then(function (list) { if (list.length && cur) { apUpdate(); placeAll(true); } }); return; }
+    var layer = svg.querySelector('.g-ap'), shown = [];
+    AP.index.forEach(function (a) {
+      var A = AP.areas[a.id], want = apWanted(a);
+      if (!A || (A.failed && Date.now() - A.failed > 15000)) { if (want) apFetch(a); return; }
+      if (!A.g) return;
+      if (want && A.g.parentNode !== layer) layer.appendChild(A.g);
+      A.g.style.display = want ? '' : 'none';
+      if (want) shown.push(a.id);
+    });
+    var key = shown.join(',');
+    if (key !== AP.shown) { AP.shown = key; buildMarks(); renderLegend(); }
+    apLabels();
+  }
+  function apFetch(a) {
+    var A = AP.areas[a.id] = { id: a.id, view: a.view, us: !!US_VIEWS[a.view], data: null, g: null, multi: false };
+    AP.pending++; renderLegend();
+    fetch('map/appellations/' + a.id + '.json').then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (d) {
+        var g = document.createElementNS(NS, 'g'), h = '', regional = 0;
+        g.setAttribute('transform', 'translate(' + d.origin[0] + ' ' + d.origin[1] + ') scale(' + d.unit + ')');
+        g.setAttribute('data-a', a.id);
+        d.shapes = d.shapes.map(function (x) {   // the columns written by tools/build-appellations.mjs
+          return { name: x[0], tier: x[1], parent: x[2], ha: x[3], vha: x[4], lx: x[5], ly: x[6], x0: x[7], y0: x[8], x1: x[9], y1: x[10], d: x[11] };
+        });
+        d.shapes.forEach(function (sh, i) { h += '<path class="t' + sh.tier + '" data-i="' + i + '" d="' + sh.d + '"/>'; if (sh.tier === 1) regional++; });
+        g.innerHTML = h;
+        g.style.display = 'none';
+        A.data = d; A.g = g; A.multi = regional > 1;
+      })
+      .catch(function () { A.failed = Date.now(); })   // tried again a little later
+      .then(function () { AP.pending--; if (cur && !A.failed) { apUpdate(); placeAll(true); } renderLegend(); });
+  }
+  function apClearLabels() { Object.keys(apEls).forEach(function (k) { apEls[k].el.remove(); }); apEls = {}; apItems = []; }
+  function apWidth(text, tier) {
+    if (!apFamily) apFamily = getComputedStyle(mapEl).fontFamily;
+    measure.font = (tier <= 3 ? '600 12.5px ' : tier === 5 ? '700 11.5px ' : '500 11.5px ') + apFamily;
+    return Math.ceil(measure.measureText(text).width) + 2;
+  }
+  // a name for each appellation big enough on screen to hold one; placeLabels keeps those that fit
+  function apLabels() {
+    var cw = mapEl.clientWidth, ch = mapEl.clientHeight, s = cw / vb.w, keep = {}, list = [];
+    if (AP.shown) AP.shown.split(',').forEach(function (id) {
+      var A = AP.areas[id], k = A.data.unit * s, perHa = k * k * 10000;   // px² in a hectare
+      A.data.shapes.forEach(function (sh, i) {
+        var t = sh.tier;
+        if (t === 1 && !A.multi) return;   // a region's one regional appellation is the region itself
+        var lx = (sh.lx - vb.x) * s, ly = (sh.ly - vb.y) * s;
+        if (lx < 0 || ly < 0 || lx > cw || ly > ch) return;
+        var bw = (sh.x1 - sh.x0) * s, bh = (sh.y1 - sh.y0) * s, area = sh.vha * perHa;   // the part not under a higher tier
+        if (bh < 14 || bw < 30 || area < 1200) return;
+        if (bw > cw * 2.5 || bh > ch * 2.5) return;   // seen from this close, the whole background, its name lost on its climats
+        var text = apName(sh.name), w = apWidth(text, t);
+        if (bw < w * 0.9 || area < w * 40) return;
+        var key = id + ':' + i, it = apEls[key];
+        if (it && it.text !== text) { it.el.remove(); it = null; }
+        if (!it) {
+          var el = document.createElement('span'), lb = document.createElement('span');
+          el.className = 'mk ap t' + t; lb.className = 'lb'; lb.textContent = text; el.appendChild(lb);
+          apMarks.appendChild(el);
+          it = apEls[key] = { kind: 'ap', tier: t, x: sh.lx, y: sh.ly, text: text, el: el, lb: lb, tw: w, base: [0, 1, 1.1, 1.2, 1.4, 1.3][t] };
+        }
+        keep[key] = 1; list.push(it);
+      });
+    });
+    Object.keys(apEls).forEach(function (k) { if (!keep[k]) { apEls[k].el.remove(); delete apEls[k]; } });
+    // a village named by its appellation needs no dot of its own; the name takes the dot's place in line
+    var named = {};
+    list.forEach(function (it) { named[it.text] = it; it.prio = it.base; });
+    baseItems.forEach(function (it) { it.dup = it.kind === 'spot' && !!named[it.text]; if (it.dup) named[it.text].prio = 0.9; });
+    apItems = list;
+    mergeItems();
+  }
+  function renderLegend() {
+    var el = $('mapLegend'), l = L(), ids = AP.shown ? AP.shown.split(',') : [];
+    if (!ids.length) {
+      el.hidden = !AP.pending;
+      if (AP.pending) el.innerHTML = '<span class="lg-h">' + esc(l.apLoading) + '</span>';
+      return;
+    }
+    var tiers = {}, us = true;
+    ids.forEach(function (id) { var A = AP.areas[id]; if (!A.us) us = false; A.data.shapes.forEach(function (sh) { tiers[sh.tier] = 1; }); });
+    var names = us ? l.apTiersUS : l.apTiers, h = '<span class="lg-h">' + esc(us ? l.apLegendUS : l.apLegend) + '</span>';
+    (us ? [2, 3] : [5, 4, 3, 2, 1]).forEach(function (t) { if (tiers[t]) h += '<span><i class="sw t' + t + '"></i>' + esc(names[t]) + '</span>'; });
+    el.innerHTML = h; el.hidden = false;
+  }
+  function fmtHa(ha) {
+    return ha < 10 ? String(+ha.toFixed(ha < 1 ? 2 : 1)) : Math.round(ha).toLocaleString(state.lang === 'zh' ? 'zh-CN' : 'en-GB');
+  }
+  function apTip(A, sh) {
+    var l = L(), name = sh.name, shown = apName(name), parent = sh.parent.replace(/ grand cru$/i, '');
+    var h = '<b>' + esc(shown) + '</b>' + (shown !== name ? ' <span lang="' + (A.us ? 'en' : 'fr') + '">' + esc(name) + '</span>' : '');
+    var bits = [(A.us ? l.apTiersUS : l.apTiers)[sh.tier]];
+    if (parent && parent !== name) bits.push(apName(parent));
+    bits.push((A.us ? l.apAreaUS : l.apArea)(fmtHa(sh.ha)));
+    h += '<br>' + esc(bits.join(' · '));
+    if (/ Premier Cru$/.test(name)) h += '<br>' + esc(l.apUmbrella);
+    return h;
+  }
+  // the appellation under the pointer: outlined, and named in the tooltip
+  function apHover(t, e) {
+    if (!t) { if (apHot) { apHot = null; if (apHlG) apHlG.style.display = 'none'; hideTip(); } return; }
+    var g = t.parentNode, A = AP.areas[g.getAttribute('data-a')], sh = A && A.data && A.data.shapes[+t.getAttribute('data-i')];
+    if (!sh) return;
+    if (t !== apHot) {
+      apHot = t;
+      if (!apHlG || apHlG.parentNode !== svg) {
+        apHlG = document.createElementNS(NS, 'g'); apHlG.setAttribute('class', 'ap-hl');
+        apHlG.appendChild(document.createElementNS(NS, 'path')); svg.appendChild(apHlG);
+      }
+      apHlG.setAttribute('transform', g.getAttribute('transform'));
+      apHlG.firstChild.setAttribute('d', t.getAttribute('d'));
+      apHlG.style.display = '';
+      apTipHtml = apTip(A, sh);
+    }
+    showTip(apTipHtml, e.clientX, e.clientY - 8);
+  }
+
+  // ---------- moving the map: drag, the wheel with Ctrl or ⌘, two fingers, + and −, double-click, keys ----------
+  var MIN_MPP = 1.2;         // the closest zoom, in metres per pixel: the climats are drawn to 2 m
+  var MIN_MPP_PLAIN = 40;    // in views without appellations, where Natural Earth goes no finer
+  var drag = null, pinch = null, gest = null, suppressUntil = 0, settleTimer = 0, hintTimer = 0, hintAt = 0, lastPointer = 'mouse';
+  var isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform || '');
+  function zoomLimits() {
+    var cw = mapEl.clientWidth || 1, max = fit(homeBox(cur), cur).w / cw * 1.25;
+    var hasAp = AP.index && AP.index.some(function (a) { return a.view === cur.id; });
+    var min = cur.id === 'world' ? max / 16 : (hasAp ? MIN_MPP : MIN_MPP_PLAIN) * cur.proj.scale / 6371000;
+    return { min: Math.min(min, max), max: max };
+  }
+  function clampBox(b) {   // the centre stays on the drawn map
+    var cx = Math.min(Math.max(b.x + b.w / 2, 0), cur.w), cy = Math.min(Math.max(b.y + b.h / 2, 0), cur.h);
+    return { x: cx - b.w / 2, y: cy - b.h / 2, w: b.w, h: b.h };
+  }
+  function freeBox() {
+    var cw = mapEl.clientWidth, ch = mapEl.clientHeight;
+    return { x: free.cx - free.u * cw / 2, y: free.cy - free.u * ch / 2, w: free.u * cw, h: free.u * ch };
+  }
+  function moveTo(b, animate) {
+    b = clampBox(b);
+    free = { cx: b.x + b.w / 2, cy: b.y + b.h / 2, u: b.w / (mapEl.clientWidth || 1) };
+    apHover(null);
+    if (animate) animateTo(b, 300);
+    else { cancelAnimationFrame(anim); animTarget = null; mapEl.classList.remove('moving'); setViewBox(b); placeAll(false); settleSoon(); }
+    if ($('mapBar').hidden) renderMapChrome();
+  }
+  // zoom by f around a point of the map (in pixels from its corner), or its centre
+  function zoomBy(f, sx, sy, animate) {
+    if (!cur || !vb) return;
+    var cw = mapEl.clientWidth, ch = mapEl.clientHeight, lim = zoomLimits(), b0 = animate && animTarget ? animTarget : vb;
+    if (sx == null) { sx = cw / 2; sy = ch / 2; }
+    var u = b0.w / cw, nu = Math.min(lim.max, Math.max(lim.min, u / f));
+    if (Math.abs(nu - u) <= u * 1e-6) return;
+    var px = b0.x + sx * u, py = b0.y + sy * u;
+    moveTo({ x: px - sx * nu, y: py - sy * nu, w: nu * cw, h: nu * ch }, animate);
+  }
+  function settleSoon() { clearTimeout(settleTimer); settleTimer = setTimeout(settled, 160); }
+  // the map has stopped: fetch and show the appellations in view, name them, place every label
+  function settled() { clearTimeout(settleTimer); if (!cur || !vb) return; apUpdate(); placeAll(true); renderZoomButtons(); }
+  function renderZoomButtons() {
+    if (!cur || !vb) return;
+    var lim = zoomLimits(), u = vb.w / (mapEl.clientWidth || 1);
+    $('zoomIn').disabled = u <= lim.min * 1.001;
+    $('zoomOut').disabled = u >= lim.max * 0.999;
+  }
+  function showHint(kind) {
+    var now = Date.now(), el = $('mapHint');
+    if (kind === 'touch' && now - hintAt < 8000) return;
+    hintAt = now;
+    el.textContent = kind === 'touch' ? L().hintTouch : L().hintWheel(isMac);
+    el.classList.add('on');
+    clearTimeout(hintTimer); hintTimer = setTimeout(hideHint, 1600);
+  }
+  function hideHint() { clearTimeout(hintTimer); $('mapHint').classList.remove('on'); }
+
   // ---------- chrome, language ----------
   function renderChrome() {
     var l = L();
@@ -1150,7 +1453,7 @@ footer p { max-width: 52em; }
   function renderAll() {
     renderChrome(); renderHero(); renderMake(); renderGrapeTools(); renderGrapes();
     renderRegionsTop(); renderViewChips(); renderRegionList(); renderRegionCard();
-    if (cur) { buildMarks(); placeAll(true); renderMapChrome(); }
+    if (cur) { buildMarks(); renderLegend(); settled(); renderMapChrome(); }
   }
   function setLang(lang) {
     state.lang = lang;
@@ -1199,6 +1502,96 @@ footer p { max-width: 52em; }
     if (d.view) { setView(d.view); return; }
   });
   $('mapBack').addEventListener('click', zoomOut);
+  $('zoomIn').addEventListener('click', function () { zoomBy(2, null, null, true); });
+  $('zoomOut').addEventListener('click', function () { zoomBy(0.5, null, null, true); });
+  // a mouse or pen drags the map; on a touch screen one finger scrolls the page and two move the map
+  mapEl.addEventListener('pointerdown', function (e) {
+    lastPointer = e.pointerType;
+    if (!cur || e.pointerType === 'touch' || e.button !== 0 || e.target.closest('.mapbar, .mapzoom')) return;
+    drag = { id: e.pointerId, x: e.clientX, y: e.clientY, b: vb, moved: false };
+  });
+  window.addEventListener('pointermove', function (e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    var dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if (!drag.moved) {
+      if (dx * dx + dy * dy < 25) return;
+      drag.moved = true; mapEl.classList.add('dragging');
+      cancelAnimationFrame(anim); animTarget = null; mapEl.classList.remove('moving');
+      drag.b = vb; drag.x = e.clientX; drag.y = e.clientY; dx = dy = 0;
+    }
+    var u = drag.b.w / mapEl.clientWidth;
+    moveTo({ x: drag.b.x - dx * u, y: drag.b.y - dy * u, w: drag.b.w, h: drag.b.h }, false);
+  });
+  var endDrag = function (e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    if (drag.moved) { suppressUntil = Date.now() + 400; mapEl.classList.remove('dragging'); settled(); }
+    drag = null;
+  };
+  window.addEventListener('pointerup', endDrag);
+  window.addEventListener('pointercancel', endDrag);
+  mapEl.addEventListener('click', function (e) { if (Date.now() < suppressUntil) { e.stopPropagation(); e.preventDefault(); } }, true);
+  mapEl.addEventListener('wheel', function (e) {
+    if (!cur) return;
+    if (!(e.ctrlKey || e.metaKey)) { showHint('wheel'); return; }   // the page scrolls on
+    e.preventDefault();
+    var r = mapEl.getBoundingClientRect(), dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaMode === 2 ? e.deltaY * r.height : e.deltaY;
+    zoomBy(Math.exp(-Math.max(-300, Math.min(300, dy)) * 0.004), e.clientX - r.left, e.clientY - r.top, false);
+  }, { passive: false });
+  // Safari's trackpad pinch
+  mapEl.addEventListener('gesturestart', function (e) { e.preventDefault(); gest = pinch ? null : { s: e.scale || 1 }; });
+  mapEl.addEventListener('gesturechange', function (e) {
+    e.preventDefault();
+    if (!gest || pinch) return;
+    var r = mapEl.getBoundingClientRect();
+    zoomBy(e.scale / gest.s, e.clientX - r.left, e.clientY - r.top, false); gest.s = e.scale;
+  });
+  mapEl.addEventListener('gestureend', function (e) { e.preventDefault(); gest = null; });
+  var twoFingers = function (e) {
+    var r = mapEl.getBoundingClientRect(), a = e.touches[0], b = e.touches[1];
+    return { d: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY) || 1, x: (a.clientX + b.clientX) / 2 - r.left, y: (a.clientY + b.clientY) / 2 - r.top };
+  };
+  mapEl.addEventListener('touchstart', function (e) {
+    if (!cur || e.touches.length < 2 || !e.cancelable) return;
+    e.preventDefault();
+    var t = twoFingers(e);
+    cancelAnimationFrame(anim); animTarget = null; mapEl.classList.remove('moving'); hideHint();
+    pinch = { d: t.d, x: t.x, y: t.y, b: vb };
+  }, { passive: false });
+  mapEl.addEventListener('touchmove', function (e) {
+    if (pinch && e.touches.length >= 2) {
+      e.preventDefault();
+      var t = twoFingers(e), cw = mapEl.clientWidth, ch = mapEl.clientHeight, lim = zoomLimits();
+      var u0 = pinch.b.w / cw, u = Math.min(lim.max, Math.max(lim.min, u0 * pinch.d / t.d));
+      var px = pinch.b.x + pinch.x * u0, py = pinch.b.y + pinch.y * u0;
+      moveTo({ x: px - t.x * u, y: py - t.y * u, w: u * cw, h: u * ch }, false);
+    } else if (!pinch && e.touches.length === 1 && cur) showHint('touch');
+  }, { passive: false });
+  var endTouch = function (e) { if (pinch && e.touches.length < 2) { pinch = null; suppressUntil = Date.now() + 400; settled(); } };
+  mapEl.addEventListener('touchend', endTouch);
+  mapEl.addEventListener('touchcancel', endTouch);
+  mapEl.addEventListener('dblclick', function (e) {
+    if (!cur || e.target.closest('button')) return;
+    var r = mapEl.getBoundingClientRect();
+    zoomBy(e.shiftKey ? 0.5 : 2, e.clientX - r.left, e.clientY - r.top, true);
+  });
+  mapEl.addEventListener('keydown', function (e) {
+    if (!cur || e.altKey || e.ctrlKey || e.metaKey) return;
+    var k = e.key, b = animTarget || vb;
+    if (k === '+' || k === '=') zoomBy(2, null, null, true);
+    else if (k === '-' || k === '_') zoomBy(0.5, null, null, true);
+    else if (/^Arrow/.test(k) && e.target === mapEl) {
+      var dx = k === 'ArrowLeft' ? -1 : k === 'ArrowRight' ? 1 : 0, dy = k === 'ArrowUp' ? -1 : k === 'ArrowDown' ? 1 : 0;
+      moveTo({ x: b.x + dx * b.w / 4, y: b.y + dy * b.h / 4, w: b.w, h: b.h }, true);
+    } else return;
+    e.preventDefault();
+  });
+  // the appellations: hover with a mouse, tap on a touch screen
+  svg.addEventListener('pointermove', function (e) {
+    if (e.pointerType === 'touch' || (drag && drag.moved) || pinch) return;
+    apHover(e.target.closest ? e.target.closest('.g-ap path') : null, e);
+  });
+  svg.addEventListener('pointerleave', function () { apHover(null); });
+  svg.addEventListener('click', function (e) { if (lastPointer === 'touch') apHover(e.target.closest ? e.target.closest('.g-ap path') : null, e); });
   // arrow keys move between the style tabs
   $('styleTabs').addEventListener('keydown', function (e) {
     var ids = STYLE_ORDER, i = ids.indexOf(state.style);
@@ -1223,7 +1616,7 @@ footer p { max-width: 52em; }
   window.addEventListener('scroll', hideTip, { passive: true });
 
   // the map follows its frame's size
-  var refit = function () { if (!cur) return; cancelAnimationFrame(anim); mapEl.classList.remove('moving'); setViewBox(targetBox()); placeAll(true); };
+  var refit = function () { if (!cur) return; cancelAnimationFrame(anim); animTarget = null; mapEl.classList.remove('moving'); setViewBox(targetBox()); settled(); };
   if ('ResizeObserver' in window) new ResizeObserver(refit).observe(mapEl); else window.addEventListener('resize', refit);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { items.forEach(function (it) { it.tw = null; }); if (cur) placeAll(true); });
 
@@ -1250,6 +1643,7 @@ footer p { max-width: 52em; }
     if (key === 'region' && REGION[id]) { selectRegion(id, { scroll: true }); return 'map'; }
     return false;
   }
+  apIndex();   // the list of appellation areas: small, and wanted as soon as a region is picked
   renderAll();
   var routed = fromHash();
   if (routed !== 'map') setView('world', { quiet: true });
