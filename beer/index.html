@@ -1,0 +1,1235 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="原麦汁 Original Gravity: a field guide to beer styles and hops by Wentao Zhang. How 28 styles are brewed, from the malt and the mash to the hops, the yeast and the conditioning, each in a glass whose colour is computed from its SRM; and 22 hops with their acids, oils and aromas. In Chinese and English.">
+<meta property="og:title" content="原麦汁 Original Gravity">
+<meta property="og:description" content="原麦汁 Original Gravity: a field guide to beer styles and hops by Wentao Zhang. How 28 styles are brewed, each in a glass whose colour is computed from its SRM, and 22 hops with their acids, oils and aromas.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://wentaoz.com/beer/">
+<meta property="og:site_name" content="Wentao Zhang">
+<meta property="og:image" content="https://wentaoz.com/beer/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="原麦汁 Original Gravity: a row of beers from a pale pilsner to an imperial stout, each colour computed from its SRM.">
+<meta name="twitter:card" content="summary_large_image">
+<script>
+/* Apply the theme picked with the Dark button (here or on the homepage) before first paint */
+(function () { try { var t = localStorage.getItem('wentaoz.theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {} })();
+</script>
+<link rel="canonical" href="https://wentaoz.com/beer/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20fill%3D%22%23F4F0E6%22%2F%3E%3Cpath%20d%3D%22M9%2010h14l-1.6%2018H10.6z%22%20fill%3D%22%23D88D00%22%2F%3E%3Cpath%20d%3D%22M8.6%205.5h14.8V10H8.6z%22%20fill%3D%22%23FBF8EF%22%20stroke%3D%22%231F1B16%22%20stroke-width%3D%22.8%22%2F%3E%3C%2Fsvg%3E">
+<title>原麦汁 Original Gravity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500..700;1,9..144,400&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Serif+SC:wght@600;900&display=swap">
+<style>
+/* Layout: one 760px column, like a page of a brewer's notebook. Beer colours are the only warm colours
+   on the page, and every one of them is computed; the interface itself is ink on paper with one hop green
+   for whatever is selected. */
+:root {
+  --bg: #F4F0E6;            /* paper */
+  --surface: #FBF9F4;
+  --fg: #1F1B16;
+  --muted: #696053;
+  --rule: #DED6C6;
+  --rule-strong: #A69A86;
+  --accent: #3F7A2C;        /* hop green: selection, focus, links */
+  --accent-soft: #DDE9D3;
+  --dot: #8A8070;           /* unselected marks in the charts */
+  --glass: rgba(31, 27, 22, 0.55);
+  /* the four main hop oils, and the rest */
+  --oil-1: #1baf7a; --oil-2: #eda100; --oil-3: #e87ba4; --oil-4: #6250d6; --oil-x: #BDB4A6;
+  --font-cjk: "Noto Serif SC", "Songti SC", "STSong", "Source Han Serif SC", "SimSun", serif;
+  --font-latin: "Fraunces", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --font-body: "IBM Plex Sans", -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #13110E; --surface: #1C1814; --fg: #EDE6D9; --muted: #A0968A; --rule: #2E2822; --rule-strong: #564C40;
+    --accent: #8CC46A; --accent-soft: #24331B; --dot: #8C8273; --glass: rgba(237, 230, 217, 0.5);
+    --oil-1: #199e70; --oil-2: #c98500; --oil-3: #d55181; --oil-4: #9085e9; --oil-x: #5C5348;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #13110E; --surface: #1C1814; --fg: #EDE6D9; --muted: #A0968A; --rule: #2E2822; --rule-strong: #564C40;
+  --accent: #8CC46A; --accent-soft: #24331B; --dot: #8C8273; --glass: rgba(237, 230, 217, 0.5);
+  --oil-1: #199e70; --oil-2: #c98500; --oil-3: #d55181; --oil-4: #9085e9; --oil-x: #5C5348;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.55;
+  -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: 100%;
+}
+h1, h2, h3, p, ol, ul, dl, dd, figure { margin: 0; }
+ol, ul { padding: 0; list-style: none; }
+a { color: inherit; text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 1.5px; text-underline-offset: 0.18em; }
+a:hover { text-decoration-thickness: 2.5px; }
+button { font: inherit; color: inherit; }
+a:focus-visible, button:focus-visible, summary:focus-visible, input:focus-visible + .srm-cursor { outline: 2px solid var(--accent); outline-offset: 2px; }
+.page {
+  max-width: 760px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 56px;
+}
+.zh-only, .en-only { display: none; }
+.lang-zh .zh-only, .lang-en .en-only { display: revert; }
+
+/* header */
+.home { display: inline-block; margin-bottom: 8px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); text-decoration: none; }
+.home:hover, .home:focus-visible { color: var(--fg); }
+.top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--rule-strong); }
+.brand { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.brand .name { font-family: var(--font-cjk); font-weight: 900; font-size: 22px; letter-spacing: 0.04em; }
+.brand .name-latin { font-family: var(--font-latin); font-style: italic; font-size: 21px; }
+.eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+.tools { display: flex; align-items: center; gap: 8px; flex: none; }
+.theme {
+  appearance: none; border: 1px solid var(--rule-strong); border-radius: 999px; background: transparent; color: var(--muted);
+  font: 500 12px/1 var(--font-body); padding: 7px 11px; cursor: pointer; letter-spacing: 0.04em;
+}
+.theme[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.lang { display: inline-flex; border: 1px solid var(--rule-strong); border-radius: 999px; overflow: hidden; flex: none; }
+.lang button { appearance: none; border: 0; background: transparent; color: var(--muted); font: 500 12px/1 var(--font-body); padding: 7px 11px; cursor: pointer; letter-spacing: 0.04em; }
+.lang button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+
+.lede { margin: 22px 0 0; font-size: 18px; line-height: 1.6; max-width: 38em; text-wrap: pretty; }
+.lang-en .lede { font-family: var(--font-latin); font-size: 19px; line-height: 1.5; font-variation-settings: "opsz" 24; }
+
+/* sections */
+section.block { padding-top: 40px; }
+.sec { display: flex; align-items: baseline; gap: 12px; margin: 0 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--rule); }
+.sec .num { font-family: var(--font-mono); font-size: 12px; color: var(--muted); letter-spacing: 0.08em; }
+.sec .t { font-size: 22px; line-height: 1.2; }
+.lang-zh .sec .t { font-family: var(--font-cjk); font-weight: 900; letter-spacing: 0.04em; }
+.lang-en .sec .t { font-family: var(--font-latin); font-weight: 600; font-variation-settings: "opsz" 48; }
+.intro { font-size: 15px; color: var(--muted); max-width: 40em; margin: 0 0 16px; }
+.intro b { color: var(--fg); font-weight: 600; }
+
+/* 01: the six steps */
+.flow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px 22px; counter-reset: step; }
+.flow li { border-top: 2px solid var(--fg); padding-top: 8px; font-size: 14px; line-height: 1.55; }
+.flow li b { display: block; font-size: 15px; margin-bottom: 3px; }
+.lang-zh .flow li b { font-family: var(--font-cjk); font-weight: 900; font-size: 16px; letter-spacing: 0.04em; }
+.lang-en .flow li b { font-family: var(--font-latin); font-weight: 600; font-size: 17px; }
+.flow li b::before { counter-increment: step; content: counter(step); font-family: var(--font-mono); font-weight: 400; font-size: 11px; color: var(--muted); margin-right: 8px; letter-spacing: 0.04em; }
+@media (max-width: 640px) { .flow { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 420px) { .flow { grid-template-columns: minmax(0, 1fr); } }
+
+/* filters: one row of text tabs above everything they scope */
+.filters { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0 0 10px; }
+.filters button {
+  appearance: none; background: none; border: 0; border-bottom: 2px solid transparent; padding: 4px 0 5px; cursor: pointer;
+  font: 600 13px/1.2 var(--font-body); color: var(--muted);
+}
+.filters button:hover { color: var(--fg); }
+.filters button[aria-pressed="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+.filters .count { font-family: var(--font-mono); font-weight: 400; font-size: 11px; margin-left: 4px; }
+
+/* chips */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  appearance: none; display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
+  border: 1px solid var(--rule-strong); border-radius: 999px; background: var(--surface);
+  font: 500 13px/1.2 var(--font-body); padding: 6px 11px 6px 8px; min-height: 32px;
+}
+.chip:hover { border-color: var(--fg); }
+.chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.chip .sw { width: 12px; height: 12px; border-radius: 50%; flex: none; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18); }
+.chip[aria-pressed="true"] .sw { box-shadow: 0 0 0 1.5px var(--bg); }
+.chip.nosw { padding-left: 11px; }
+.chip.small { min-height: 28px; padding: 4px 10px; font-size: 12.5px; }
+
+/* cards */
+.card { margin-top: 16px; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 18px 18px 16px; }
+.card-head { display: grid; grid-template-columns: 124px minmax(0, 1fr); grid-template-areas: "glass ttl" "glass sum"; grid-template-rows: auto 1fr; column-gap: 18px; align-items: start; }
+.card-head .glass { grid-area: glass; }
+.card-head .ttl { grid-area: ttl; min-width: 0; }
+.card-head .csum { grid-area: sum; }
+.glass { position: relative; width: 124px; height: 220px; }
+.glass canvas { display: block; width: 100%; height: 100%; }
+.kicker { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.cname { margin: 4px 0 0; line-height: 1.12; text-wrap: balance; }
+.cname .a { font-size: 30px; }
+.lang-zh .cname .a { font-family: var(--font-cjk); font-weight: 900; letter-spacing: 0.03em; }
+.lang-en .cname .a { font-family: var(--font-latin); font-weight: 600; font-variation-settings: "opsz" 72; }
+.cname .b { display: block; margin-top: 2px; font-family: var(--font-latin); font-style: italic; font-weight: 400; font-size: 17px; color: var(--muted); }
+.cmeta { margin: 6px 0 0; font-size: 13px; color: var(--muted); }
+.csum { margin: 10px 0 0; font-size: 15px; line-height: 1.6; text-wrap: pretty; }
+@media (max-width: 480px) {
+  .card { padding: 14px 14px 12px; }
+  .card-head { grid-template-columns: 92px minmax(0, 1fr); grid-template-areas: "glass ttl" "sum sum"; column-gap: 14px; }
+  .card-head .ttl { align-self: center; }
+  .glass { width: 92px; height: 170px; }
+  .cname .a { font-size: 25px; }
+}
+
+/* vital statistics */
+.vitals { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px 16px; margin: 16px 0 0; padding: 14px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+.vitals div { min-width: 0; }
+.vitals dt { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+.vitals dd { font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.vitals dd small { display: block; font-size: 12px; font-weight: 400; color: var(--muted); margin-top: 1px; }
+@media (max-width: 560px) { .vitals { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* SRM strip: the colour of 5 cm of beer from 1.5 to 45 SRM on a log scale; drag to preview */
+.srm-wrap { margin-top: 16px; }
+.srm-label { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; font-size: 12.5px; color: var(--muted); margin-bottom: 8px; }
+.srm-label b { color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
+.srm { position: relative; height: 26px; border-radius: 4px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1); cursor: ew-resize; touch-action: pan-y; }
+.srm input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; pointer-events: none; }
+.srm-band { position: absolute; top: -5px; bottom: -5px; border: 2px solid var(--fg); border-radius: 5px; pointer-events: none; }
+.srm-cursor { position: absolute; top: -8px; bottom: -8px; width: 6px; margin-left: -3px; background: var(--surface); border: 1.5px solid var(--fg); border-radius: 3px; pointer-events: none; }
+.srm-axis { position: relative; height: 18px; margin-top: 6px; font-family: var(--font-mono); font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.srm-axis span { position: absolute; top: 0; transform: translateX(-50%); white-space: nowrap; }
+.srm-axis span:last-child { transform: translateX(-100%); }
+
+/* the brewing steps of one style */
+.steps { margin: 16px 0 0; }
+.steps li { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--rule); font-size: 14.5px; line-height: 1.6; }
+.steps li:first-child { padding-top: 0; }
+.steps .lab { font-size: 15px; line-height: 1.5; }
+.lang-zh .steps .lab { font-family: var(--font-cjk); font-weight: 900; letter-spacing: 0.06em; }
+.lang-en .steps .lab { font-family: var(--font-latin); font-weight: 600; }
+.steps .lab small { display: block; font-family: var(--font-mono); font-weight: 400; font-size: 10px; letter-spacing: 0.06em; color: var(--muted); text-transform: uppercase; }
+@media (max-width: 420px) { .steps li { grid-template-columns: minmax(0, 1fr); gap: 2px; } .steps .lab small { display: inline; margin-left: 8px; } }
+.facts { display: grid; gap: 8px; margin: 14px 0 0; font-size: 14px; }
+.facts > div { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 12px; align-items: baseline; }
+.facts dt { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.facts dd { min-width: 0; }
+.facts .chips { gap: 5px; }
+@media (max-width: 420px) { .facts > div { grid-template-columns: minmax(0, 1fr); gap: 4px; } }
+
+/* charts */
+.chart { position: relative; margin-top: 22px; }
+.chart-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; margin-bottom: 6px; }
+.chart-head h3 { font-size: 15px; font-weight: 600; }
+.chart-note { font-size: 12.5px; color: var(--muted); margin-top: 6px; max-width: 46em; }
+.seg { display: inline-flex; border: 1px solid var(--rule-strong); border-radius: 999px; overflow: hidden; }
+.seg button { appearance: none; border: 0; background: transparent; color: var(--muted); font: 500 12px/1 var(--font-body); padding: 6px 11px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; touch-action: pan-y; }
+.ax-grid { stroke: var(--rule); stroke-width: 1; shape-rendering: crispEdges; }
+.ax-base { stroke: var(--rule-strong); stroke-width: 1; shape-rendering: crispEdges; }
+.ax-tick { font-family: var(--font-mono); font-size: 10.5px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+.ax-title { font-family: var(--font-body); font-size: 11.5px; fill: var(--muted); }
+.ax-zone { font-family: var(--font-body); font-size: 11px; fill: var(--muted); font-style: italic; }
+.pt { fill: var(--dot); stroke: var(--surface); stroke-width: 2; cursor: pointer; }
+.pt.off { opacity: 0.22; }
+.pt.hot { fill: var(--fg); }
+.pt.on { fill: var(--accent); }
+.pt-range { fill: var(--accent); fill-opacity: 0.12; stroke: var(--accent); stroke-opacity: 0.55; stroke-width: 1; }
+.pt-label { font-family: var(--font-body); font-size: 12px; font-weight: 600; fill: var(--fg); paint-order: stroke; stroke: var(--surface); stroke-width: 4px; stroke-linejoin: round; pointer-events: none; }
+.plot-bg { fill: var(--surface); }
+.tip {
+  position: absolute; top: 0; left: 0; z-index: 2; display: grid; gap: 2px; padding: 7px 9px; min-width: 120px;
+  background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 6px;
+  font-size: 12px; line-height: 1.35; color: var(--muted); pointer-events: none; white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+.tip b { color: var(--fg); font-weight: 600; font-size: 13px; }
+.tip .v { color: var(--fg); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* hops */
+.uses { display: inline-block; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); margin-left: 6px; vertical-align: 2px; }
+.hop-head .cname .a { font-size: 28px; }
+.aroma { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; }
+.aroma li { font-size: 12.5px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--rule); background: var(--bg); }
+.acids { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px 16px; margin: 16px 0 0; padding: 14px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+.acids div { min-width: 0; }
+.acids dt { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+.lang-zh .acids dt, .lang-zh .vitals dt, .lang-zh .facts dt { text-transform: none; letter-spacing: 0.04em; font-family: var(--font-body); font-size: 11px; }   /* keeps α and β lower-case */
+.acids dd { font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.acids dd small { display: block; font-size: 12px; font-weight: 400; color: var(--muted); }
+@media (max-width: 560px) { .acids { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.oils { margin-top: 16px; }
+.oils h4 { margin: 0 0 8px; font-size: 13px; font-weight: 600; }
+.oilbar { display: flex; gap: 2px; height: 28px; }
+.oilbar span { position: relative; display: flex; align-items: center; min-width: 0; height: 100%; border-radius: 4px; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; padding-left: 7px; white-space: nowrap; overflow: visible; }
+.oilbar .o1 { background: var(--oil-1); color: #fff; } .oilbar .o2 { background: var(--oil-2); color: #0b0b0b; }
+.oilbar .o3 { background: var(--oil-3); color: #fff; } .oilbar .o4 { background: var(--oil-4); color: #fff; }
+.oilbar .ox { background: var(--oil-x); color: #0b0b0b; }
+:root[data-theme="dark"] .oilbar .ox { color: #fff; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .oilbar .ox { color: #fff; } }
+.oilkey { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 8px; font-size: 12.5px; color: var(--muted); }
+.oilkey span { display: inline-flex; align-items: center; gap: 6px; }
+.oilkey i { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+.oilkey b { color: var(--fg); font-weight: 600; }
+.src { margin: 12px 0 0; font-size: 12px; color: var(--muted); }
+
+/* the numbers as tables */
+.tables { margin-top: 18px; }
+details { border-top: 1px solid var(--rule); }
+details + details { border-top: 0; }
+summary { cursor: pointer; padding: 14px 0; font-weight: 600; font-size: 14.5px; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; font-family: var(--font-mono); color: var(--muted); font-size: 18px; }
+details[open] summary::after { content: "–"; }
+.tbl { overflow-x: auto; padding-bottom: 12px; }
+table { border-collapse: collapse; width: 100%; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 6px 10px 6px 0; border-bottom: 1px solid var(--rule); white-space: nowrap; vertical-align: baseline; }
+th { font-family: var(--font-mono); font-weight: 500; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+td:first-child { white-space: normal; min-width: 8em; }
+td .sw { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18); }
+tr.click { cursor: pointer; }
+tr.click:hover td { background: var(--accent-soft); }
+
+/* method and footer */
+.method { padding: 0 0 18px; font-size: 14.5px; max-width: 62ch; }
+.method p { margin: 0 0 12px; }
+.method .k { font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); }
+.method code { font-family: var(--font-mono); font-size: 12.5px; }
+footer { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--rule-strong); font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: space-between; }
+footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 15px; color: var(--fg); }
+.nojs { margin: 22px 0 0; font-size: 17px; max-width: 34em; }
+</style>
+<noscript><style>.tools, main { display: none; }</style></noscript>
+</head>
+<body>
+<div class="page lang-zh" id="page">
+  <header class="top">
+    <div>
+      <a class="home" href="../">← wentaoz.com</a>
+      <div class="brand"><span class="name" lang="zh-CN">原麦汁</span><span class="name-latin" lang="en">Original Gravity</span></div>
+      <div class="eyebrow" id="eyebrow"></div>
+    </div>
+    <div class="tools">
+      <button type="button" class="theme" id="btn-theme" aria-pressed="false" hidden></button>
+      <div class="lang" role="group" aria-label="Language">
+        <button type="button" id="btn-zh" aria-pressed="true" lang="zh-CN">中文</button>
+        <button type="button" id="btn-en" aria-pressed="false" lang="en">EN</button>
+      </div>
+    </div>
+  </header>
+
+  <noscript><p class="nojs">原麦汁要在浏览器里算出每杯啤酒的颜色，需要 JavaScript。请开启后刷新页面。<br><span lang="en">Original Gravity computes the colour of every beer in your browser and needs JavaScript. Turn it on and reload.</span></p></noscript>
+
+  <main>
+    <p class="lede" id="lede"></p>
+
+    <section class="block" id="brewing" aria-labelledby="brewing-h">
+      <h2 class="sec" id="brewing-h"><span class="num">01</span><span class="t" id="brewing-t"></span></h2>
+      <ol class="flow" id="flow"></ol>
+    </section>
+
+    <section class="block" id="styles" aria-labelledby="styles-h">
+      <h2 class="sec" id="styles-h"><span class="num">02</span><span class="t" id="styles-t"></span></h2>
+      <p class="intro" id="styles-intro"></p>
+      <div class="filters" id="style-filter" role="group"></div>
+      <div class="chips" id="style-chips" role="group"></div>
+
+      <article class="card" id="style-card" aria-live="polite">
+        <div class="card-head">
+          <div class="glass"><canvas id="glass" role="img"></canvas></div>
+          <div class="ttl">
+            <p class="kicker" id="s-kicker"></p>
+            <h3 class="cname"><span class="a" id="s-name"></span><span class="b" id="s-sub"></span></h3>
+            <p class="cmeta" id="s-meta"></p>
+          </div>
+          <p class="csum" id="s-sum"></p>
+        </div>
+        <dl class="vitals" id="s-vitals"></dl>
+        <div class="srm-wrap">
+          <p class="srm-label"><span id="srm-read"></span><span id="srm-hint"></span></p>
+          <div class="srm" id="srm">
+            <input type="range" id="srm-range" min="0" max="1000" step="1" value="500">
+            <span class="srm-band" id="srm-band"></span>
+            <span class="srm-cursor" id="srm-cursor"></span>
+          </div>
+          <div class="srm-axis" id="srm-axis" aria-hidden="true"></div>
+        </div>
+        <ol class="steps" id="s-steps"></ol>
+        <dl class="facts" id="s-facts"></dl>
+      </article>
+
+      <figure class="chart" id="smap">
+        <div class="chart-head">
+          <h3 id="smap-h"></h3>
+          <div class="seg" role="group" id="smap-y">
+            <button type="button" data-y="ibu" aria-pressed="true"></button>
+            <button type="button" data-y="abv" aria-pressed="false"></button>
+          </div>
+        </div>
+        <svg id="smap-svg" role="img"></svg>
+        <div class="tip" id="smap-tip" hidden></div>
+        <figcaption class="chart-note" id="smap-note"></figcaption>
+      </figure>
+    </section>
+
+    <section class="block" id="hops" aria-labelledby="hops-h">
+      <h2 class="sec" id="hops-h"><span class="num">03</span><span class="t" id="hops-t"></span></h2>
+      <p class="intro" id="hops-intro"></p>
+      <div class="filters" id="hop-filter" role="group"></div>
+      <div class="chips" id="hop-chips" role="group"></div>
+
+      <article class="card" id="hop-card" aria-live="polite">
+        <div class="hop-head">
+          <p class="kicker" id="h-kicker"></p>
+          <h3 class="cname"><span class="a" id="h-name"></span><span class="b" id="h-sub"></span></h3>
+          <p class="cmeta" id="h-meta"></p>
+          <ul class="aroma" id="h-aroma"></ul>
+          <p class="csum" id="h-story"></p>
+        </div>
+        <dl class="acids" id="h-acids"></dl>
+        <div class="oils">
+          <h4 id="h-oils-h"></h4>
+          <div class="oilbar" id="h-oilbar" role="img"></div>
+          <div class="oilkey" id="h-oilkey"></div>
+        </div>
+        <dl class="facts" id="h-facts"></dl>
+        <p class="src" id="h-src"></p>
+      </article>
+
+      <figure class="chart" id="hmap">
+        <div class="chart-head"><h3 id="hmap-h"></h3></div>
+        <svg id="hmap-svg" role="img"></svg>
+        <div class="tip" id="hmap-tip" hidden></div>
+        <figcaption class="chart-note" id="hmap-note"></figcaption>
+      </figure>
+    </section>
+
+    <div class="tables">
+      <details id="t-styles"><summary id="t-styles-h"></summary><div class="tbl" id="t-styles-body"></div></details>
+      <details id="t-hops"><summary id="t-hops-h"></summary><div class="tbl" id="t-hops-body"></div></details>
+      <details id="methodBox"><summary id="method-h"></summary><div class="method" id="method"></div></details>
+    </div>
+  </main>
+
+  <footer>
+    <span class="sig" id="foot-sig"></span>
+    <span id="foot-note"></span>
+  </footer>
+</div>
+
+<script src="colour.js"></script>
+<script src="data.js"></script>
+<script>
+(function () {
+  'use strict';
+  var D = OGData, B = BeerColour;
+  var $ = function (id) { return document.getElementById(id); };
+  var root = document.documentElement;
+  var STYLE = {}, HOP = {};
+  D.STYLES.forEach(function (s) { STYLE[s.id] = s; });
+  D.HOPS.forEach(function (h) {
+    HOP[h.id] = h;
+    h.usedIn = D.STYLES.filter(function (s) { return s.hops.indexOf(h.id) >= 0; }).map(function (s) { return s.id; });
+  });
+
+  /* ---------- words ---------- */
+  var I18N = {
+    zh: {
+      eyebrow: function (ns, nh) { return '啤酒风格与酒花图鉴 · ' + ns + ' 种风格 · ' + nh + ' 种酒花'; },
+      lede: '一杯啤酒只有四样东西：麦芽、酒花、酵母和水。风格和风格之间的差别，几乎都在于怎么对待它们：麦芽烘到多深，糖化停在几度，酒花什么时候下锅，酵母在 10°C 还是 30°C 下工作，酒在冰冷的地窖里躺几周，还是在橡木桶里睡上三年。选一种风格，看它是怎么酿出来的；杯中的颜色是按这种啤酒吸收多少光，一点一点算出来的。',
+      brewing: '酿一杯啤酒',
+      flow: [
+        ['制麦', '大麦泡水，发芽四五天，再进烘炉烘干，淀粉和分解淀粉的酶都准备好了。烘得越热颜色越深：皮尔森麦芽约 80°C，慕尼黑麦芽约 100°C；焦香麦芽先在湿热的 65–70°C 让淀粉在麦粒里变成糖再烘烤，黑麦芽要烤到 200°C 以上。'],
+        ['糖化', '碾碎的麦芽和热水混合，在 62–72°C 停留约一小时，麦芽自己的酶把淀粉切成糖。β-淀粉酶在 60–65°C 最活跃，切出酵母能吃的麦芽糖；α-淀粉酶在 68–72°C 最活跃，切出酵母吃不掉的糊精。所以糖化温度低，酒干；温度高，酒体厚。最后滤出麦汁，再用热水把麦糟里的糖洗出来。'],
+        ['煮沸', '麦汁煮沸 60–90 分钟：杀菌，让蛋白质凝结沉下去，赶走带着煮玉米味的二甲基硫。酒花里的 α 酸受热异构化成溶得进酒的异 α 酸，这才是苦味的来源。所以早下锅的酒花给苦味，晚下锅的酒花留住易挥发的香气油。原麦汁浓度也在这一步定下来。'],
+        ['发酵', '冷却后加入酵母。艾尔酵母（酿酒酵母 S. cerevisiae）在 15–24°C 上面发酵，几天就完成，产生果香的酯；拉格酵母（巴氏酵母 S. pastorianus，是酿酒酵母和耐寒的真贝酵母 S. eubayanus 的杂交种）在 7–13°C 下面发酵，又慢又干净。酵母把糖变成酒精和二氧化碳，比重从原麦汁降到最终比重，降了多少就决定了酒精度。'],
+        ['熟成', '拉格在接近 0°C 的地方贮藏几周；艾尔在酒桶或瓶里再发酵，产生气泡；干投的酒花泡在冷的酒里，只加香，不加苦；野菌啤酒在橡木桶里一陈就是几年。'],
+        ['侍酒', '过不过滤、气泡多少、什么温度、什么杯子，都会改变味道。英国桶装艾尔每升只溶着约 2 克二氧化碳，德式小麦啤酒有 7–9 克；淡色拉格在 2–6°C 喝，烈性艾尔在 12–16°C 喝。']
+      ],
+      styles: '风格',
+      stylesIntro: function (n) { return '按产地分成四组，共 ' + n + ' 种。点一种风格看它的酿法；下面的地图把所有风格按颜色和苦度（或酒精度）排开。'; },
+      all: '全部',
+      kicker: function (reg, fer) { return reg + ' · ' + fer; },
+      meta: function (s) { return [s.local, t(s.p), s.y ? t(s.y) : ''].filter(Boolean).join(' · '); },
+      v: { og: '原麦汁浓度', fg: '最终比重', abv: '酒精度', ibu: '苦度', srm: '颜色', att: '发酵度', bugu: '苦甜比' },
+      bugu: function (x) { return x < 0.4 ? '苦味轻' : x < 0.6 ? '苦甜平衡' : '偏苦'; },
+      approx: '约',
+      srmRead: function (srm, ebc, inRange) { return '颜色 <b>' + srm + ' SRM</b> · <b>' + ebc + ' EBC</b>' + (inRange ? '' : ' · 超出这一风格的范围'); },
+      srmHint: '拖动色条，看它从最浅到最深的样子',
+      srmAria: '预览颜色（SRM）',
+      steps: { malt: ['麦芽', 'Grain'], mash: ['糖化', 'Mash'], boil: ['煮沸', 'Boil'], ferment: ['发酵', 'Ferment'], cond: ['熟成', 'Condition'] },
+      facts: { serve: '侍酒', hops: '酒花', ex: '代表酒款', bjcp: 'BJCP' },
+      serve: function (g, a, b) { return g + ' · ' + a + '–' + b + '°C'; },
+      glassAria: function (name, srm, glass) { return name + '，' + srm + ' SRM，盛在' + glass + '里'; },
+      smapH: '风格地图',
+      smapY: { ibu: '苦度', abv: '酒精度' },
+      smapX: '颜色（SRM，对数刻度）',
+      smapYTitle: { ibu: '苦度 IBU', abv: '酒精度 %' },
+      smapNote: '每个点是一种风格，落在它颜色和苦度范围的中间；选中的风格画出整个范围。横轴下的色带是 5 厘米厚的啤酒在日光下的颜色。',
+      smapAria: function (n) { return n + ' 种啤酒风格按颜色和苦度排开的散点图，具体数字见下方的表格。'; },
+      tipStyle: function (s) { return [['颜色', fr(s.srm) + ' SRM'], ['苦度', fr(s.ibu) + ' IBU'], ['酒精度', fr(s.abv) + '%']]; },
+      hops: '酒花',
+      hopsIntro: '酒花是蛇麻（<i>Humulus lupulus</i>）雌株的花，一个个绿色的小球果。苞片根部金黄色的蛇麻腺里藏着两样关键的东西：<b>α 酸</b>，煮沸时异构化，变成苦味；<b>精油</b>，易挥发，决定香气。欧洲传统的“贵族酒花”α 酸低、香气细腻；美国和南半球培育的新品种 α 酸和精油都多，带着柑橘和热带水果的香。',
+      use: { aroma: '香型', bitter: '苦型', dual: '两用' },
+      hopKicker: function (o, use) { return o + ' · ' + use; },
+      hopMeta: function (h) { return [h.local, t(h.p), h.y ? t(h.y) : ''].filter(Boolean).join(' · '); },
+      a: { alpha: 'α 酸', beta: 'β 酸', cohum: '合葎草酮', oil: '总油量' },
+      ofAlpha: '占 α 酸', perOil: 'mL / 100 g',
+      oilsH: '精油组成（占总油量）',
+      oils: [['月桂烯', '树脂、柑橘、青草'], ['葎草烯', '木质、草本'], ['石竹烯', '香料、胡椒'], ['金合欢烯', '花香、青苹果'], ['其他', '芳樟醇、香叶醇等']],
+      oilAria: function (parts) { return '精油组成：' + parts + '。'; },
+      hf: { by: '育成', parent: '亲本', used: '用在', sub: '可以替代' },
+      src: '数据来源：',
+      hmapH: 'α 酸与总油量',
+      hmapX: 'α 酸 %',
+      hmapY: '总油量 mL/100 g',
+      hmapNote: '每个点是一种酒花，落在它 α 酸和总油量范围的中间；选中的酒花画出整个范围。左下是传统的贵族酒花，右边是打苦用的高 α 酸品种，右上是又苦又香的新世界酒花。',
+      hmapAria: function (n) { return n + ' 种酒花按 α 酸和总油量排开的散点图，具体数字见下方的表格。'; },
+      zones: ['贵族酒花', '高 α 酸', '新世界'],
+      tipHop: function (h) { return [['α 酸', fr(h.alpha) + '%'], ['总油量', fr(h.oil) + ' mL/100 g']]; },
+      tStyles: '所有风格的数字',
+      tHops: '所有酒花的数字',
+      th: { style: '风格', og: '原麦汁', fg: '最终比重', abv: '酒精度', ibu: '苦度', srm: 'SRM', hop: '酒花', origin: '产地', use: '用途', alpha: 'α 酸', beta: 'β 酸', oil: '总油量' },
+      methodH: '怎么算的',
+      method: '<p><span class="k">颜色</span><br>SRM 的定义是 1 厘米厚的啤酒在 430 nm 处吸光度的 12.7 倍（ASBC Beer-10A），EBC 约为 SRM 的 1.97 倍。其他波长的吸收，用 A. J. deLange 从 99 种啤酒得出的平均光谱：<code>A(λ) = SRM/12.7 × (0.018747 e<sup>−(λ−430)/13.374</sup> + 0.98226 e<sup>−(λ−430)/80.514</sup>)</code>。杯子里每个像素的颜色，都是日光（D65）穿过那一点的啤酒之后剩下的光：按 Beer–Lambert 定律逐个波长衰减，再用 CIE 1931 标准观察者换算成 sRGB，和主页上薄膜颜色的算法一样。光在圆杯里走过的距离是 2√(R² − x²)，所以杯子中间深、边缘浅；杯子按常见的内径和高度等比例画。超出 sRGB 色域的颜色，保持亮度降低饱和度。这个模型假定啤酒是澄清的，浑浊的风格另外盖了一层乳白，只是示意；颜色和平均光谱差得远的啤酒（比如樱桃兰比克）也算不准。</p>' +
+              '<p><span class="k">风格的数字</span><br>原麦汁浓度、最终比重、酒精度、苦度和颜色都是 BJCP 2021 风格指南给的范围，卡片下方标着对应的分类号。°P（柏拉图度，国产啤酒标签上的“原麦汁浓度”）由比重按 ASBC 的多项式换算。发酵度 = (OG − FG) ÷ (OG − 1)；苦甜比 BU:GU = IBU ÷ ((OG − 1) × 1000)，是酿酒师衡量苦和麦芽是否平衡的老办法，0.5 左右算平衡，越高越苦。这两项都按范围的中间值计算。</p>' +
+              '<p><span class="k">酒花的数字</span><br>α 酸、β 酸、合葎草酮和精油的范围，来自各品种的育种者或原产地种植商、经销商公布的规格，每种酒花下面列着来源。精油组成按各成分范围的中间值画，剩下的归为“其他”。每年的收成和产地不同，实际数字会有出入。</p>' +
+              '<p><span class="k">酿法</span><br>每种风格的步骤根据 BJCP 指南里的历史和原料说明，以及酒厂公开的做法整理，写的是传统或典型的做法，不是唯一的做法。</p>',
+      footSig: '原麦汁',
+      footNote: '数字是风格的范围，不是规矩；很多好喝的啤酒都出了格。',
+      theme: '深色',
+      title: function (name) { return '原麦汁 Original Gravity · ' + name; }
+    },
+    en: {
+      eyebrow: function (ns, nh) { return 'A field guide to beer styles and hops · ' + ns + ' styles · ' + nh + ' hops'; },
+      lede: 'A beer is four things: malt, hops, yeast and water. Nearly everything that sets one style apart from another is in how they are handled: how dark the malt is kilned, the temperature the mash is held at, when the hops go in, whether the yeast works at 10 °C or at 30 °C, and whether the beer rests for weeks in a cold cellar or three years in oak. Pick a style to see how it is brewed; the colour in its glass is computed, point by point, from how much light the beer absorbs.',
+      brewing: 'How beer is made',
+      flow: [
+        ['Malting', 'Barley is steeped, left to sprout for four or five days and dried in a kiln, readying its starch and the enzymes that will break it down. The hotter the kiln, the darker the malt: pilsner malt at about 80 °C, Munich at about 100 °C. Crystal malt is first stewed wet at 65–70 °C, so the starch turns to sugar inside the grain, then roasted; black malt is roasted above 200 °C.'],
+        ['Mashing', 'Crushed malt is mixed with hot water and held at 62–72 °C for about an hour while the malt’s own enzymes cut its starch into sugar. Beta-amylase, most active at 60–65 °C, makes maltose the yeast can eat; alpha-amylase, most active at 68–72 °C, makes dextrins it can’t. So a cooler mash gives a drier beer, a warmer one a fuller body. The sweet liquid, the wort, is run off and the grain rinsed with hot water.'],
+        ['Boiling', 'The wort boils for 60–90 minutes: it is sterilised, proteins clump and settle, and DMS, with its smell of sweetcorn, is driven off. Heat turns the hops’ alpha acids into soluble iso-alpha acids, the source of bitterness, so hops added early give bitterness and hops added late keep their volatile, aromatic oils. This is where the original gravity is set.'],
+        ['Fermenting', 'The wort is cooled and yeast goes in. Ale yeast, Saccharomyces cerevisiae, works at the top at 15–24 °C, in a few days, and makes fruity esters. Lager yeast, S. pastorianus, a hybrid of S. cerevisiae with the cold-loving S. eubayanus, works at the bottom at 7–13 °C, slowly and cleanly. Sugar becomes alcohol and carbon dioxide; how far the gravity falls from original to final sets the strength.'],
+        ['Conditioning', 'Lagers rest near 0 °C for weeks; ales referment in cask or bottle to make their bubbles; dry hops steeped in the cold beer add aroma without bitterness; wild beers spend years in oak.'],
+        ['Serving', 'Filtering, carbonation, temperature and glass all change the taste. English cask ale holds about 2 g of carbon dioxide a litre, a German wheat beer 7–9 g; pale lager is served at 2–6 °C, strong ales at 12–16 °C.']
+      ],
+      styles: 'Styles',
+      stylesIntro: function (n) { return n + ' styles in four groups by where they come from. Pick one to see how it is brewed; the map below sets them all out by colour and by bitterness or strength.'; },
+      all: 'All',
+      kicker: function (reg, fer) { return reg + ' · ' + fer; },
+      meta: function (s) { return [s.local !== s.n[1] ? s.local : '', t(s.p), s.y ? t(s.y) : ''].filter(Boolean).join(' · '); },
+      v: { og: 'Original gravity', fg: 'Final gravity', abv: 'Alcohol', ibu: 'Bitterness', srm: 'Colour', att: 'Attenuation', bugu: 'BU:GU' },
+      bugu: function (x) { return x < 0.4 ? 'gently bitter' : x < 0.6 ? 'balanced' : 'bitter'; },
+      approx: '≈',
+      srmRead: function (srm, ebc, inRange) { return 'Colour <b>' + srm + ' SRM</b> · <b>' + ebc + ' EBC</b>' + (inRange ? '' : ' · outside this style’s range'); },
+      srmHint: 'Drag along the strip to see it from palest to darkest',
+      srmAria: 'Preview colour (SRM)',
+      steps: { malt: ['Grain', ''], mash: ['Mash', ''], boil: ['Boil', ''], ferment: ['Ferment', ''], cond: ['Condition', ''] },
+      facts: { serve: 'Serve', hops: 'Hops', ex: 'Classics', bjcp: 'BJCP' },
+      serve: function (g, a, b) { return 'In a ' + g + ' at ' + a + '–' + b + ' °C'; },
+      glassAria: function (name, srm, glass) { return name + ', ' + srm + ' SRM, in a ' + glass; },
+      smapH: 'The style map',
+      smapY: { ibu: 'Bitterness', abv: 'Alcohol' },
+      smapX: 'Colour (SRM, log scale)',
+      smapYTitle: { ibu: 'Bitterness, IBU', abv: 'Alcohol, %' },
+      smapNote: 'Each dot is a style at the middle of its colour and bitterness ranges; the selected style shows its whole range. The band under the axis is the colour of 5 cm of beer in daylight.',
+      smapAria: function (n) { return 'Scatter plot of ' + n + ' beer styles by colour and bitterness; the table below gives the numbers.'; },
+      tipStyle: function (s) { return [['Colour', fr(s.srm) + ' SRM'], ['Bitterness', fr(s.ibu) + ' IBU'], ['Alcohol', fr(s.abv) + '%']]; },
+      hops: 'Hops',
+      hopsIntro: 'Hops are the cones of the female hop plant, <i>Humulus lupulus</i>. Golden lupulin glands at the base of their bracts hold the two things that matter: <b>alpha acids</b>, which the boil turns bitter, and <b>essential oils</b>, volatile, which carry the aroma. Europe’s traditional “noble” hops are low in alpha acid and delicate in aroma; the newer American and southern-hemisphere varieties are rich in both, with citrus and tropical fruit.',
+      use: { aroma: 'aroma', bitter: 'bittering', dual: 'dual-purpose' },
+      hopKicker: function (o, use) { return o + ' · ' + use; },
+      hopMeta: function (h) { return [h.local !== h.n[1] ? h.local : '', t(h.p), h.y ? t(h.y) : ''].filter(Boolean).join(' · '); },
+      a: { alpha: 'Alpha acids', beta: 'Beta acids', cohum: 'Cohumulone', oil: 'Total oil' },
+      ofAlpha: 'of alpha acids', perOil: 'mL per 100 g',
+      oilsH: 'The oils, as shares of the total',
+      oils: [['Myrcene', 'resin, citrus, green'], ['Humulene', 'woody, herbal'], ['Caryophyllene', 'spicy, peppery'], ['Farnesene', 'floral, green apple'], ['Other', 'linalool, geraniol and the rest']],
+      oilAria: function (parts) { return 'Oil make-up: ' + parts + '.'; },
+      hf: { by: 'Bred by', parent: 'Parentage', used: 'Used in', sub: 'Stand-ins' },
+      src: 'Sources: ',
+      hmapH: 'Alpha acid and total oil',
+      hmapX: 'Alpha acids, %',
+      hmapY: 'Total oil, mL/100 g',
+      hmapNote: 'Each dot is a hop at the middle of its alpha-acid and oil ranges; the selected hop shows its whole range. Bottom left are the traditional noble hops, to the right the high-alpha bittering varieties, top right the New World hops that are both bitter and aromatic.',
+      hmapAria: function (n) { return 'Scatter plot of ' + n + ' hops by alpha acid and total oil; the table below gives the numbers.'; },
+      zones: ['noble', 'high alpha', 'New World'],
+      tipHop: function (h) { return [['Alpha acids', fr(h.alpha) + '%'], ['Total oil', fr(h.oil) + ' mL/100 g']]; },
+      tStyles: 'All the styles’ numbers',
+      tHops: 'All the hops’ numbers',
+      th: { style: 'Style', og: 'OG', fg: 'FG', abv: 'ABV', ibu: 'IBU', srm: 'SRM', hop: 'Hop', origin: 'From', use: 'Use', alpha: 'Alpha', beta: 'Beta', oil: 'Oil' },
+      methodH: 'How it is computed',
+      method: '<p><span class="k">Colour</span><br>SRM is 12.7 times the absorbance of 1 cm of beer at 430 nm (ASBC Beer-10A); EBC is about 1.97 times SRM. At other wavelengths the absorbance follows A. J. deLange’s average spectrum of 99 beers: <code>A(λ) = SRM/12.7 × (0.018747 e<sup>−(λ−430)/13.374</sup> + 0.98226 e<sup>−(λ−430)/80.514</sup>)</code>. Every pixel of a glass is the daylight (D65) left after crossing the beer at that point, attenuated wavelength by wavelength by the Beer–Lambert law and turned into sRGB with the CIE 1931 observer, the same way the homepage computes a film’s colour. Light crosses 2√(R² − x²) of a round glass, so the middle is darker than the edges; the glasses are drawn to scale from typical inside dimensions. Colours outside sRGB lose saturation at constant luminance. The model assumes clear beer, so hazy styles get a milky layer that is only a sketch, and beers far from the average spectrum, such as a cherry lambic, come out wrong.</p>' +
+              '<p><span class="k">The style numbers</span><br>Original and final gravity, alcohol, bitterness and colour are the ranges of the BJCP 2021 Style Guidelines, by the category under each card. Degrees Plato, the unit on Chinese and Czech labels, come from the gravity by the ASBC polynomial. Attenuation is (OG − FG) ÷ (OG − 1); BU:GU is IBU ÷ ((OG − 1) × 1000), the brewer’s old measure of bitterness against malt, balanced near 0.5 and more bitter the higher it goes. Both are taken at the middle of the ranges.</p>' +
+              '<p><span class="k">The hop numbers</span><br>Alpha and beta acids, cohumulone and oils are the ranges published by each variety’s breeder or by the growers and merchants of its home country; the sources are listed under each hop. The oil bar uses the middle of each range and calls the rest “other”. Crops vary from year to year and farm to farm.</p>' +
+              '<p><span class="k">The brewing steps</span><br>Each style’s steps follow the history and ingredients notes of the BJCP guidelines and what the breweries say about their own methods. They describe the traditional or typical way, not the only one.</p>',
+      footSig: 'Original Gravity',
+      footNote: 'The numbers are ranges, not rules; plenty of good beer breaks them.',
+      theme: 'Dark',
+      title: function (name) { return '原麦汁 Original Gravity · ' + name; }
+    }
+  };
+
+  /* ---------- state ---------- */
+  var state = { lang: 'zh', region: 'all', style: 'czech-pils', y: 'ibu', origin: 'all', hop: 'saaz', preview: null };
+  try {
+    var saved = localStorage.getItem('gravity.lang');
+    if (saved === 'zh' || saved === 'en') state.lang = saved;
+    else state.lang = (navigator.language || 'zh').toLowerCase().indexOf('zh') === 0 ? 'zh' : 'en';
+  } catch (e) {}
+  var fromHash = parseHash();
+  if (fromHash.s && STYLE[fromHash.s]) state.style = fromHash.s;
+  if (fromHash.h && HOP[fromHash.h]) state.hop = fromHash.h;
+
+  function L() { return state.lang === 'zh' ? 0 : 1; }
+  function t(pair) { return pair ? pair[L()] : ''; }
+  function T() { return I18N[state.lang]; }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  /* ---------- numbers ---------- */
+  function num(x, d) {
+    var s = (+x).toFixed(d);
+    return d ? s.replace(/\.?0+$/, '') : s;
+  }
+  function fr(r, d) {   // a range as text, at most d decimals (default: as given)
+    var a = d == null ? String(r[0]) : num(r[0], d), b = d == null ? String(r[1]) : num(r[1], d);
+    return a === b ? a : a + '–' + b;
+  }
+  function sg(r) { return r[0].toFixed(3) + '–' + r[1].toFixed(3); }
+  function plato(r) { return B.plato(r[0]).toFixed(1) + '–' + B.plato(r[1]).toFixed(1); }
+  function mid(r) { return (r[0] + r[1]) / 2; }
+  function gmid(r) { return Math.sqrt(Math.max(0.1, r[0]) * r[1]); }
+  function attenuation(s) { var og = mid(s.og), fg = mid(s.fg); return (og - fg) / (og - 1); }
+  function bugu(s) { return mid(s.ibu) / ((mid(s.og) - 1) * 1000); }
+
+  /* colour of 5 cm of beer, the swatches' thickness */
+  var swatchCache = {};
+  function swatch(srm) {
+    var k = srm.toFixed(2);
+    if (!swatchCache[k]) swatchCache[k] = B.hex(B.rgb(srm, B.SWATCH_CM));
+    return swatchCache[k];
+  }
+
+  /* SRM axis shared by the strip and the map: log scale from 1.5 to 45 */
+  var SRM_LO = 1.5, SRM_HI = 45;
+  function srmPos(s) { return (Math.log(s) - Math.log(SRM_LO)) / (Math.log(SRM_HI) - Math.log(SRM_LO)); }
+  function srmAt(p) { return Math.exp(Math.log(SRM_LO) + p * (Math.log(SRM_HI) - Math.log(SRM_LO))); }
+  var SRM_TICKS = [2, 3, 5, 10, 20, 40];
+  var stripGradient = (function () {
+    var stops = [];
+    for (var i = 0; i <= 40; i++) { var p = i / 40; stops.push(swatch(srmAt(p)) + ' ' + (p * 100).toFixed(1) + '%'); }
+    return 'linear-gradient(90deg, ' + stops.join(', ') + ')';
+  })();
+
+  /* ---------- the glass: every pixel is daylight after the beer it crosses ---------- */
+  function interp(profile) {
+    // monotone cubic (Fritsch-Carlson) through [depth, diameter], so the walls never overshoot
+    var x = profile.map(function (p) { return p[0]; }), y = profile.map(function (p) { return p[1]; }), n = x.length;
+    var dx = [], m = [], tg = [];
+    for (var i = 0; i < n - 1; i++) { dx.push(x[i + 1] - x[i]); m.push((y[i + 1] - y[i]) / (x[i + 1] - x[i])); }
+    tg[0] = m[0]; tg[n - 1] = m[n - 2];
+    for (i = 1; i < n - 1; i++) tg[i] = m[i - 1] * m[i] <= 0 ? 0 : (m[i - 1] + m[i]) / 2;
+    for (i = 0; i < n - 1; i++) {
+      if (m[i] === 0) { tg[i] = 0; tg[i + 1] = 0; continue; }
+      var a = tg[i] / m[i], b = tg[i + 1] / m[i], h = a * a + b * b;
+      if (h > 9) { var k = 3 / Math.sqrt(h); tg[i] = k * a * m[i]; tg[i + 1] = k * b * m[i]; }
+    }
+    return function (d) {
+      if (d <= x[0]) return y[0];
+      if (d >= x[n - 1]) return y[n - 1];
+      var j = 0; while (j < n - 2 && d > x[j + 1]) j++;
+      var hh = dx[j], s = (d - x[j]) / hh, s2 = s * s, s3 = s2 * s;
+      return (2 * s3 - 3 * s2 + 1) * y[j] + (s3 - 2 * s2 + s) * hh * tg[j] + (-2 * s3 + 3 * s2) * y[j + 1] + (s3 - s2) * hh * tg[j + 1];
+    };
+  }
+  function cssColour(name, fallback) {
+    var v = getComputedStyle(root).getPropertyValue(name).trim();
+    return v || fallback;
+  }
+  function parseCol(c) {
+    var m = String(c).match(/[\d.]+/g);
+    if (/^#/.test(c)) { var h = c.slice(1); if (h.length === 3) h = h.replace(/./g, '$&$&'); return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16), 1]; }
+    return m ? [+m[0], +m[1], +m[2], m[3] != null ? +m[3] : 1] : [0, 0, 0, 1];
+  }
+  function rng(seed) { return function () { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }; }
+
+  function drawGlass(canvas, style, srm) {
+    var g = D.GLASSES[style.glass];
+    var cssW = canvas.clientWidth, cssH = canvas.clientHeight;
+    if (!cssW || !cssH) return;
+    var dpr = Math.min(3, window.devicePixelRatio || 1);
+    var w = Math.round(cssW * dpr), h = Math.round(cssH * dpr);
+    canvas.width = w; canvas.height = h;
+    var ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    var prof = g.profile, depth = prof[prof.length - 1][0], base = g.foot ? 0 : 0.9;
+    var S = Math.min((h - 6 * dpr) / 24.4, (w - 4 * dpr) / 12.4);     // pixels per cm, the same for every glass
+    var bottom = h - 3 * dpr, top = bottom - (depth + base + g.foot) * S;
+    var cx = w / 2 - (g.handle ? 1.3 * S : 0);
+    var dia = interp(prof);
+    var wall = 0.16;
+
+    // colour of daylight after d cm of this beer, tabulated
+    var maxD = 12.5, N = 250, lut = new Uint8ClampedArray((N + 1) * 3);
+    for (var i = 0; i <= N; i++) { var c = B.rgb(srm, i / N * maxD); lut[3 * i] = c[0]; lut[3 * i + 1] = c[1]; lut[3 * i + 2] = c[2]; }
+    var haze = style.haze || 0, milk = null;
+    if (haze) { var mc = B.rgb(srm, 3.2); milk = mc.map(function (v) { return v + (255 - v) * 0.16; }); }
+
+    var img = ctx.createImageData(w, h), px = img.data;
+    var foamTop = top + 0.25 * S, surface = top + g.fill * S, floor = top + depth * S;
+    var foamCol = srm < 7 ? [252, 249, 240] : srm < 16 ? [248, 240, 222] : srm < 26 ? [240, 226, 198] : [228, 206, 168];
+    for (var y = Math.max(0, Math.floor(foamTop)); y < Math.min(h, Math.ceil(floor)); y++) {
+      var dcm = (y + 0.5 - top) / S, R = dia(dcm) / 2, Rp = R * S;
+      var x0 = Math.max(0, Math.floor(cx - Rp - 1)), x1 = Math.min(w - 1, Math.ceil(cx + Rp + 1));
+      var inFoam = y + 0.5 < surface;
+      for (var x = x0; x <= x1; x++) {
+        var u = (x + 0.5 - cx) / S, cover = Math.min(1, Math.max(0, Rp - Math.abs(x + 0.5 - cx) + 0.5));
+        if (cover <= 0) continue;
+        var o = 4 * (y * w + x), r, gg, b;
+        if (inFoam) {
+          var shade = 1 - 0.07 * Math.pow(Math.abs(u) / R, 2) - 0.05 * Math.max(0, (y - foamTop) / Math.max(1, surface - foamTop));
+          r = foamCol[0] * shade; gg = foamCol[1] * shade; b = foamCol[2] * shade;
+        } else {
+          var path = 2 * Math.sqrt(Math.max(0, R * R - u * u)) * 0.97;
+          var k = Math.min(N, Math.round(path / maxD * N)) * 3;
+          r = lut[k]; gg = lut[k + 1]; b = lut[k + 2];
+          if (milk) {
+            var f = haze * (1 - Math.exp(-path / 1.6)) * 0.7;
+            r += (milk[0] - r) * f; gg += (milk[1] - gg) * f; b += (milk[2] - b) * f;
+          }
+        }
+        px[o] = r; px[o + 1] = gg; px[o + 2] = b; px[o + 3] = Math.round(255 * cover);
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+
+    // a few bubbles rising through the beer, and the foam's own bubbles
+    var rand = rng(7 + style.id.length * 31);
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,255,255,' + (srm < 20 ? 0.32 : 0.1) + ')';
+    for (i = 0; i < 26; i++) {
+      var by = surface + 0.4 * S + rand() * (floor - surface - 0.8 * S), bR = dia((by - top) / S) / 2 * S;
+      var bx = cx + (rand() * 2 - 1) * bR * 0.75, br = (0.25 + rand() * 0.55) * dpr * S / 9;
+      ctx.beginPath(); ctx.arc(bx, by, br, 0, 7); ctx.fill();
+    }
+    ctx.fillStyle = 'rgba(150,130,100,0.09)';
+    for (i = 0; i < 34; i++) {
+      var fy = foamTop + 0.15 * S + rand() * Math.max(1, surface - foamTop - 0.3 * S), fR = dia((fy - top) / S) / 2 * S;
+      ctx.beginPath(); ctx.arc(cx + (rand() * 2 - 1) * fR * 0.85, fy, (0.3 + rand() * 0.6) * dpr * S / 9, 0, 7); ctx.fill();
+    }
+    ctx.restore();
+
+    // the glass itself
+    var ink = cssColour('--glass', 'rgba(31,27,22,.55)');
+    ctx.save();
+    ctx.lineWidth = 1.25 * dpr; ctx.strokeStyle = ink; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+    var steps = 60, left = [], right = [];
+    for (i = 0; i <= steps; i++) {
+      var dd = i / steps * depth, rr = (dia(dd) / 2 + wall) * S;
+      left.push([cx - rr, top + dd * S]); right.push([cx + rr, top + dd * S]);
+    }
+    ctx.beginPath();
+    left.forEach(function (p, j) { if (j) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); });
+    if (base) {
+      var rb = (dia(depth) / 2 + wall) * S;
+      ctx.lineTo(cx - rb, top + (depth + base) * S); ctx.lineTo(cx + rb, top + (depth + base) * S);
+    }
+    for (i = right.length - 1; i >= 0; i--) ctx.lineTo(right[i][0], right[i][1]);
+    ctx.stroke();
+    if (base) {   // a heavy glass base below the beer
+      ctx.fillStyle = 'rgba(128,128,128,0.08)';
+      var rb2 = (dia(depth) / 2) * S;
+      ctx.fillRect(cx - rb2, floor, 2 * rb2, base * S - 1.5 * dpr);
+    }
+    if (g.foot) {   // stem and foot
+      var stemTop = top + depth * S, footY = top + (depth + g.foot) * S - 1.2 * dpr, fw = Math.min(4.2, dia(0) * 0.42) * S;
+      ctx.beginPath();
+      ctx.moveTo(cx - 0.28 * S, stemTop); ctx.lineTo(cx - 0.28 * S, footY - 0.6 * S); ctx.quadraticCurveTo(cx - 0.3 * S, footY - 0.1 * S, cx - fw, footY);
+      ctx.lineTo(cx + fw, footY); ctx.quadraticCurveTo(cx + 0.3 * S, footY - 0.1 * S, cx + 0.28 * S, footY - 0.6 * S); ctx.lineTo(cx + 0.28 * S, stemTop);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(128,128,128,0.08)'; ctx.fill();
+    }
+    if (g.handle) {   // the mug's handle
+      var hx = cx + (dia(0) / 2 + wall) * S, hy0 = top + 1.8 * S, hy1 = top + 11.2 * S;
+      ctx.lineWidth = 0.55 * S; ctx.strokeStyle = 'rgba(128,128,128,0.22)';
+      ctx.beginPath(); ctx.moveTo(hx, hy0); ctx.bezierCurveTo(hx + 3.2 * S, hy0, hx + 3.2 * S, hy1, hx, hy1); ctx.stroke();
+      ctx.lineWidth = 1.25 * dpr; ctx.strokeStyle = ink;
+      ctx.beginPath(); ctx.moveTo(hx, hy0 - 0.28 * S); ctx.bezierCurveTo(hx + 3.55 * S, hy0 - 0.28 * S, hx + 3.55 * S, hy1 + 0.28 * S, hx, hy1 + 0.28 * S); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(hx, hy0 + 0.28 * S); ctx.bezierCurveTo(hx + 2.85 * S, hy0 + 0.28 * S, hx + 2.85 * S, hy1 - 0.28 * S, hx, hy1 - 0.28 * S); ctx.stroke();
+    }
+    // a reflection down the left side
+    var grd = ctx.createLinearGradient(0, top, 0, floor);
+    grd.addColorStop(0, 'rgba(255,255,255,0.0)'); grd.addColorStop(0.3, 'rgba(255,255,255,0.28)'); grd.addColorStop(1, 'rgba(255,255,255,0.05)');
+    ctx.strokeStyle = grd; ctx.lineWidth = 0.32 * S;
+    ctx.beginPath();
+    for (i = Math.round(steps * 0.08); i <= Math.round(steps * 0.86); i++) {
+      var d2 = i / steps * depth, x2 = cx - (dia(d2) / 2 - 0.55) * S;
+      if (i === Math.round(steps * 0.08)) ctx.moveTo(x2, top + d2 * S); else ctx.lineTo(x2, top + d2 * S);
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  /* ---------- rendering ---------- */
+  function render() {
+    var Tx = T();
+    var page = $('page');
+    page.className = 'page lang-' + state.lang;
+    root.lang = state.lang === 'zh' ? 'zh-CN' : 'en';
+    $('btn-zh').setAttribute('aria-pressed', state.lang === 'zh');
+    $('btn-en').setAttribute('aria-pressed', state.lang === 'en');
+    $('btn-theme').textContent = Tx.theme;
+    $('eyebrow').textContent = Tx.eyebrow(D.STYLES.length, D.HOPS.length);
+    $('lede').textContent = Tx.lede;
+    $('brewing-t').textContent = Tx.brewing;
+    $('flow').innerHTML = Tx.flow.map(function (f) { return '<li><b>' + esc(f[0]) + '</b>' + esc(f[1]) + '</li>'; }).join('');
+    $('styles-t').textContent = Tx.styles;
+    $('styles-intro').textContent = Tx.stylesIntro(D.STYLES.length);
+    $('hops-t').textContent = Tx.hops;
+    $('hops-intro').innerHTML = Tx.hopsIntro;
+    $('smap-h').textContent = Tx.smapH;
+    [].forEach.call($('smap-y').querySelectorAll('button'), function (b) {
+      var y = b.getAttribute('data-y');
+      b.textContent = Tx.smapY[y];
+      b.setAttribute('aria-pressed', state.y === y ? 'true' : 'false');
+    });
+    $('smap-note').textContent = Tx.smapNote;
+    $('hmap-h').textContent = Tx.hmapH;
+    $('hmap-note').textContent = Tx.hmapNote;
+    $('t-styles-h').textContent = Tx.tStyles;
+    $('t-hops-h').textContent = Tx.tHops;
+    $('method-h').textContent = Tx.methodH;
+    $('method').innerHTML = Tx.method;
+    $('foot-sig').textContent = Tx.footSig;
+    $('foot-note').textContent = Tx.footNote;
+    $('srm-range').setAttribute('aria-label', Tx.srmAria);
+    renderStyleFilter(); renderStyleChips(); renderStyle(); renderStyleMap();
+    renderHopFilter(); renderHopChips(); renderHop(); renderHopMap();
+    renderTables();
+    document.title = Tx.title(t(STYLE[state.style].n));
+  }
+
+  function filterButtons(el, groups, current, count) {
+    var Tx = T();
+    var html = '<button type="button" data-k="all" aria-pressed="' + (current === 'all') + '">' + esc(Tx.all) + '<span class="count">' + count('all') + '</span></button>';
+    groups.forEach(function (g) {
+      html += '<button type="button" data-k="' + g.key + '" aria-pressed="' + (current === g.key) + '">' + esc(t(g.name)) + '<span class="count">' + count(g.key) + '</span></button>';
+    });
+    el.innerHTML = html;
+  }
+  function renderStyleFilter() {
+    filterButtons($('style-filter'), D.REGIONS, state.region, function (k) {
+      return k === 'all' ? D.STYLES.length : D.STYLES.filter(function (s) { return s.r === k; }).length;
+    });
+    $('style-filter').setAttribute('aria-label', state.lang === 'zh' ? '按产地筛选风格' : 'Filter styles by region');
+  }
+  function visibleStyle(s) { return state.region === 'all' || s.r === state.region; }
+  function renderStyleChips() {
+    $('style-chips').setAttribute('aria-label', state.lang === 'zh' ? '选择风格' : 'Pick a style');
+    $('style-chips').innerHTML = D.STYLES.filter(visibleStyle).map(function (s) {
+      return '<button type="button" class="chip" data-id="' + s.id + '" aria-pressed="' + (s.id === state.style) + '"><i class="sw" style="background:' + swatch(gmid(s.srm)) + '"></i>' + esc(t(s.n)) + '</button>';
+    }).join('');
+  }
+
+  function renderStyle() {
+    var Tx = T(), s = STYLE[state.style];
+    var region = D.REGIONS.filter(function (r) { return r.key === s.r; })[0];
+    $('s-kicker').textContent = Tx.kicker(t(region.name), t(D.FERMENTS[s.f]));
+    $('s-name').textContent = t(s.n);
+    $('s-sub').textContent = state.lang === 'zh' ? s.n[1] : '';
+    $('s-sub').hidden = state.lang !== 'zh';
+    $('s-meta').textContent = Tx.meta(s);
+    $('s-sum').textContent = t(s.sum);
+
+    var att = attenuation(s), bg = bugu(s);
+    var V = Tx.v;
+    var cells = [
+      [V.og, state.lang === 'zh' ? plato(s.og) + '°P' : sg(s.og), state.lang === 'zh' ? sg(s.og) : plato(s.og) + ' °P'],
+      [V.fg, sg(s.fg), state.lang === 'zh' ? plato(s.fg) + '°P' : plato(s.fg) + ' °P'],
+      [V.abv, fr(s.abv) + '%', ''],
+      [V.ibu, fr(s.ibu) + ' IBU', ''],
+      [V.srm, fr(s.srm) + ' SRM', fr([s.srm[0] * 1.97, s.srm[1] * 1.97], 0) + ' EBC'],
+      [V.att, Tx.approx + ' ' + Math.round(att * 100) + '%', ''],
+      [V.bugu, Tx.approx + ' ' + bg.toFixed(2), Tx.bugu(bg)],
+      ['BJCP', s.bjcp, '']
+    ];
+    $('s-vitals').innerHTML = cells.map(function (c) {
+      return '<div><dt>' + esc(c[0]) + '</dt><dd>' + esc(c[1]) + (c[2] ? '<small>' + esc(c[2]) + '</small>' : '') + '</dd></div>';
+    }).join('');
+
+    var keys = ['malt', 'mash', 'boil', 'ferment', 'cond'];
+    $('s-steps').innerHTML = keys.map(function (k) {
+      var lab = Tx.steps[k];
+      return '<li><span class="lab">' + esc(lab[0]) + (lab[1] ? '<small>' + esc(lab[1]) + '</small>' : '') + '</span><span>' + esc(t(s.steps[k])) + '</span></li>';
+    }).join('');
+
+    var glass = D.GLASSES[s.glass];
+    var hops = s.hops.filter(function (id) { return HOP[id]; }).map(function (id) {
+      return '<button type="button" class="chip small nosw" data-hop="' + id + '">' + esc(t(HOP[id].n)) + '</button>';
+    }).join('');
+    $('s-facts').innerHTML =
+      '<div><dt>' + esc(Tx.facts.serve) + '</dt><dd>' + esc(Tx.serve(t(glass.name), s.temp[0], s.temp[1])) + '</dd></div>' +
+      (hops ? '<div><dt>' + esc(Tx.facts.hops) + '</dt><dd><div class="chips">' + hops + '</div></dd></div>' : '') +
+      '<div><dt>' + esc(Tx.facts.ex) + '</dt><dd>' + s.ex.map(esc).join(' · ') + '</dd></div>';
+
+    state.preview = null;
+    renderSrm();
+  }
+
+  function renderSrm() {
+    var Tx = T(), s = STYLE[state.style];
+    var srm = state.preview != null ? state.preview : gmid(s.srm);
+    var strip = $('srm');
+    strip.style.background = stripGradient;
+    $('srm-band').style.left = (srmPos(s.srm[0]) * 100) + '%';
+    $('srm-band').style.width = ((srmPos(s.srm[1]) - srmPos(s.srm[0])) * 100) + '%';
+    $('srm-cursor').style.left = (srmPos(srm) * 100) + '%';
+    var range = $('srm-range');
+    range.value = Math.round(srmPos(srm) * 1000);
+    var shown = srm < 10 ? srm.toFixed(1) : String(Math.round(srm));
+    range.setAttribute('aria-valuetext', shown + ' SRM');
+    var inRange = srm >= s.srm[0] - 0.05 && srm <= s.srm[1] + 0.05;
+    $('srm-read').innerHTML = Tx.srmRead(shown, Math.round(srm * 1.97), inRange);
+    $('srm-hint').textContent = Tx.srmHint;
+    if (!$('srm-axis').childElementCount) {
+      $('srm-axis').innerHTML = SRM_TICKS.map(function (v) { return '<span style="left:' + (srmPos(v) * 100) + '%">' + v + (v === 40 ? ' SRM' : '') + '</span>'; }).join('');
+    }
+    var canvas = $('glass');
+    drawGlass(canvas, s, srm);
+    canvas.setAttribute('aria-label', Tx.glassAria(t(s.n), shown, t(D.GLASSES[s.glass].name)));
+  }
+
+  /* drag along the strip, or arrow keys on the hidden range input */
+  (function () {
+    var strip = $('srm'), range = $('srm-range'), dragging = false;
+    function fromPointer(e) {
+      var rect = strip.getBoundingClientRect();
+      var p = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+      state.preview = Math.min(40, Math.max(1.5, srmAt(p)));
+      renderSrm();
+    }
+    strip.addEventListener('pointerdown', function (e) {
+      dragging = true;
+      try { strip.setPointerCapture(e.pointerId); } catch (err) {}
+      fromPointer(e); range.focus({ preventScroll: true }); e.preventDefault();
+    });
+    strip.addEventListener('pointermove', function (e) { if (dragging) fromPointer(e); });
+    ['pointerup', 'pointercancel'].forEach(function (type) { strip.addEventListener(type, function () { dragging = false; }); });
+    range.addEventListener('input', function () { state.preview = Math.min(40, Math.max(1.5, srmAt(+range.value / 1000))); renderSrm(); });
+  })();
+
+  /* ---------- a scatter plot with a nearest-point tooltip ---------- */
+  function scatter(opt) {
+    var svg = opt.svg, box = svg.parentNode, W = box.clientWidth;
+    if (!W) return null;
+    var narrow = W < 480;
+    var H = narrow ? 280 : 330, M = { l: 40, r: 14, t: 14, b: opt.band ? 50 : 40 };
+    var pw = W - M.l - M.r, ph = H - M.t - M.b;
+    var X = function (v) { return M.l + opt.x(v) * pw; }, Y = function (v) { return M.t + (1 - (v - opt.y0) / (opt.y1 - opt.y0)) * ph; };
+    var s = '<rect class="plot-bg" x="' + M.l + '" y="' + M.t + '" width="' + pw + '" height="' + ph + '"/>';
+    opt.yTicks.forEach(function (v) {
+      s += '<line class="ax-grid" x1="' + M.l + '" x2="' + (M.l + pw) + '" y1="' + Y(v) + '" y2="' + Y(v) + '"/>' +
+           '<text class="ax-tick" x="' + (M.l - 6) + '" y="' + Y(v) + '" dy="0.35em" text-anchor="end">' + v + '</text>';
+    });
+    s += '<line class="ax-base" x1="' + M.l + '" x2="' + (M.l + pw) + '" y1="' + (M.t + ph) + '" y2="' + (M.t + ph) + '"/>';
+    var tickY = M.t + ph + (opt.band ? 24 : 14);
+    opt.xTicks.forEach(function (v) {
+      s += '<text class="ax-tick" x="' + X(v) + '" y="' + tickY + '" dy="0.35em" text-anchor="middle">' + v + '</text>';
+    });
+    if (opt.band) {
+      s += '<defs><linearGradient id="' + opt.band.id + '" x1="0" x2="1" y1="0" y2="0">' + opt.band.stops + '</linearGradient></defs>' +
+           '<rect x="' + M.l + '" y="' + (M.t + ph + 4) + '" width="' + pw + '" height="8" rx="2" fill="url(#' + opt.band.id + ')"/>';
+    }
+    s += '<text class="ax-title" x="' + (M.l + pw) + '" y="' + (H - 4) + '" text-anchor="end">' + esc(opt.xTitle) + '</text>' +
+         '<text class="ax-title" x="' + M.l + '" y="' + (M.t - 4) + '" text-anchor="start">' + esc(opt.yTitle) + '</text>';
+    (opt.zones || []).forEach(function (z) {
+      s += '<text class="ax-zone" x="' + X(z[0]) + '" y="' + Y(z[1]) + '" text-anchor="' + (z[3] || 'start') + '">' + esc(z[2]) + '</text>';
+    });
+    var pts = opt.items.map(function (it) {
+      return { it: it, x: X(opt.px(it)), y: Y(opt.py(it)), on: it.id === opt.selected, off: !opt.visible(it) };
+    });
+    var sel = pts.filter(function (p) { return p.on; })[0];
+    if (sel && opt.range) {
+      var rg = opt.range(sel.it);
+      var rx0 = X(rg[0]), rx1 = X(rg[1]), ry0 = Y(rg[3]), ry1 = Y(rg[2]);
+      s += '<rect class="pt-range" x="' + Math.min(rx0, rx1) + '" y="' + Math.min(ry0, ry1) + '" width="' + Math.max(2, Math.abs(rx1 - rx0)) + '" height="' + Math.max(2, Math.abs(ry1 - ry0)) + '" rx="3"/>';
+    }
+    pts.forEach(function (p, i) {
+      if (p.on) return;
+      s += '<circle class="pt' + (p.off ? ' off' : '') + '" data-i="' + i + '" cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="4.5"/>';
+    });
+    if (sel) {
+      var i0 = pts.indexOf(sel);
+      s += '<circle class="pt on" data-i="' + i0 + '" cx="' + sel.x.toFixed(1) + '" cy="' + sel.y.toFixed(1) + '" r="6.5"/>';
+      var right = sel.x < M.l + pw * 0.62;
+      s += '<text class="pt-label" x="' + (sel.x + (right ? 11 : -11)) + '" y="' + (sel.y - 9) + '" text-anchor="' + (right ? 'start' : 'end') + '">' + esc(opt.label(sel.it)) + '</text>';
+    }
+    svg.setAttribute('width', W); svg.setAttribute('height', H); svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    svg.innerHTML = s;
+    return { pts: pts, W: W, H: H };
+  }
+  function hookTip(svg, tip, get, onPick, rowsOf, nameOf) {
+    var hot = -1;
+    function show(e) {
+      var g = get();
+      if (!g) return;
+      var rect = svg.getBoundingClientRect(), mx = e.clientX - rect.left, my = e.clientY - rect.top, best = -1, bestD = Infinity;
+      g.pts.forEach(function (p, i) {
+        var d = Math.sqrt((p.x - mx) * (p.x - mx) + (p.y - my) * (p.y - my));
+        if (d < 24 && d < bestD) { best = i; bestD = d; }
+      });
+      if (best !== hot) {
+        var old = svg.querySelector('.pt.hot'); if (old) old.classList.remove('hot');
+        hot = best;
+        if (best >= 0) { var el = svg.querySelector('.pt[data-i="' + best + '"]'); if (el && !el.classList.contains('on')) el.classList.add('hot'); }
+      }
+      svg.style.cursor = best >= 0 ? 'pointer' : '';
+      if (best < 0) { tip.hidden = true; return; }
+      var p = g.pts[best];
+      tip.textContent = '';
+      var name = document.createElement('b'); name.textContent = nameOf(p.it); tip.appendChild(name);
+      rowsOf(p.it).forEach(function (r) {
+        var row = document.createElement('span'), v = document.createElement('span');
+        v.className = 'v'; v.textContent = r[1];
+        row.appendChild(document.createTextNode(r[0] + ' ')); row.appendChild(v);
+        tip.appendChild(row);
+      });
+      tip.hidden = false;
+      var left = p.x + 14;
+      if (left + tip.offsetWidth > g.W) left = p.x - 14 - tip.offsetWidth;
+      var top = p.y - tip.offsetHeight - 12;
+      if (top < 0) top = p.y + 14;
+      tip.style.left = Math.max(0, left) + 'px'; tip.style.top = top + 'px';
+    }
+    svg.addEventListener('pointermove', show);
+    svg.addEventListener('pointerdown', show);
+    svg.addEventListener('pointerleave', function (e) {
+      if (e.pointerType === 'touch') return;
+      tip.hidden = true; hot = -1;
+      var old = svg.querySelector('.pt.hot'); if (old) old.classList.remove('hot');
+    });
+    svg.addEventListener('click', function () { if (hot >= 0) { var g = get(); if (g) onPick(g.pts[hot].it); } });
+  }
+
+  var smapGeom = null, hmapGeom = null;
+  function bandStops() {
+    var st = '';
+    for (var i = 0; i <= 24; i++) { var p = i / 24; st += '<stop offset="' + p.toFixed(3) + '" stop-color="' + swatch(srmAt(p)) + '"/>'; }
+    return st;
+  }
+  var BAND = bandStops();
+  function renderStyleMap() {
+    var Tx = T(), y = state.y;
+    smapGeom = scatter({
+      svg: $('smap-svg'), items: D.STYLES, selected: state.style, visible: visibleStyle,
+      x: srmPos, xTicks: SRM_TICKS, xTitle: Tx.smapX, band: { id: 'srmband', stops: BAND },
+      y0: y === 'ibu' ? 0 : 2, y1: y === 'ibu' ? 100 : 12, yTicks: y === 'ibu' ? [0, 20, 40, 60, 80, 100] : [2, 4, 6, 8, 10, 12], yTitle: Tx.smapYTitle[y],
+      px: function (s) { return gmid(s.srm); }, py: function (s) { return mid(s[y]); },
+      range: function (s) { return [s.srm[0], s.srm[1], s[y][0], s[y][1]]; },
+      label: function (s) { return t(s.n); }
+    });
+    $('smap-svg').setAttribute('aria-label', Tx.smapAria(D.STYLES.length));
+    $('smap-tip').hidden = true;
+  }
+  function renderHopMap() {
+    var Tx = T();
+    hmapGeom = scatter({
+      svg: $('hmap-svg'), items: D.HOPS, selected: state.hop, visible: visibleHop,
+      x: function (v) { return v / 20; }, xTicks: [0, 5, 10, 15, 20], xTitle: Tx.hmapX,
+      y0: 0, y1: 4, yTicks: [0, 1, 2, 3, 4], yTitle: Tx.hmapY,
+      px: function (h) { return mid(h.alpha); }, py: function (h) { return mid(h.oil); },
+      range: function (h) { return [h.alpha[0], h.alpha[1], h.oil[0], h.oil[1]]; },
+      label: function (h) { return t(h.n); },
+      zones: [[0.6, 0.15, Tx.zones[0]], [19.6, 0.15, Tx.zones[1], 'end'], [19.6, 3.75, Tx.zones[2], 'end']]
+    });
+    $('hmap-svg').setAttribute('aria-label', Tx.hmapAria(D.HOPS.length));
+    $('hmap-tip').hidden = true;
+  }
+
+  /* ---------- hops ---------- */
+  function renderHopFilter() {
+    filterButtons($('hop-filter'), D.HOP_ORIGINS, state.origin, function (k) {
+      return k === 'all' ? D.HOPS.length : D.HOPS.filter(function (h) { return h.o === k; }).length;
+    });
+    $('hop-filter').setAttribute('aria-label', state.lang === 'zh' ? '按产地筛选酒花' : 'Filter hops by origin');
+  }
+  function visibleHop(h) { return state.origin === 'all' || h.o === state.origin; }
+  function renderHopChips() {
+    $('hop-chips').setAttribute('aria-label', state.lang === 'zh' ? '选择酒花' : 'Pick a hop');
+    $('hop-chips').innerHTML = D.HOPS.filter(visibleHop).map(function (h) {
+      return '<button type="button" class="chip nosw" data-id="' + h.id + '" aria-pressed="' + (h.id === state.hop) + '">' + esc(t(h.n)) + '</button>';
+    }).join('');
+  }
+  function renderHop() {
+    var Tx = T(), h = HOP[state.hop];
+    if (!h) return;
+    var origin = D.HOP_ORIGINS.filter(function (o) { return o.key === h.o; })[0];
+    $('h-kicker').innerHTML = esc(t(origin.name)) + '<span class="uses">' + esc(Tx.use[h.use]) + '</span>';
+    $('h-name').textContent = t(h.n);
+    $('h-sub').textContent = state.lang === 'zh' ? h.n[1] : '';
+    $('h-sub').hidden = state.lang !== 'zh';
+    $('h-meta').textContent = Tx.hopMeta(h);
+    $('h-aroma').innerHTML = h.aroma[L()].map(function (a) { return '<li>' + esc(a) + '</li>'; }).join('');
+    $('h-story').textContent = t(h.story);
+    var A = Tx.a;
+    var cells = [
+      [A.alpha, h.alpha ? fr(h.alpha) + '%' : '–', ''],
+      [A.beta, h.beta ? fr(h.beta) + '%' : '–', ''],
+      [A.cohum, h.cohum ? fr(h.cohum) + '%' : '–', Tx.ofAlpha],
+      [A.oil, h.oil ? fr(h.oil) : '–', Tx.perOil]
+    ];
+    $('h-acids').innerHTML = cells.map(function (c) {
+      return '<div><dt>' + esc(c[0]) + '</dt><dd>' + esc(c[1]) + (c[2] ? '<small>' + esc(c[2]) + '</small>' : '') + '</dd></div>';
+    }).join('');
+
+    // the oils at the middle of their ranges; what is left is "other"
+    var keys = ['myrcene', 'humulene', 'caryophyllene', 'farnesene'];
+    var vals = keys.map(function (k) { return h[k] ? mid(h[k]) : 0; });
+    var sum = vals.reduce(function (a, b) { return a + b; }, 0);
+    if (sum > 100) vals = vals.map(function (v) { return v * 100 / sum; });
+    vals.push(Math.max(0, 100 - Math.min(100, sum)));
+    $('h-oils-h').textContent = Tx.oilsH;
+    var bar = $('h-oilbar'), parts = [];
+    bar.innerHTML = '';
+    vals.forEach(function (v, i) {
+      if (v <= 0.05) return;
+      var sp = document.createElement('span');
+      sp.className = i < 4 ? 'o' + (i + 1) : 'ox';
+      sp.style.flex = v + ' 1 0';
+      var label = Math.round(v) + '%';
+      sp.title = Tx.oils[i][0] + ' ' + label;
+      parts.push(Tx.oils[i][0] + ' ' + label);
+      bar.appendChild(sp);
+      sp.textContent = label;
+    });
+    // a label that does not fit its block is left to the legend and the title
+    [].forEach.call(bar.children, function (sp) { if (sp.scrollWidth > sp.clientWidth + 1 || sp.clientWidth < 34) sp.textContent = ''; });
+    bar.setAttribute('aria-label', Tx.oilAria(parts.join(state.lang === 'zh' ? '，' : ', ')));
+    $('h-oilkey').innerHTML = Tx.oils.map(function (o, i) {
+      return '<span><i style="background:var(--oil-' + (i < 4 ? i + 1 : 'x') + ')"></i><b>' + esc(o[0]) + '</b>' + esc(o[1]) + '</span>';
+    }).join('');
+
+    var used = h.usedIn.map(function (id) {
+      return '<button type="button" class="chip small" data-style="' + id + '"><i class="sw" style="background:' + swatch(gmid(STYLE[id].srm)) + '"></i>' + esc(t(STYLE[id].n)) + '</button>';
+    }).join('');
+    var subs = (h.sub || []).filter(function (id) { return HOP[id]; }).map(function (id) {
+      return '<button type="button" class="chip small nosw" data-hop="' + id + '">' + esc(t(HOP[id].n)) + '</button>';
+    }).join('');
+    $('h-facts').innerHTML =
+      (h.by ? '<div><dt>' + esc(Tx.hf.by) + '</dt><dd>' + esc(t(h.by)) + '</dd></div>' : '') +
+      (h.parent ? '<div><dt>' + esc(Tx.hf.parent) + '</dt><dd>' + esc(t(h.parent)) + '</dd></div>' : '') +
+      (used ? '<div><dt>' + esc(Tx.hf.used) + '</dt><dd><div class="chips">' + used + '</div></dd></div>' : '') +
+      (subs ? '<div><dt>' + esc(Tx.hf.sub) + '</dt><dd><div class="chips">' + subs + '</div></dd></div>' : '');
+    var src = $('h-src');
+    src.textContent = '';
+    if (h.src && h.src.length) {
+      src.appendChild(document.createTextNode(Tx.src));
+      h.src.forEach(function (x, i) {
+        if (i) src.appendChild(document.createTextNode(state.lang === 'zh' ? '、' : ', '));
+        var a = document.createElement('a'); a.href = x.u; a.textContent = x.n; a.rel = 'noopener'; src.appendChild(a);
+      });
+    }
+  }
+
+  /* ---------- the tables ---------- */
+  function renderTables() {
+    var Tx = T(), th = Tx.th;
+    var s = '<table><thead><tr><th>' + th.style + '</th><th>' + th.og + '</th><th>' + th.fg + '</th><th>' + th.abv + '</th><th>' + th.ibu + '</th><th>' + th.srm + '</th><th>BJCP</th></tr></thead><tbody>';
+    D.STYLES.forEach(function (x) {
+      s += '<tr class="click" data-style="' + x.id + '"><td><span class="sw" style="background:' + swatch(gmid(x.srm)) + '"></span>' + esc(t(x.n)) + '</td><td>' + sg(x.og) + '</td><td>' + sg(x.fg) + '</td><td>' + fr(x.abv) + '%</td><td>' + fr(x.ibu) + '</td><td>' + fr(x.srm) + '</td><td>' + esc(x.bjcp) + '</td></tr>';
+    });
+    $('t-styles-body').innerHTML = s + '</tbody></table>';
+    var hsrc = '<table><thead><tr><th>' + th.hop + '</th><th>' + th.origin + '</th><th>' + th.use + '</th><th>' + th.alpha + '</th><th>' + th.beta + '</th><th>' + th.oil + '</th></tr></thead><tbody>';
+    D.HOPS.forEach(function (h) {
+      var o = D.HOP_ORIGINS.filter(function (x) { return x.key === h.o; })[0];
+      hsrc += '<tr class="click" data-hop="' + h.id + '"><td>' + esc(t(h.n)) + '</td><td>' + esc(t(o.name)) + '</td><td>' + esc(Tx.use[h.use]) + '</td><td>' + (h.alpha ? fr(h.alpha) + '%' : '–') + '</td><td>' + (h.beta ? fr(h.beta) + '%' : '–') + '</td><td>' + (h.oil ? fr(h.oil) : '–') + '</td></tr>';
+    });
+    $('t-hops-body').innerHTML = hsrc + '</tbody></table>';
+  }
+
+  /* ---------- selection, and the address that keeps it ---------- */
+  function parseHash() {
+    var out = {};
+    (location.hash || '').replace(/^#/, '').split('&').forEach(function (kv) {
+      var p = kv.split('='); if (p.length === 2) out[p[0]] = decodeURIComponent(p[1]);
+    });
+    return out;
+  }
+  function keepInURL() {
+    try { history.replaceState(null, '', '#s=' + state.style + '&h=' + state.hop); } catch (e) {}
+  }
+  function pickStyle(id, scroll) {
+    if (!STYLE[id]) return;
+    state.style = id;
+    if (!visibleStyle(STYLE[id])) state.region = 'all';
+    renderStyleFilter(); renderStyleChips(); renderStyle(); renderStyleMap();
+    document.title = T().title(t(STYLE[id].n));
+    keepInURL();
+    if (scroll) $('style-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function pickHop(id, scroll) {
+    if (!HOP[id]) return;
+    state.hop = id;
+    if (!visibleHop(HOP[id])) state.origin = 'all';
+    renderHopFilter(); renderHopChips(); renderHop(); renderHopMap();
+    keepInURL();
+    if (scroll) $('hop-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('button, tr.click') : null;
+    if (!b) return;
+    if (b.parentNode && b.parentNode.id === 'style-chips') return pickStyle(b.getAttribute('data-id'));
+    if (b.parentNode && b.parentNode.id === 'hop-chips') return pickHop(b.getAttribute('data-id'));
+    if (b.parentNode && b.parentNode.id === 'style-filter') {
+      state.region = b.getAttribute('data-k');
+      renderStyleFilter(); renderStyleChips(); renderStyleMap();
+      return;
+    }
+    if (b.parentNode && b.parentNode.id === 'hop-filter') {
+      state.origin = b.getAttribute('data-k');
+      renderHopFilter(); renderHopChips(); renderHopMap();
+      return;
+    }
+    if (b.parentNode && b.parentNode.id === 'smap-y') { state.y = b.getAttribute('data-y'); render(); return; }
+    if (b.hasAttribute('data-hop')) return pickHop(b.getAttribute('data-hop'), true);
+    if (b.hasAttribute('data-style')) return pickStyle(b.getAttribute('data-style'), true);
+  });
+  hookTip($('smap-svg'), $('smap-tip'), function () { return smapGeom; }, function (s) { pickStyle(s.id); },
+    function (s) { return T().tipStyle(s); }, function (s) { return t(s.n); });
+  hookTip($('hmap-svg'), $('hmap-tip'), function () { return hmapGeom; }, function (h) { pickHop(h.id); },
+    function (h) { return T().tipHop(h); }, function (h) { return t(h.n); });
+
+  function setLang(l) { state.lang = l; try { localStorage.setItem('gravity.lang', l); } catch (e) {} render(); }
+  $('btn-zh').addEventListener('click', function () { setLang('zh'); });
+  $('btn-en').addEventListener('click', function () { setLang('en'); });
+
+  // light / dark: follows the system until chosen; the choice is shared with the homepage
+  var mqDark = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  function isDark() { var v = root.getAttribute('data-theme'); return v ? v === 'dark' : !!(mqDark && mqDark.matches); }
+  function showTheme() { $('btn-theme').setAttribute('aria-pressed', isDark() ? 'true' : 'false'); }
+  $('btn-theme').addEventListener('click', function () {
+    var next = isDark() ? 'light' : 'dark', system = mqDark && mqDark.matches ? 'dark' : 'light';
+    // picking what the system already shows clears the choice, so the page follows the system again
+    if (next === system) root.removeAttribute('data-theme'); else root.setAttribute('data-theme', next);
+    try {
+      if (next === system) localStorage.removeItem('wentaoz.theme'); else localStorage.setItem('wentaoz.theme', next);
+    } catch (e) {}
+    showTheme(); renderSrm();
+  });
+  if (mqDark && mqDark.addEventListener) mqDark.addEventListener('change', function () { showTheme(); renderSrm(); });
+  showTheme();
+  $('btn-theme').hidden = false;
+
+  var resizeTimer;
+  window.addEventListener('resize', function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () { renderStyleMap(); renderHopMap(); renderSrm(); renderHop(); }, 120);
+  });
+
+  // a link followed within the page, or an address typed in, picks its style and hop
+  window.addEventListener('hashchange', function () {
+    var h = parseHash();
+    if (h.s && STYLE[h.s] && h.s !== state.style) pickStyle(h.s);
+    if (h.h && HOP[h.h] && h.h !== state.hop) pickHop(h.h);
+  });
+
+  render();
+  if (fromHash.h && HOP[fromHash.h] && !fromHash.s) $('hop-card').scrollIntoView();
+  else if (fromHash.s && STYLE[fromHash.s]) $('style-card').scrollIntoView();
+})();
+</script>
+<!-- GoatCounter: counts visits without cookies; the totals feed the visitor map on the homepage -->
+<script data-goatcounter="https://wentaoz.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>
