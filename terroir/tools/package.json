@@ -9,6 +9,8 @@
     "node": ">=20.9.0"
   },
   "dependencies": {
-    "d3-geo": "3.1.1"
+    "d3-geo": "3.1.1",
+    "mapshaper": "0.7.96",
+    "shapefile": "0.6.6"
   }
 }

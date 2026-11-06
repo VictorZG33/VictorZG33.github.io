@@ -12,6 +12,9 @@
      one without a card. `spots` are the villages and sub-regions shown when the map zooms in:
      [Chinese, English, lat, lon], with a fifth value 1 for a town shown only to find the way.
      Coordinates of spots were checked against OpenStreetMap (Nominatim), November 2026.
+   - appellationsZh: Chinese names for the appellations drawn on the zoomed-in maps
+     (map/appellations/, from tools/build-appellations.mjs), keyed by the name as drawn. Spots
+     lend theirs too; anything without one, the climats above all, keeps its own name.
 
    After moving a region to another view, adding one far from its view's frame, or adding a
    view, run terroir/tools/build-map.mjs to redraw the maps. */
@@ -1139,5 +1142,64 @@ regions: [
     spots: [
       ['怀来', 'Huailai', 40.415, 115.518], ['昌黎', 'Changli', 39.704, 119.161], ['北京', 'Beijing', 39.906, 116.391, 1]
     ] }
-]
+],
+
+appellationsZh: {
+  // Burgundy
+  'Bourgogne': '勃艮第', 'Bourgogne Côte Chalonnaise': '勃艮第夏隆内丘', 'Bourgogne Hautes-Côtes de Nuits': '勃艮第上夜丘',
+  'Bourgogne Hautes-Côtes de Beaune': '勃艮第上伯恩丘', 'Côte de Nuits-Villages': '夜丘村庄', 'Côte de Beaune-Villages': '伯恩丘村庄',
+  'Côte de Beaune': '伯恩丘', 'Mâcon': '马孔', 'Marsannay': '马沙内', 'Fixin': '菲克桑', 'Morey-Saint-Denis': '莫雷-圣丹尼',
+  'Ladoix': '拉多瓦', 'Pernand-Vergelesses': '佩尔南-韦热莱斯', 'Savigny-lès-Beaune': '萨维尼-伯恩', 'Chorey-lès-Beaune': '肖雷-伯恩',
+  'Monthélie': '蒙蝶利', 'Auxey-Duresses': '欧克塞-迪雷斯', 'Saint-Romain': '圣罗曼', 'Saint-Aubin': '圣欧班', 'Blagny': '布拉尼',
+  'Chassagne-Montrachet': '夏山-蒙哈榭', 'Santenay': '桑特奈', 'Maranges': '马朗日', 'Bouzeron': '布哲宏', 'Rully': '吕利',
+  'Mercurey': '梅尔居雷', 'Givry': '日夫里', 'Montagny': '蒙塔尼', 'Viré-Clessé': '维雷-克莱塞', 'Saint-Véran': '圣韦朗',
+  'Pouilly-Fuissé': '普伊-富赛', 'Pouilly-Loché': '普伊-洛榭', 'Pouilly-Vinzelles': '普伊-万泽勒',
+  'Chambertin': '香贝丹', 'Chambertin-Clos de Bèze': '香贝丹-贝兹园', 'Chapelle-Chambertin': '夏贝尔-香贝丹',
+  'Charmes-Chambertin': '夏姆-香贝丹', 'Mazoyères-Chambertin': '马索耶尔-香贝丹', 'Griotte-Chambertin': '格里奥特-香贝丹',
+  'Latricières-Chambertin': '拉特里西耶尔-香贝丹', 'Mazis-Chambertin': '马兹-香贝丹', 'Ruchottes-Chambertin': '卢索特-香贝丹',
+  'Clos de la Roche': '罗西园', 'Clos Saint-Denis': '圣丹尼园', 'Clos des Lambrays': '兰布莱园', 'Clos de Tart': '塔尔园',
+  'Bonnes-Mares': '邦马尔', 'Musigny': '慕西尼', 'Clos de Vougeot': '伏旧园', 'Échezeaux': '依瑟索', 'Grands-Échezeaux': '大依瑟索',
+  'Romanée-Conti': '罗曼尼-康帝', 'La Romanée': '罗曼尼', 'La Tâche': '塔希', 'Richebourg': '李奇堡', 'Romanée-Saint-Vivant': '罗曼尼-圣维旺',
+  'La Grande Rue': '大街', 'Corton': '科尔登', 'Corton-Charlemagne': '科尔登-查理曼', 'Montrachet': '蒙哈榭',
+  'Chevalier-Montrachet': '骑士-蒙哈榭', 'Bâtard-Montrachet': '巴塔-蒙哈榭', 'Bienvenues-Bâtard-Montrachet': '比维纳斯-巴塔-蒙哈榭',
+  'Criots-Bâtard-Montrachet': '克利奥-巴塔-蒙哈榭',
+  'Chablis': '夏布利', 'Petit Chablis': '小夏布利', 'Chablis Grand Cru': '夏布利特级园', 'Irancy': '伊朗西', 'Saint-Bris': '圣布里',
+  'Beaujolais': '博若莱', 'Beaujolais Villages': '博若莱村庄', 'Saint-Amour': '圣阿穆尔', 'Chénas': '谢纳', 'Chiroubles': '希露博',
+  'Régnié': '雷尼耶', 'Côte de Brouilly': '布鲁伊丘',
+  // Bordeaux
+  'Bordeaux': '波尔多', 'Médoc': '梅多克', 'Haut-Médoc': '上梅多克', 'Graves': '格拉夫', 'Entre-deux-Mers': '两海之间',
+  'Graves de Vayres': '韦雷-格拉夫', 'Côtes de Bordeaux-Saint-Macaire': '波尔多丘-圣马凯尔', 'Blaye Côtes de Bordeaux': '布莱-波尔多丘',
+  'Cadillac Côtes de Bordeaux': '卡迪亚克-波尔多丘', 'Castillon Côtes de Bordeaux': '卡斯蒂永-波尔多丘', 'Francs Côtes de Bordeaux': '弗朗-波尔多丘',
+  'Listrac-Médoc': '利斯特拉克-梅多克', 'Moulis-en-Médoc': '慕里斯', 'Barsac': '巴萨克', 'Cérons': '塞龙', 'Loupiac': '卢皮亚克',
+  'Sainte-Croix-du-Mont': '圣十字山', 'Cadillac': '卡迪亚克', 'Lalande-de-Pomerol': '拉朗德-波美侯', 'Fronsac': '弗龙萨克',
+  'Canon-Fronsac': '卡农-弗龙萨克', 'Montagne-Saint-Émilion': '蒙塔涅-圣埃美隆', 'Lussac-Saint-Émilion': '吕萨克-圣埃美隆',
+  'Puisseguin-Saint-Émilion': '皮瑟甘-圣埃美隆', 'Saint-Georges-Saint-Émilion': '圣乔治-圣埃美隆', 'Côtes de Bourg': '布尔丘',
+  // the rest of France
+  'Alsace': '阿尔萨斯', 'Alsace grand cru': '阿尔萨斯特级园',
+  'Anjou': '安茹', 'Touraine': '都兰', 'Anjou Villages': '安茹村庄', 'Anjou Brissac': '安茹-布里萨克', 'Coteaux de l\'Aubance': '欧邦斯丘',
+  'Coteaux du Layon': '莱昂丘', 'Coteaux de Saumur': '索缪尔丘', 'Muscadet Sèvre et Maine': '塞夫勒-曼恩蜜思卡岱',
+  'Muscadet Coteaux de la Loire': '卢瓦尔丘蜜思卡岱', 'Muscadet Côtes de Grandlieu': '格朗利厄丘蜜思卡岱', 'Cheverny': '舍韦尔尼',
+  'Cour-Cheverny': '库尔-舍韦尔尼', 'Coteaux du Giennois': '吉耶努瓦丘', 'Bonnezeaux': '邦尼舒', 'Saumur-Champigny': '索缪尔-香比尼',
+  'Bourgueil': '布尔格伊', 'Saint-Nicolas-de-Bourgueil': '圣尼古拉-布尔格伊', 'Montlouis-sur-Loire': '蒙路易', 'Jasnières': '雅斯涅尔',
+  'Menetou-Salon': '默讷图-萨隆', 'Quincy': '坎西', 'Reuilly': '勒伊',
+  'Château-Grillet': '格里叶堡', 'Saint-Péray': '圣佩雷',
+  'Côtes du Rhône': '罗讷丘', 'Côtes du Rhône Villages': '罗讷丘村庄', 'Ventoux': '旺图', 'Luberon': '吕贝隆', 'Costières de Nîmes': '尼姆丘',
+  'Grignan-les-Adhémar': '格里尼昂-莱阿代马尔', 'Vinsobres': '万索布尔', 'Cairanne': '凯拉纳', 'Laudun': '洛丹',
+  'Coteaux d\'Aix-en-Provence': '埃克斯丘', 'Coteaux varois en Provence': '瓦尔丘', 'Palette': '帕莱特', 'Les Baux de Provence': '莱博',
+  'Languedoc': '朗格多克', 'Côtes du Roussillon': '鲁西荣丘', 'Côtes du Roussillon Villages': '鲁西荣丘村庄', 'Grés de Montpellier': '蒙彼利埃砂岩',
+  'Saint-Chinian': '圣希尼昂', 'La Livinière': '拉利维尼耶尔', 'Boutenac': '布特纳克', 'Fitou': '菲图', 'La Clape': '拉克拉普',
+  'Terrasses du Larzac': '拉尔扎克台地', 'Montpeyroux': '蒙佩鲁', 'Cabardès': '卡巴尔岱', 'Malepère': '马勒佩尔', 'Collioure': '科利乌尔',
+  'Maury': '莫里', 'Muscat de Frontignan': '弗龙蒂尼昂麝香', 'Muscat de Lunel': '吕内勒麝香', 'Muscat de Mireval': '米雷瓦尔麝香',
+  'Muscat de Saint-Jean-de-Minervois': '圣让-米内瓦麝香',
+  // American Viticultural Areas
+  'Napa Valley': '纳帕谷', 'Northern Sonoma': '北索诺玛', 'Columbia Valley': '哥伦比亚谷', 'Willamette Valley': '威拉米特谷',
+  'Finger Lakes': '五指湖', 'Monterey': '蒙特雷', 'Edna Valley': '埃德娜谷', 'Arroyo Grande Valley': '阿罗约格兰德谷', 'York Mountain': '约克山',
+  'San Benito': '圣贝尼托', 'Mt. Veeder': '维德山', 'Spring Mountain District': '春山', 'Diamond Mountain District': '钻石山',
+  'Atlas Peak': '阿特拉斯峰', 'Coombsville': '库姆斯维尔', 'Oak Knoll District of Napa Valley': '橡树丘', 'Yountville': '扬特维尔',
+  'Chiles Valley': '奇尔斯谷', 'Wild Horse Valley': '野马谷', 'Knights Valley': '骑士谷', 'Chalk Hill': '白垩山',
+  'Green Valley of Russian River Valley': '俄罗斯河谷绿谷', 'Fort Ross-Seaview': '罗斯堡-海景', 'Petaluma Gap': '佩塔卢马峡口',
+  'Bennett Valley': '贝内特谷', 'Sonoma Mountain': '索诺玛山', 'Moon Mountain District Sonoma County': '月亮山',
+  'Walla Walla Valley': '瓦拉瓦拉谷', 'Lake Chelan': '奇兰湖', 'Rattlesnake Hills': '响尾蛇山', 'Tualatin Hills': '图拉丁山',
+  'Van Duzer Corridor': '范杜泽走廊', 'Ribbon Ridge': '丝带岭', 'Arroyo Seco': '阿罗约塞科', 'Ballard Canyon': '巴拉德峡谷'
+}
 };
