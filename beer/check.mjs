@@ -1,5 +1,5 @@
 // Checks beer/data.js: each style's numbers against the BJCP 2021 Style Guidelines, read from the
-// BeerJSON project's copy of them on GitHub, and that every hop or stand-in a page links to exists.
+// BeerJSON project's copy of them on GitHub, and that every hop, stand-in or question a page links to exists.
 // Run from the repository: node beer/check.mjs (Node 18 or newer, for fetch).
 import { createRequire } from 'node:module';
 
@@ -36,10 +36,13 @@ for (const h of D.HOPS) {
   for (const x of h.sub || []) if (!hops.has(x)) fail(h.id + ' names a stand-in that is not listed: ' + x);
   if (!D.STYLES.some((s) => s.hops.includes(h.id))) fail(h.id + ' is not used by any style');
   if (!D.HOP_ORIGINS.some((o) => o.key === h.o)) fail(h.id + ' has an unknown origin: ' + h.o);
-  const oils = ['myrcene', 'humulene', 'caryophyllene', 'farnesene'].reduce((t, k) => t + (h[k] ? (h[k][0] + h[k][1]) / 2 : 0), 0);
+  // the middle of each range, or the limit where only an upper limit is published
+  const oils = ['myrcene', 'humulene', 'caryophyllene', 'farnesene'].reduce((t, k) => t + (h[k] ? (h[k][0] == null ? h[k][1] : (h[k][0] + h[k][1]) / 2) : 0), 0);
   if (oils > 100) fail(h.id + ': the oils add up to ' + oils.toFixed(0) + '% at the middle of their ranges');
 }
+const questions = new Set((D.QA || []).map((q) => q.id));
 for (const s of D.STYLES) {
+  for (const q of s.read || []) if (!questions.has(q)) fail(s.id + ' links to a question that is not listed: ' + q);
   if (!D.GLASSES[s.glass]) fail(s.id + ' has an unknown glass: ' + s.glass);
   if (!D.REGIONS.some((r) => r.key === s.r)) fail(s.id + ' has an unknown region: ' + s.r);
 }
