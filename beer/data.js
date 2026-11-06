@@ -672,7 +672,8 @@ var OGData = (function () {
     { key: 'cz', name: ['捷克与斯洛文尼亚', 'Czechia & Slovenia'] },
     { key: 'uk', name: ['英国', 'England'] },
     { key: 'us', name: ['美国', 'United States'] },
-    { key: 'nz', name: ['新西兰与澳大利亚', 'New Zealand & Australia'] },
+    { key: 'nz', name: ['新西兰', 'New Zealand'] },
+    { key: 'au', name: ['澳大利亚', 'Australia'] },
     { key: 'jp', name: ['日本', 'Japan'] }
   ];
 
@@ -687,10 +688,12 @@ var OGData = (function () {
     nzhops: function (path) { return { n: 'NZ Hops', u: 'https://nzhops.co.nz/collections/new-zealand-hops/products/' + path }; }
   };
 
-  /* o: origin, use: aroma | bitter | dual. alpha, beta: % by weight; cohum: cohumulone, % of the alpha
-     acids; oil: total oil, mL per 100 g; myrcene to farnesene: % of the total oil, [null, x] where only
-     an upper limit is published. sub: hops that can stand in for it. src: where the numbers come from:
-     the breeder where it publishes them, otherwise growers and merchants of the hop's home country. */
+  /* o: origin, use: aroma | bitter | dual, status: experimental or limited where it is not a regular
+     commercial variety. alpha, beta: % by weight; cohum: cohumulone, % of the alpha acids; oil: total
+     oil, mL per 100 g; myrcene to farnesene: % of the total oil, [null, x] where only an upper limit is
+     published, left out where nothing is. uses: what brewers use it for, where no style below names it.
+     sub: hops that can stand in for it. src: where the numbers come from: the breeder where it
+     publishes them, otherwise growers and merchants of the hop's home country. */
   var HOPS = [
     {
       id: 'hallertau', o: 'de', use: 'aroma',
@@ -952,7 +955,7 @@ var OGData = (function () {
       src: [S.nzhops('motueka')]
     },
     {
-      id: 'galaxy', o: 'nz', use: 'dual',
+      id: 'galaxy', o: 'au', use: 'dual',
       n: ['银河', 'Galaxy'], local: 'Galaxy',
       p: ['澳大利亚', 'Australia'], y: ['2009 年', '2009'],
       by: ['Hop Products Australia', 'Hop Products Australia'], parent: ['澳大利亚高 α 酸品系 × 珍珠（Perle）', 'a high-alpha Australian line × Perle'],

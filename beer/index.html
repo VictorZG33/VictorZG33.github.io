@@ -148,6 +148,9 @@ section.block { padding-top: 40px; }
 .chip[aria-pressed="true"] .sw { box-shadow: 0 0 0 1.5px var(--bg); }
 .chip.nosw { padding-left: 11px; }
 .chip.small { min-height: 28px; padding: 4px 10px; font-size: 12.5px; }
+.chip-group { flex: 0 0 100%; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 6px 0 -1px; }
+.chip-group:first-child { margin-top: 0; }
+.lang-zh .chip-group { font-family: var(--font-body); font-size: 11.5px; letter-spacing: 0.04em; text-transform: none; }
 
 /* cards */
 .card { margin-top: 16px; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 18px 18px 16px; }
@@ -241,6 +244,8 @@ section.block { padding-top: 40px; }
 
 /* hops */
 .uses { display: inline-block; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); margin-left: 6px; vertical-align: 2px; }
+.uses.st { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1px var(--rule-strong); }
+.oil-none { font-size: 13px; color: var(--muted); }
 .hop-head .cname .a { font-size: 28px; }
 .aroma { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; }
 .aroma li { font-size: 12.5px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--rule); background: var(--bg); }
@@ -429,6 +434,7 @@ footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 15p
           <h4 id="h-oils-h"></h4>
           <div class="oilbar" id="h-oilbar" role="img"></div>
           <div class="oilkey" id="h-oilkey"></div>
+          <p class="oil-none" id="h-oils-none" hidden></p>
         </div>
         <dl class="facts" id="h-facts"></dl>
         <p class="src" id="h-src"></p>
@@ -532,6 +538,9 @@ footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 15p
       hops: '酒花',
       hopsIntro: '酒花是蛇麻（<i>Humulus lupulus</i>）雌株的花，一个个绿色的小球果。苞片根部金黄色的蛇麻腺里藏着两样关键的东西：<b>α 酸</b>，煮沸时异构化，变成苦味；<b>精油</b>，易挥发，决定香气。欧洲传统的“贵族酒花”α 酸低、香气细腻；美国和南半球培育的新品种 α 酸和精油都多，带着柑橘和热带水果的香。中国也种酒花，大多种在新疆和甘肃的河西走廊，以青岛大花（Tsingtao Flower）为主。',
       use: { aroma: '香型', bitter: '苦型', dual: '两用' },
+      status: { experimental: '实验品种', limited: '少量供应' },
+      noOils: '精油组成没有公布。',
+      notOnMap: function (names) { return '没有公布 α 酸或总油量的品种不在图上：' + names + '。'; },
       hopKicker: function (o, use) { return o + ' · ' + use; },
       hopMeta: function (h) { return [h.local, t(h.p), h.y ? t(h.y) : ''].filter(Boolean).join(' · '); },
       a: { alpha: 'α 酸', beta: 'β 酸', cohum: '合葎草酮', oil: '总油量' },
@@ -539,7 +548,7 @@ footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 15p
       oilsH: '精油组成（占总油量）',
       oils: [['月桂烯', '树脂、柑橘、青草'], ['葎草烯', '木质、草本'], ['石竹烯', '香料、胡椒'], ['金合欢烯', '花香、青苹果'], ['其他', '芳樟醇、香叶醇等']],
       oilAria: function (parts) { return '精油组成：' + parts + '。'; },
-      hf: { by: '育成', parent: '亲本', used: '用在', sub: '可以替代' },
+      hf: { by: '育成', parent: '亲本', used: '用在', uses: '常见用途', sub: '可以替代' },
       src: '数据来源：',
       hmapH: 'α 酸与总油量',
       hmapX: 'α 酸 %',
@@ -622,6 +631,9 @@ footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 15p
       hops: 'Hops',
       hopsIntro: 'Hops are the cones of the female hop plant, <i>Humulus lupulus</i>. Golden lupulin glands at the base of their bracts hold the two things that matter: <b>alpha acids</b>, which the boil turns bitter, and <b>essential oils</b>, volatile, which carry the aroma. Europe’s traditional “noble” hops are low in alpha acid and delicate in aroma; the newer American and southern-hemisphere varieties are rich in both, with citrus and tropical fruit. China grows hops too, mostly in Xinjiang and Gansu’s Hexi Corridor, and mostly Tsingtao Flower.',
       use: { aroma: 'aroma', bitter: 'bittering', dual: 'dual-purpose' },
+      status: { experimental: 'experimental', limited: 'limited release' },
+      noOils: 'The make-up of its oil has not been published.',
+      notOnMap: function (names) { return 'Not on the map, for want of published alpha acid or oil: ' + names + '.'; },
       hopKicker: function (o, use) { return o + ' · ' + use; },
       hopMeta: function (h) { return [h.local !== h.n[1] ? h.local : '', t(h.p), h.y ? t(h.y) : ''].filter(Boolean).join(' · '); },
       a: { alpha: 'Alpha acids', beta: 'Beta acids', cohum: 'Cohumulone', oil: 'Total oil' },
@@ -629,7 +641,7 @@ footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 15p
       oilsH: 'The oils, as shares of the total',
       oils: [['Myrcene', 'resin, citrus, green'], ['Humulene', 'woody, herbal'], ['Caryophyllene', 'spicy, peppery'], ['Farnesene', 'floral, green apple'], ['Other', 'linalool, geraniol and the rest']],
       oilAria: function (parts) { return 'Oil make-up: ' + parts + '.'; },
-      hf: { by: 'Bred by', parent: 'Parentage', used: 'Used in', sub: 'Stand-ins' },
+      hf: { by: 'Bred by', parent: 'Parentage', used: 'Used in', uses: 'Brewers use it for', sub: 'Stand-ins' },
       src: 'Sources: ',
       hmapH: 'Alpha acid and total oil',
       hmapX: 'Alpha acids, %',
@@ -707,6 +719,9 @@ footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 15p
   function sg(r) { return r[0].toFixed(3) + '–' + r[1].toFixed(3); }
   function plato(r) { return B.plato(r[0]).toFixed(1) + '–' + B.plato(r[1]).toFixed(1); }
   function mid(r) { return (r[0] + r[1]) / 2; }
+  // a published range's middle, or its limit where only an upper limit is published
+  function val(r) { return r == null ? null : r[0] == null ? r[1] : (r[0] + r[1]) / 2; }
+  function lo(r) { return r[0] == null ? 0 : r[0]; }
   function gmid(r) { return Math.sqrt(Math.max(0.1, r[0]) * r[1]); }
   function attenuation(s) { var og = mid(s.og), fg = mid(s.fg); return (og - fg) / (og - 1); }
   function bugu(s) { return mid(s.ibu) / ((mid(s.og) - 1) * 1000); }
@@ -1148,17 +1163,20 @@ footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 15p
   }
   function renderHopMap() {
     var Tx = T();
+    var mapped = D.HOPS.filter(function (h) { return h.alpha && h.oil; });
+    var unmapped = D.HOPS.filter(function (h) { return !(h.alpha && h.oil) && visibleHop(h); });
     hmapGeom = scatter({
-      svg: $('hmap-svg'), items: D.HOPS, selected: state.hop, visible: visibleHop,
+      svg: $('hmap-svg'), items: mapped, selected: state.hop, visible: visibleHop,
       x: function (v) { return v / 20; }, xTicks: [0, 5, 10, 15, 20], xTitle: Tx.hmapX,
       y0: 0, y1: 5, yTicks: [0, 1, 2, 3, 4, 5], yTitle: Tx.hmapY,
-      px: function (h) { return mid(h.alpha); }, py: function (h) { return mid(h.oil); },
-      range: function (h) { return [h.alpha[0], h.alpha[1], h.oil[0], h.oil[1]]; },
+      px: function (h) { return val(h.alpha); }, py: function (h) { return val(h.oil); },
+      range: function (h) { return [lo(h.alpha), h.alpha[1], lo(h.oil), h.oil[1]]; },
       label: function (h) { return t(h.n); },
       zones: [[0.6, 0.18, Tx.zones[0]], [19.6, 0.18, Tx.zones[1], 'end'], [19.6, 4.7, Tx.zones[2], 'end']]
     });
-    $('hmap-svg').setAttribute('aria-label', Tx.hmapAria(D.HOPS.length));
+    $('hmap-svg').setAttribute('aria-label', Tx.hmapAria(mapped.length));
     $('hmap-tip').hidden = true;
+    $('hmap-note').textContent = Tx.hmapNote + (unmapped.length ? ' ' + Tx.notOnMap(unmapped.map(function (h) { return t(h.n); }).join(state.lang === 'zh' ? '、' : ', ')) : '');
   }
 
   /* ---------- hops ---------- */
@@ -1171,15 +1189,21 @@ footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 15p
   function visibleHop(h) { return state.origin === 'all' || h.o === state.origin; }
   function renderHopChips() {
     $('hop-chips').setAttribute('aria-label', state.lang === 'zh' ? '选择酒花' : 'Pick a hop');
-    $('hop-chips').innerHTML = D.HOPS.filter(visibleHop).map(function (h) {
+    var chip = function (h) {
       return '<button type="button" class="chip nosw" data-id="' + h.id + '" aria-pressed="' + (h.id === state.hop) + '">' + esc(t(h.n)) + '</button>';
+    };
+    // with every hop showing, each origin gets its own labelled row
+    $('hop-chips').innerHTML = state.origin !== 'all' ? D.HOPS.filter(visibleHop).map(chip).join('') : D.HOP_ORIGINS.map(function (o) {
+      var hs = D.HOPS.filter(function (h) { return h.o === o.key; });
+      return hs.length ? '<span class="chip-group">' + esc(t(o.name)) + '</span>' + hs.map(chip).join('') : '';
     }).join('');
   }
   function renderHop() {
     var Tx = T(), h = HOP[state.hop];
     if (!h) return;
     var origin = D.HOP_ORIGINS.filter(function (o) { return o.key === h.o; })[0];
-    $('h-kicker').innerHTML = esc(t(origin.name)) + '<span class="uses">' + esc(Tx.use[h.use]) + '</span>';
+    $('h-kicker').innerHTML = esc(t(origin.name)) + '<span class="uses">' + esc(Tx.use[h.use]) + '</span>' +
+      (h.status && Tx.status[h.status] ? '<span class="uses st">' + esc(Tx.status[h.status]) + '</span>' : '');
     $('h-name').textContent = t(h.n);
     $('h-sub').textContent = state.lang === 'zh' ? h.n[1] : '';
     $('h-sub').hidden = state.lang !== 'zh';
@@ -1206,8 +1230,12 @@ footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 15p
     vals.push(Math.max(0, 100 - Math.min(100, sum)));
     upTo.push(false);
     $('h-oils-h').textContent = Tx.oilsH;
-    var bar = $('h-oilbar'), parts = [];
+    var bar = $('h-oilbar'), parts = [], known = keys.some(function (k) { return !!h[k]; });
     bar.innerHTML = '';
+    bar.hidden = !known; $('h-oilkey').hidden = !known;
+    var none = $('h-oils-none');
+    if (!known) { none.textContent = Tx.noOils; none.hidden = false; } else none.hidden = true;
+    if (known) {
     vals.forEach(function (v, i) {
       if (v <= 0.05) return;
       var sp = document.createElement('span');
@@ -1225,6 +1253,7 @@ footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 15p
     $('h-oilkey').innerHTML = Tx.oils.map(function (o, i) {
       return '<span><i style="background:var(--oil-' + (i < 4 ? i + 1 : 'x') + ')"></i><b>' + esc(o[0]) + '</b>' + esc(o[1]) + '</span>';
     }).join('');
+    }
 
     var used = h.usedIn.map(function (id) {
       return '<button type="button" class="chip small" data-style="' + id + '"><i class="sw" style="background:' + swatch(gmid(STYLE[id].srm)) + '"></i>' + esc(t(STYLE[id].n)) + '</button>';
@@ -1236,6 +1265,7 @@ footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 15p
       (h.by ? '<div><dt>' + esc(Tx.hf.by) + '</dt><dd>' + esc(t(h.by)) + '</dd></div>' : '') +
       (h.parent ? '<div><dt>' + esc(Tx.hf.parent) + '</dt><dd>' + esc(t(h.parent)) + '</dd></div>' : '') +
       (used ? '<div><dt>' + esc(Tx.hf.used) + '</dt><dd><div class="chips">' + used + '</div></dd></div>' : '') +
+      (h.uses ? '<div><dt>' + esc(Tx.hf.uses) + '</dt><dd>' + esc(t(h.uses)) + '</dd></div>' : '') +
       (subs ? '<div><dt>' + esc(Tx.hf.sub) + '</dt><dd><div class="chips">' + subs + '</div></dd></div>' : '');
     var src = $('h-src');
     src.textContent = '';
