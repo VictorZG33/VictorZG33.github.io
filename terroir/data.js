@@ -157,8 +157,8 @@ styles: [
   {
     id: 'rose', glass: 'rose', name: ['桃红葡萄酒', 'Rosé'],
     lead: [
-      '桃红的颜色来自和红葡萄皮的短暂接触：几小时，而不是几天。在欧盟，静止桃红不允许用红酒和白酒兑出来，桃红香槟是有名的例外。',
-      'Rosé takes its colour from a short time on red skins: hours rather than days. In the EU a still rosé may not be made by mixing red and white wine; rosé Champagne is the famous exception.'
+      '桃红的颜色来自和红葡萄皮的短暂接触：几小时，而不是几天。在欧盟，没有产区标志（PDO/PGI）的静止酒不能用红酒和白酒兑成桃红，法定产区酒照各自的规定；起泡酒不受这条限制，所以桃红香槟大多是兑出来的。',
+      'Rosé takes its colour from a short time on red skins: hours rather than days. In the EU, still wine without a PDO or PGI may not be made rosé by blending red and white (appellation wines follow their own rules); sparkling wine is exempt, which is why most rosé Champagne is blended.'
     ],
     where: ['provence', 'rhone-south', 'languedoc'],
     steps: [
@@ -343,8 +343,8 @@ styles: [
   {
     id: 'orange', glass: 'amber', name: ['橙酒', 'Orange wine'],
     lead: [
-      '用白葡萄、按红酒的方法带皮发酵，就得到琥珀色、带单宁的“橙酒”。这其实是最古老的酿法之一：格鲁吉亚人在陶罐里这样酿酒，已经有大约八千年。',
-      'White grapes fermented on their skins, the way red wine is made, give an amber, tannic “orange” wine. It is one of the oldest ways to make wine: Georgians have made it like this in clay jars for some 8,000 years.'
+      '用白葡萄、按红酒的方法带皮发酵，就得到琥珀色、带单宁的“橙酒”。这其实是最古老的酿法之一：格鲁吉亚人用陶罐酿酒已有大约八千年，带皮发酵正是那里的传统做法。',
+      'White grapes fermented on their skins, the way red wine is made, give an amber, tannic “orange” wine. It is one of the oldest ways to make wine: Georgians have made wine in clay jars for some 8,000 years, and fermenting on the skins is their traditional way.'
     ],
     where: ['kakheti', 'friuli'],
     steps: [
@@ -355,8 +355,8 @@ styles: [
         d: ['格鲁吉亚的 qvevri 是埋在地下的蛋形陶罐，地温让发酵凉爽而平稳。发酵完封上口，酒和皮一起泡上大半年。2013 年这种酿法列入联合国教科文组织人类非物质文化遗产。',
             'Georgia’s qvevri are egg-shaped clay jars buried in the ground, which keeps fermentation cool and steady. When it is done they are sealed and the wine stays on its skins for half a year. UNESCO listed the method as intangible heritage in 2013.'] },
       { t: ['浸皮时间', 'How long on skins'], k: ['几天到几个月', 'Days to months'],
-        d: ['浸皮越久，颜色越深、单宁越多，风味越偏向干果、茶和橙皮。1990 年代末，意大利弗留利与斯洛文尼亚边境的酒农让这种风格重新流行起来。',
-            'The longer on skins, the deeper the colour, the more tannin, and the more the flavour turns to dried fruit, tea and orange peel. Growers on the Friuli–Slovenia border revived the style in the late 1990s.'] },
+        d: ['浸皮越久，颜色越深、单宁越多，风味越偏向干果、茶和橙皮。1990 年代中后期，意大利弗留利与斯洛文尼亚边境的酒农让这种风格重新流行起来。',
+            'The longer on skins, the deeper the colour, the more tannin, and the more the flavour turns to dried fruit, tea and orange peel. Growers on the Friuli–Slovenia border revived the style in the mid-to-late 1990s.'] },
       { t: ['少干预装瓶', 'Bottled with little intervention'],
         d: ['橙酒常常不澄清、不过滤，二氧化硫也用得很少，所以可能略带浑浊。饮用温度比白葡萄酒稍高，配菜时可以当红酒用。',
             'Orange wines are often bottled unfined and unfiltered, with little sulphur dioxide, so they can be hazy. Serve them a little warmer than white wine and treat them at the table like a red.'] }
@@ -381,8 +381,8 @@ grapes: [
   { id: 'cabernet-franc', c: 'red', name: ['品丽珠', 'Cabernet Franc'], origin: ['法国西南部，可能源自西班牙巴斯克地区', 'South-west France, perhaps from the Spanish Basque Country'],
     s: { body: 3, tannin: 3, acid: 4 },
     notes: [['覆盆子', 'raspberry'], ['紫罗兰', 'violet'], ['青椒', 'green pepper'], ['铅笔芯', 'pencil shavings']],
-    text: ['赤霞珠和梅洛的亲本之一，比两者都轻盈，带覆盆子、紫罗兰和一丝青椒的气息。在卢瓦尔河谷的希农和布尔格伊，它单独酿成清爽的红酒；圣埃美隆的白马酒庄用它做一半以上的调配。山东烟台的品丽珠近年也很受关注。',
-           'A parent of both Cabernet Sauvignon and Merlot, and lighter than either, with raspberry, violets and a hint of green pepper. In Chinon and Bourgueil on the Loire it makes fresh reds on its own; at Château Cheval Blanc in Saint-Émilion it is more than half the blend. Yantai, in Shandong, has made a name with it lately.'],
+    text: ['赤霞珠和梅洛的亲本之一，比两者都轻盈，带覆盆子、紫罗兰和一丝青椒的气息。在卢瓦尔河谷的希农和布尔格伊，它单独酿成清爽的红酒；圣埃美隆白马酒庄的葡萄园一半以上种的是它。山东烟台的品丽珠近年也很受关注。',
+           'A parent of both Cabernet Sauvignon and Merlot, and lighter than either, with raspberry, violets and a hint of green pepper. In Chinon and Bourgueil on the Loire it makes fresh reds on its own; at Château Cheval Blanc in Saint-Émilion it fills more than half the vineyard. Yantai, in Shandong, has made a name with it lately.'],
     pair: ['烤鸡、猪肉、山羊奶酪', 'Roast chicken, pork, goat’s cheese'] },
   { id: 'pinot-noir', c: 'red', name: ['黑皮诺', 'Pinot Noir'], origin: ['法国勃艮第', 'Burgundy, France'],
     s: { body: 2, tannin: 2, acid: 4 },
@@ -423,8 +423,8 @@ grapes: [
   { id: 'nebbiolo', c: 'red', name: ['内比奥罗', 'Nebbiolo'], origin: ['意大利皮埃蒙特', 'Piedmont, Italy'],
     s: { body: 4, tannin: 5, acid: 5 },
     notes: [['玫瑰', 'rose'], ['焦油', 'tar'], ['樱桃', 'cherry'], ['甘草', 'liquorice'], ['松露', 'truffle']],
-    text: ['名字来自 nebbia（雾），因为它采收得很晚，那时朗格山丘上常有秋雾。颜色浅，单宁却极强、酸度高，香气是有名的“焦油与玫瑰”。巴罗洛和巴巴莱斯科是它最好的酒，年轻时很涩，往往要陈年十年以上才见风采。',
-           'Named for nebbia, fog, because it is picked so late that autumn mist often lies over the Langhe hills. Pale yet fiercely tannic and acidic, it smells famously of tar and roses. Barolo and Barbaresco are its great wines, hard when young and often best after ten years or more.'],
+    text: ['名字来自 nebbia（雾）：一说是因为它采收很晚，那时朗格山丘上常有秋雾；一说指果皮上那层雾一样的白色果粉。颜色浅，单宁却极强、酸度高，香气是有名的“焦油与玫瑰”。巴罗洛和巴巴莱斯科是它最好的酒，年轻时很涩，往往要陈年十年以上才见风采。',
+           'Named for nebbia, fog: perhaps because it is picked so late that autumn mist lies over the Langhe hills, perhaps for the misty bloom on its berries. Pale yet fiercely tannic and acidic, it smells famously of tar and roses. Barolo and Barbaresco are its great wines, hard when young and often best after ten years or more.'],
     pair: ['松露菜、红酒炖牛肉、陈年奶酪', 'Truffles, braised beef, aged cheese'] },
   { id: 'barbera', c: 'red', name: ['巴贝拉', 'Barbera'], origin: ['意大利皮埃蒙特', 'Piedmont, Italy'],
     s: { body: 3, tannin: 2, acid: 5 },
@@ -523,7 +523,7 @@ grapes: [
     text: ['黑皮诺的变种，果皮是灰粉色的。意大利叫它 Pinot Grigio，多半早采，酿成清淡爽口、带梨和柠檬味的日常白酒；阿尔萨斯的灰皮诺则成熟饱满，带蜂蜜、香料和一丝烟熏，常常微甜。',
            'A mutation of Pinot Noir with greyish-pink skins. As Pinot Grigio in Italy it is mostly picked early for light, crisp everyday whites tasting of pear and lemon; Alsace Pinot Gris is ripe and full, with honey, spice and a hint of smoke, often just off-dry.'],
     pair: ['海鲜意面、清淡的菜；阿尔萨斯的配白肉', 'Seafood pasta, light dishes; Alsace: white meat'] },
-  { id: 'gewurztraminer', c: 'white', name: ['琼瑶浆', 'Gewürztraminer'], origin: ['意大利上阿迪杰的特拉明一带', 'Tramin, Alto Adige, Italy'],
+  { id: 'gewurztraminer', c: 'white', name: ['琼瑶浆', 'Gewürztraminer'], origin: ['德国西南部或法国东北部，名字来自意大利的特拉明', 'South-west Germany or north-east France; named after Tramin, Italy'],
     s: { body: 4, acid: 1, aroma: 5 },
     notes: [['荔枝', 'lychee'], ['玫瑰', 'rose'], ['姜', 'ginger'], ['香料', 'spice']],
     text: ['香气最浓烈的葡萄之一，一闻就是荔枝和玫瑰，还有姜和香料的味道（德语 Gewürz 就是“香料”）。酸度低、酒体丰满、酒精较高，常常微甜。阿尔萨斯的最好，很适合配带香料的中餐。',
@@ -591,8 +591,8 @@ regions: [
   { id: 'bordeaux', name: ['波尔多', 'Bordeaux'], country: 'FR', view: 'france', lat: 44.97, lon: -0.53, glass: ['red'],
     climate: ['温和的海洋性气候', 'Mild, maritime'],
     grapes: ['cabernet-sauvignon', 'merlot', 'cabernet-franc', ['小维多', 'Petit Verdot'], 'sauvignon-blanc', 'semillon'],
-    text: ['世界上最有名的红酒产区，以吉伦特河口为界分成左右两岸。左岸梅多克和格拉夫是砾石土，排水好、白天储热，正合晚熟的赤霞珠；右岸的圣埃美隆和波美侯以黏土和石灰岩为主，梅洛唱主角。1855 年的分级把 61 家酒庄分为五级，至今只改过两次，五家一级庄是拉菲、拉图、玛歌、侯伯王和 1973 年升级的木桐。南边的苏玳出产世界顶级的贵腐甜酒。',
-           'The most famous red wine region in the world, split by the Gironde estuary into a Left and a Right Bank. On the Left Bank, the gravels of the Médoc and Graves drain well and hold the day’s heat, which late-ripening Cabernet Sauvignon needs; on the Right Bank, in Saint-Émilion and Pomerol, clay and limestone favour Merlot. The 1855 Classification ranked 61 châteaux in five growths and has changed only twice since; the first growths are Lafite, Latour, Margaux, Haut-Brion and Mouton, promoted in 1973. Sauternes, to the south, makes some of the world’s finest sweet wine.'],
+    text: ['世界上最有名的红酒产区，以加龙河、多尔多涅河和两河汇成的吉伦特河口为界，分成左右两岸。左岸梅多克和格拉夫是砾石土，排水好、白天储热，正合晚熟的赤霞珠；右岸的圣埃美隆和波美侯以黏土和石灰岩为主，梅洛唱主角。1855 年的分级把酒庄分为五级（如今共 61 家，有几家是后来拆分的），至今只改过两次，五家一级庄是拉菲、拉图、玛歌、侯伯王和 1973 年升级的木桐。南边的苏玳出产世界顶级的贵腐甜酒。',
+           'The most famous red wine region in the world, split into a Left and a Right Bank by the Garonne, the Dordogne and the Gironde estuary they form. On the Left Bank, the gravels of the Médoc and Graves drain well and hold the day’s heat, which late-ripening Cabernet Sauvignon needs; on the Right Bank, in Saint-Émilion and Pomerol, clay and limestone favour Merlot. The 1855 Classification ranked the châteaux in five growths (61 today, some split off since) and has changed only twice since; the first growths are Lafite, Latour, Margaux, Haut-Brion and Mouton, promoted in 1973. Sauternes, to the south, makes some of the world’s finest sweet wine.'],
     spots: [
       ['圣埃斯泰夫', 'Saint-Estèphe', 45.264, -0.771], ['波亚克', 'Pauillac', 45.200, -0.748], ['圣朱利安', 'Saint-Julien', 45.165, -0.741],
       ['玛歌', 'Margaux', 45.036, -0.670], ['佩萨克-雷奥良', 'Pessac-Léognan', 44.729, -0.600], ['苏玳', 'Sauternes', 44.533, -0.341],
@@ -675,8 +675,8 @@ regions: [
   { id: 'provence', name: ['普罗旺斯', 'Provence'], country: 'FR', view: 'france', lat: 43.38, lon: 6.05, glass: ['rose'],
     climate: ['地中海气候', 'Mediterranean'],
     grapes: ['grenache', ['神索', 'Cinsault'], 'syrah', 'mourvedre', ['侯尔', 'Rolle (Vermentino)']],
-    text: ['法国最古老的葡萄酒产区：约公元前 600 年希腊人建立马赛时就带来了葡萄。如今以淡粉色的干型桃红闻名，桃红约占产量的九成，是全世界桃红的风向标。邦多尔是例外，以慕合怀特为主的红酒浓郁耐陈；卡西斯以白酒著称。',
-           'France’s oldest wine region: Greeks brought vines when they founded Marseille around 600 BC. Today it is known for pale, dry rosé, about nine bottles in ten of its wine and the model for rosé everywhere. Bandol is the exception, with dense, long-lived reds built on Mourvèdre; Cassis is known for whites.'],
+    text: ['法国最古老的葡萄酒产区：约公元前 600 年希腊人建立马赛时就带来了葡萄。如今以淡粉色的干型桃红闻名，桃红约占产量的九成，是全世界桃红的风向标。邦多尔如今也以桃红为主，但最有名的是以慕合怀特为主、浓郁耐陈的红酒；卡西斯以白酒著称。',
+           'France’s oldest wine region: Greeks brought vines when they founded Marseille around 600 BC. Today it is known for pale, dry rosé, about nine bottles in ten of its wine and the model for rosé everywhere. Bandol, though it too now makes mostly rosé, is famous for dense, long-lived reds built on Mourvèdre; Cassis is known for whites.'],
     spots: [
       ['埃克斯丘', 'Coteaux d’Aix', 43.530, 5.447], ['卡西斯', 'Cassis', 43.214, 5.540], ['邦多尔', 'Bandol', 43.136, 5.752],
       ['普罗旺斯丘', 'Côtes de Provence', 43.463, 6.479], ['圣特罗佩', 'Saint-Tropez', 43.273, 6.641, 1]
@@ -706,8 +706,8 @@ regions: [
   { id: 'tuscany', name: ['托斯卡纳', 'Tuscany'], country: 'IT', view: 'italy', lat: 43.29, lon: 11.25, glass: ['red'],
     climate: ['地中海气候，内陆多丘陵', 'Mediterranean, inland hills'],
     grapes: ['sangiovese', 'cabernet-sauvignon', 'merlot', 'cabernet-franc', ['维奈西卡', 'Vernaccia']],
-    text: ['桑娇维塞的故乡。佛罗伦萨和锡耶纳之间的基安蒂经典区是核心，瓶颈上印着黑公鸡；南边的蒙塔奇诺出产全用桑娇维塞、上市前至少陈年五年的布鲁奈罗；蒙特普尔恰诺出产贵族酒。1970 年代起，西边海岸的宝格丽用赤霞珠和梅洛酿出不守规矩的“超级托斯卡纳”，西施佳雅是先驱。',
-           'The home of Sangiovese. Chianti Classico, between Florence and Siena, with a black rooster on the neck, is its heart; to the south, Montalcino makes Brunello, all Sangiovese and aged at least five years before release, and Montepulciano makes Vino Nobile. From the 1970s, at Bolgheri on the coast, Cabernet and Merlot made rule-breaking “Super Tuscans”, with Sassicaia the pioneer.'],
+    text: ['桑娇维塞的故乡。佛罗伦萨和锡耶纳之间的基安蒂经典区是核心，瓶颈上印着黑公鸡；南边的蒙塔奇诺出产布鲁奈罗：全用桑娇维塞，至少在木桶里陈年两年，收获后第五年的 1 月 1 日才能上市；蒙特普尔恰诺出产贵族酒。1970 年代起，西边海岸的宝格丽用赤霞珠和梅洛酿出不守规矩的“超级托斯卡纳”，西施佳雅是先驱。',
+           'The home of Sangiovese. Chianti Classico, between Florence and Siena, with a black rooster on the neck, is its heart; to the south, Montalcino makes Brunello, all Sangiovese, with at least two years in wood and released no earlier than 1 January of the fifth year after the harvest, and Montepulciano makes Vino Nobile. From the 1970s, at Bolgheri on the coast, Cabernet and Merlot made rule-breaking “Super Tuscans”, with Sassicaia the pioneer.'],
     spots: [
       ['基安蒂经典', 'Chianti Classico', 43.607, 11.332], ['圣吉米尼亚诺', 'San Gimignano', 43.468, 11.043], ['蒙塔奇诺', 'Montalcino', 43.058, 11.490],
       ['蒙特普尔恰诺', 'Montepulciano', 43.095, 11.783], ['宝格丽', 'Bolgheri', 43.234, 10.618], ['佛罗伦萨', 'Florence', 43.770, 11.256, 1],
@@ -734,8 +734,8 @@ regions: [
   { id: 'friuli', name: ['弗留利', 'Friuli'], country: 'IT', view: 'italy', lat: 46.00, lon: 13.51, glass: ['white'],
     climate: ['阿尔卑斯山与亚得里亚海之间', 'Between the Alps and the Adriatic'],
     grapes: ['pinot-gris', 'sauvignon-blanc', ['弗留利诺', 'Friulano'], ['丽波拉', 'Ribolla Gialla']],
-    text: ['意大利东北角，夹在阿尔卑斯山和亚得里亚海之间，与斯洛文尼亚接壤，出产意大利最好的白葡萄酒：有本地的弗留利诺和丽波拉，也有灰皮诺和长相思。1990 年代末，科利奥山区奥斯拉维亚村的格拉夫纳（Josko Gravner）和拉迪孔（Stanko Radikon）重新拾起带皮发酵和陶罐，让橙酒在全世界复兴；边境另一侧斯洛文尼亚的布尔达是同一片山丘。',
-           'Italy’s north-east corner, between the Alps and the Adriatic on the Slovenian border, and the source of the country’s best whites: local Friulano and Ribolla Gialla, as well as Pinot Grigio and Sauvignon Blanc. In the late 1990s, in the Collio village of Oslavia, Josko Gravner and Stanko Radikon went back to skin contact and clay jars and set off the worldwide revival of orange wine; Slovenia’s Brda, across the border, is the same range of hills.'],
+    text: ['意大利东北角，夹在阿尔卑斯山和亚得里亚海之间，与斯洛文尼亚接壤，出产意大利最好的白葡萄酒：有本地的弗留利诺和丽波拉，也有灰皮诺和长相思。1990 年代中后期，科利奥山区奥斯拉维亚村的拉迪孔（Stanko Radikon）和格拉夫纳（Josko Gravner）重新拾起长时间带皮发酵（拉迪孔用大橡木桶，格拉夫纳从 2001 年起改用格鲁吉亚陶罐），让橙酒在全世界复兴；边境另一侧斯洛文尼亚的布尔达是同一片山丘。',
+           'Italy’s north-east corner, between the Alps and the Adriatic on the Slovenian border, and the source of the country’s best whites: local Friulano and Ribolla Gialla, as well as Pinot Grigio and Sauvignon Blanc. From the mid-1990s, in the Collio village of Oslavia, Stanko Radikon and Josko Gravner went back to long skin contact (Radikon in big oak vats, Gravner from 2001 in Georgian qvevri) and set off the worldwide revival of orange wine; Slovenia’s Brda, across the border, is the same range of hills.'],
     spots: [
       ['奇维达莱', 'Cividale', 46.073, 13.439], ['科尔蒙斯', 'Cormòns', 45.955, 13.462], ['奥斯拉维亚', 'Oslavia', 45.971, 13.613],
       ['布尔达（斯洛文尼亚）', 'Brda (Slovenia)', 45.997, 13.527], ['乌迪内', 'Udine', 46.063, 13.236, 1]
@@ -754,8 +754,8 @@ regions: [
   { id: 'rioja', name: ['里奥哈', 'Rioja'], country: 'ES', view: 'iberia', lat: 42.44, lon: -2.40, glass: ['red'],
     climate: ['大陆性气候，受大西洋和地中海影响', 'Continental, with Atlantic and Mediterranean influence'],
     grapes: ['tempranillo', 'grenache', ['格拉西亚诺', 'Graciano'], ['马士罗', 'Mazuelo (Carignan)'], ['维奥娜', 'Viura']],
-    text: ['西班牙最有名的产区，1991 年成为第一个 DOCa（最高等级）。沿埃布罗河分成上里奥哈、阿拉维萨和东里奥哈三部分。传统上按陈年时间分级：佳酿（Crianza）至少两年、其中一年在橡木桶；珍藏（Reserva）三年、一年在桶；特级珍藏（Gran Reserva）五年、两年在桶。19 世纪末根瘤蚜摧毁法国葡萄园时，波尔多酒商来到里奥哈，带来了橡木桶陈年的做法。',
-           'Spain’s best-known region, and in 1991 its first DOCa, the top tier. It runs along the Ebro in three parts, Rioja Alta, Rioja Alavesa and Rioja Oriental. Wines are traditionally graded by age: Crianza at least two years with one in oak, Reserva three with one in oak, Gran Reserva five with two in oak. When phylloxera ruined France’s vineyards in the late 1800s, Bordeaux merchants came to Rioja and brought barrel ageing with them.'],
+    text: ['西班牙最有名的产区，1991 年成为第一个 DOCa（最高等级）。沿埃布罗河分成上里奥哈、阿拉维萨和东里奥哈三部分。传统上按陈年时间分级：佳酿（Crianza）至少两年、其中一年在橡木桶；珍藏（Reserva）三年、一年在桶；特级珍藏（Gran Reserva）五年、两年在桶。橡木桶陈年是 19 世纪 50、60 年代由穆列塔（Luciano de Murrieta）和瑞格尔侯爵（Marqués de Riscal）从波尔多学来的；之后根瘤蚜摧毁法国葡萄园，波尔多酒商纷纷来到里奥哈，让这种做法普及开来。',
+           'Spain’s best-known region, and in 1991 its first DOCa, the top tier. It runs along the Ebro in three parts, Rioja Alta, Rioja Alavesa and Rioja Oriental. Wines are traditionally graded by age: Crianza at least two years with one in oak, Reserva three with one in oak, Gran Reserva five with two in oak. Barrel ageing came from Bordeaux in the 1850s and 1860s with Luciano de Murrieta and the Marqués de Riscal; when phylloxera then ruined France’s vineyards, Bordeaux merchants came to Rioja and spread it.'],
     spots: [
       ['哈罗', 'Haro', 42.577, -2.847], ['拉瓜迪亚', 'Laguardia', 42.543, -2.581], ['洛格罗尼奥', 'Logroño', 42.466, -2.440],
       ['阿尔法罗', 'Alfaro', 42.179, -1.749]
@@ -772,11 +772,11 @@ regions: [
   { id: 'priorat', name: ['普里奥拉托', 'Priorat'], country: 'ES', view: 'iberia', lat: 41.19, lon: 0.82, glass: ['red'],
     climate: ['干燥的地中海-大陆性气候', 'Dry, Mediterranean to continental'],
     grapes: ['grenache', ['佳丽酿', 'Cariñena (Carignan)'], 'syrah', 'cabernet-sauvignon'],
-    text: ['加泰罗尼亚的山区，12 世纪建立的斯卡拉-德伊修道院在这里种下葡萄。陡坡上是黑色的板岩土 llicorella，贫瘠得葡萄只结很少的果。1980 年代末，阿尔瓦罗·帕拉西奥斯（Álvaro Palacios）等五位酿酒师在格拉塔洛普斯村重振这里，用歌海娜和佳丽酿老藤酿出浓缩强劲的红酒。2000 年，它成为继里奥哈之后西班牙第二个 DOCa（加泰罗尼亚语 DOQ）。',
-           'Mountain country in Catalonia, where the priory of Scala Dei, founded in the 12th century, planted vines. Its steep slopes are black slate, llicorella, so poor the vines give little fruit. In the late 1980s five winemakers, Álvaro Palacios among them, revived it from the village of Gratallops with dense, powerful reds from old Grenache and Carignan. In 2000 it became Spain’s second DOCa after Rioja (DOQ in Catalan).'],
+    text: ['加泰罗尼亚的山区，12 世纪建立的斯卡拉-德伊修道院在这里种下葡萄。陡坡上是黑色的板岩土 llicorella，贫瘠得葡萄只结很少的果。1980 年代末，阿尔瓦罗·帕拉西奥斯（Álvaro Palacios）等五位酿酒师在格拉塔洛普斯村重振这里，用歌海娜和佳丽酿老藤酿出浓缩强劲的红酒。2000 年加泰罗尼亚授予它最高的 DOQ 等级，2009 年得到西班牙全国承认，成为继里奥哈之后的第二个 DOCa。',
+           'Mountain country in Catalonia, where the priory of Scala Dei, founded in the 12th century, planted vines. Its steep slopes are black slate, llicorella, so poor the vines give little fruit. In the late 1980s five winemakers, Álvaro Palacios among them, revived it from the village of Gratallops with dense, powerful reds from old Grenache and Carignan. In 2000 Catalonia gave it its top tier, DOQ, recognised across Spain in 2009 as the country’s second DOCa after Rioja.'],
     spots: [
       ['斯卡拉-德伊', 'Scala Dei', 41.248, 0.811], ['波雷拉', 'Porrera', 41.189, 0.856], ['格拉塔洛普斯', 'Gratallops', 41.193, 0.777],
-      ['法尔塞特', 'Falset', 41.145, 0.820]
+      ['法尔塞特', 'Falset', 41.145, 0.820, 1]
     ] },
   { id: 'penedes', name: ['佩内德斯', 'Penedès'], country: 'ES', view: 'iberia', lat: 41.38, lon: 1.74, glass: ['white'], fizz: true,
     climate: ['地中海气候', 'Mediterranean'],
@@ -856,7 +856,7 @@ regions: [
   { id: 'tokaj', name: ['托卡伊', 'Tokaj'], country: 'HU', view: 'central', lat: 48.24, lon: 21.42, glass: ['amber'],
     climate: ['大陆性气候，秋季河雾', 'Continental, misty river autumns'],
     grapes: ['furmint', ['哈斯莱威路', 'Hárslevelű'], 'muscat'],
-    text: ['匈牙利东北部的火山丘陵，博德罗格河在这里汇入蒂萨河，秋天的河雾给贵腐菌创造了条件。托卡伊阿苏是世界上最古老的贵腐甜酒之一，据说法王路易十四称它为“王者之酒，酒中之王”。1737 年的一道王室法令划定了这里的边界，使它成为世界上最早的封闭式法定产区之一。最珍贵的爱真霓（Eszencia）是贵腐果粒靠自身重量渗出的汁，甜得惊人，酒精常常只有百分之几。',
+    text: ['匈牙利东北部的火山丘陵，博德罗格河在这里汇入蒂萨河，秋天的河雾给贵腐菌创造了条件。托卡伊阿苏是世界上最古老的贵腐甜酒之一，据说法王路易十四称它为“王者之酒，酒中之王”。1737 年的一道王室法令划定了这里的边界，使它成为世界上最早的封闭式法定产区之一。最珍贵的精华酒（Eszencia）是贵腐果粒靠自身重量渗出的汁，甜得惊人，酒精常常只有百分之几。',
            'Volcanic hills in north-east Hungary where the Bodrog meets the Tisza, and autumn river mists bring on noble rot. Tokaji Aszú is among the oldest botrytised sweet wines; Louis XIV is said to have called it “the wine of kings, the king of wines”. A royal decree drew its boundaries in 1737, making it one of the world’s first closed wine regions. The rarest wine, Eszencia, is the juice that seeps from aszú berries under their own weight: astonishingly sweet, and often only a few per cent alcohol.'],
     spots: [
       ['沙托劳尔尧乌伊海伊', 'Sátoraljaújhely', 48.396, 21.656], ['沙罗什保陶克', 'Sárospatak', 48.322, 21.566], ['托尔奇瓦', 'Tolcsva', 48.283, 21.449],
@@ -928,8 +928,8 @@ regions: [
   { id: 'columbia', name: ['哥伦比亚谷', 'Columbia Valley'], country: 'US', view: 'pnw', lat: 46.24, lon: -119.42, glass: ['red'],
     climate: ['干燥的半沙漠大陆性气候', 'Dry, semi-desert, continental'],
     grapes: ['cabernet-sauvignon', 'merlot', 'syrah', 'riesling', 'chardonnay'],
-    text: ['华盛顿州喀斯喀特山脉以东的大片半沙漠，年降雨只有 150–250 毫米，全靠哥伦比亚河等河水灌溉。纬度高，夏季白天长、夜里凉，葡萄熟得透又保得住酸度。华盛顿是美国第二大葡萄酒产地，这里的赤霞珠、梅洛、西拉和雷司令都很出色，红山和瓦拉瓦拉是有名的子产区。冬天寒冷、土壤多沙，根瘤蚜难以生存，很多葡萄不用嫁接。',
-           'A vast semi-desert east of Washington’s Cascade Mountains, with only 150 to 250 mm of rain a year, farmed with water from the Columbia and other rivers. At this latitude summer days are long and nights cool, so grapes ripen fully and keep their acidity. Washington is America’s second-largest wine state, with fine Cabernet, Merlot, Syrah and Riesling; Red Mountain and Walla Walla are well-known sub-regions. Cold winters and sandy soils keep phylloxera away, and many vines grow on their own roots.'],
+    text: ['华盛顿州喀斯喀特山脉以东的大片半沙漠，年降雨只有 150–250 毫米，全靠哥伦比亚河等河水灌溉。纬度高，夏季白天长、夜里凉，葡萄熟得透又保得住酸度。华盛顿是美国第二大葡萄酒产地，这里的赤霞珠、梅洛、西拉和雷司令都很出色，红山和瓦拉瓦拉是有名的子产区。冬天寒冷、土壤多沙，根瘤蚜长期难以立足，很多葡萄没有嫁接；不过 2019 年起，瓦拉瓦拉、雅基马谷等地已陆续发现根瘤蚜。',
+           'A vast semi-desert east of Washington’s Cascade Mountains, with only 150 to 250 mm of rain a year, farmed with water from the Columbia and other rivers. At this latitude summer days are long and nights cool, so grapes ripen fully and keep their acidity. Washington is America’s second-largest wine state, with fine Cabernet, Merlot, Syrah and Riesling; Red Mountain and Walla Walla are well-known sub-regions. Cold winters and sandy soils long kept phylloxera at bay, so many vines grow on their own roots, though since 2019 it has turned up in Walla Walla, the Yakima Valley and elsewhere.'],
     spots: [
       ['雅基马谷', 'Yakima Valley', 46.207, -119.769], ['红山', 'Red Mountain', 46.263, -119.488], ['瓦拉瓦拉', 'Walla Walla', 46.065, -118.343],
       ['马天堂山', 'Horse Heaven Hills', 45.937, -119.603], ['瓦卢克坡', 'Wahluke Slope', 46.738, -119.903]
@@ -973,8 +973,8 @@ regions: [
   { id: 'colchagua', name: ['空加瓜谷', 'Colchagua Valley'], country: 'CL', view: 'southam', lat: -34.59, lon: -71.49, glass: ['red'],
     climate: ['温暖的地中海气候', 'Warm Mediterranean'],
     grapes: ['carmenere', 'cabernet-sauvignon', 'syrah', 'malbec'],
-    text: ['圣地亚哥以南约 180 公里，属于拉佩尔谷，比迈坡更温暖，是智利佳美娜和浓郁红酒的重镇。阿帕尔塔朝北的马蹄形山坡（在南半球，朝北就是朝阳）尤其出名，蒙特斯（Montes）和拉博丝特（Lapostolle）的顶级酒都出自这里。圣克鲁斯镇是产区的中心。',
-           'About 180 km south of Santiago, part of the Rapel Valley and warmer than Maipo, a stronghold of Carménère and full-bodied reds. The horseshoe of north-facing slopes at Apalta (north is the sunny side in the southern hemisphere) is especially famous, the source of top wines from Montes and Lapostolle. The town of Santa Cruz is its centre.'],
+    text: ['圣地亚哥以南约 180 公里，属于拉佩尔谷，比迈坡更温暖，是智利佳美娜和浓郁红酒的重镇。阿帕尔塔三面环山、向南朝廷吉里里卡河敞开的马蹄形山谷尤其出名，蒙特斯（Montes）和拉博丝特（Lapostolle）的顶级酒都出自这里。圣克鲁斯镇是产区的中心。',
+           'About 180 km south of Santiago, part of the Rapel Valley and warmer than Maipo, a stronghold of Carménère and full-bodied reds. The horseshoe of hills at Apalta, open to the south over the Tinguiririca river, is especially famous, the source of top wines from Montes and Lapostolle. The town of Santa Cruz is its centre.'],
     spots: [
       ['圣克鲁斯', 'Santa Cruz', -34.640, -71.366], ['阿帕尔塔', 'Apalta', -34.635, -71.323], ['洛洛尔', 'Lolol', -34.728, -71.644],
       ['马尔奇圭', 'Marchigüe', -34.367, -71.642]
@@ -1013,13 +1013,13 @@ regions: [
     text: ['开普敦以北的“黑土地”，得名于一种颜色发暗的本地灌木，原本是种麦子的地方。夏天炎热干燥，很多老藤不灌溉，以灌木式生长。2000 年代起，伊本·萨迪（Eben Sadie）等年轻酿酒师用这里的白诗南老藤和罗讷品种酿出自然而有张力的酒，掀起“斯瓦特兰革命”，这里成了南非最受关注的产区。',
            'The “black land” north of Cape Town, named for a dark native shrub, and once wheat country. Summers are hot and dry, and many old vines grow as unirrigated bush vines. From the 2000s young winemakers led by Eben Sadie made vivid, natural wines from its old-vine Chenin Blanc and Rhône grapes, the “Swartland Revolution”, and it became South Africa’s most talked-about region.'],
     spots: [
-      ['里贝克-卡斯蒂尔', 'Riebeek-Kasteel', -33.385, 18.896], ['马姆斯伯里', 'Malmesbury', -33.460, 18.724], ['达令', 'Darling', -33.376, 18.379]
+      ['里贝克-卡斯蒂尔', 'Riebeek-Kasteel', -33.385, 18.896], ['马姆斯伯里', 'Malmesbury', -33.460, 18.724]
     ] },
   { id: 'constantia', name: ['康斯坦提亚', 'Constantia'], country: 'ZA', view: 'cape', lat: -34.03, lon: 18.42, glass: ['amber'],
     climate: ['凉爽，两面受海洋影响', 'Cool, between two oceans'],
     grapes: ['muscat', 'sauvignon-blanc', 'semillon'],
-    text: ['开普敦南郊、桌山背后，是南非最早的葡萄园，1685 年由开普总督西蒙·范德斯泰尔（Simon van der Stel）建立。18、19 世纪，这里用麝香葡萄酿的甜酒 Vin de Constance 风靡欧洲宫廷，据说流放在圣赫勒拿岛的拿破仑每月都要喝。根瘤蚜之后它消失了约一百年，直到 1986 年才重新酿造。如今这里凉爽的山坡也出产出色的长相思。',
-           'Behind Table Mountain on Cape Town’s southern edge lie South Africa’s oldest vineyards, founded in 1685 by the Cape governor Simon van der Stel. In the 18th and 19th centuries its sweet Muscat, Vin de Constance, was the toast of European courts; Napoleon, exiled on St Helena, is said to have drunk it every month. It disappeared for about a century after phylloxera and was revived only in 1986. Today its cool slopes also make fine Sauvignon Blanc.'],
+    text: ['开普敦南郊、桌山背后，有南非最古老的葡萄酒庄园之一，1685 年由开普总督西蒙·范德斯泰尔（Simon van der Stel）建立；南非最早的葡萄酒是 1659 年范里贝克（Jan van Riebeeck）在开普敦酿出的。18、19 世纪，这里用麝香葡萄酿的甜酒 Vin de Constance 风靡欧洲宫廷，据说流放在圣赫勒拿岛的拿破仑每月都要喝。根瘤蚜之后它消失了约一百年，直到 1986 年才重新酿造。如今这里凉爽的山坡也出产出色的长相思。',
+           'Behind Table Mountain on Cape Town’s southern edge lies one of South Africa’s oldest wine estates, founded in 1685 by the Cape governor Simon van der Stel; the Cape’s first wine had been made in Cape Town by Jan van Riebeeck in 1659. In the 18th and 19th centuries its sweet Muscat, Vin de Constance, was the toast of European courts; Napoleon, exiled on St Helena, is said to have drunk it every month. It disappeared for about a century after phylloxera and was revived only in 1986. Today its cool slopes also make fine Sauvignon Blanc.'],
     spots: [
       ['格鲁特康斯坦提亚', 'Groot Constantia', -34.030, 18.418], ['开普敦', 'Cape Town', -33.929, 18.417, 1]
     ] },
@@ -1062,7 +1062,7 @@ regions: [
   { id: 'margaret-river', name: ['玛格丽特河', 'Margaret River'], country: 'AU', view: 'oceania', lat: -33.85, lon: 115.07, glass: ['red', 'white'],
     climate: ['温和的海洋性气候', 'Mild, maritime'],
     grapes: ['cabernet-sauvignon', 'chardonnay', 'semillon', 'sauvignon-blanc', 'merlot'],
-    text: ['西澳西南角伸进印度洋的一片海岬，西、南两面临海，气候温和稳定，年份差异小。1960 年代的研究认为它的气候和波尔多相近，1967 年瓦斯·菲利斯（Vasse Felix）种下了第一批葡萄。如今以优雅的赤霞珠和霞多丽著称，鲁文酒庄（Leeuwin Estate）的“艺术系列”霞多丽是澳大利亚最有名的白葡萄酒之一。',
+    text: ['西澳西南角伸进印度洋的一片海岬，西、南两面临海，气候温和稳定，年份差异小。1960 年代的研究认为它的气候和波尔多相近，1967 年瓦斯·菲利斯（Vasse Felix）种下了第一批葡萄。如今以优雅的赤霞珠和霞多丽著称，露纹酒庄（Leeuwin Estate）的“艺术系列”霞多丽是澳大利亚最有名的白葡萄酒之一。',
            'A cape in Western Australia’s south-west corner, with the Indian Ocean to the west and south and a mild, steady climate that varies little from year to year. Studies in the 1960s found its climate close to Bordeaux’s, and Vasse Felix planted the first vines in 1967. It is now known for elegant Cabernet and Chardonnay; Leeuwin Estate’s Art Series Chardonnay is among Australia’s most famous whites.'],
     spots: [
       ['雅林古普', 'Yallingup', -33.640, 115.026], ['维亚布鲁普', 'Wilyabrup', -33.795, 115.046], ['科瓦拉穆普', 'Cowaramup', -33.851, 115.103],
@@ -1071,7 +1071,7 @@ regions: [
   { id: 'yarra', name: ['雅拉谷', 'Yarra Valley'], country: 'AU', view: 'oceania', lat: -37.70, lon: 145.49, glass: ['red', 'white'],
     climate: ['凉爽', 'Cool'],
     grapes: ['pinot-noir', 'chardonnay', 'syrah', 'cabernet-sauvignon'],
-    text: ['墨尔本东北约一小时车程，是维多利亚州最早的产区，1838 年就种下了葡萄。气候凉爽，以优雅的黑皮诺、霞多丽和起泡酒著称，酩悦香槟在这里建了香桐酒庄（Domaine Chandon）。',
+    text: ['墨尔本东北约一小时车程，是维多利亚州最早的产区，1838 年就种下了葡萄。气候凉爽，以优雅的黑皮诺、霞多丽和起泡酒著称，酩悦香槟在这里建了夏桐酒庄（Domaine Chandon）。',
            'About an hour north-east of Melbourne and Victoria’s first wine region, planted in 1838. It is cool and known for elegant Pinot Noir, Chardonnay and sparkling wine; Moët & Chandon set up Domaine Chandon here.'],
     spots: [
       ['雅拉格伦', 'Yarra Glen', -37.657, 145.374], ['科尔德斯特里姆', 'Coldstream', -37.729, 145.378], ['希尔斯维尔', 'Healesville', -37.654, 145.516],
@@ -1134,8 +1134,8 @@ regions: [
   { id: 'hebei', name: ['河北怀来与昌黎', 'Hebei (Huailai, Changli)'], country: 'CN', view: 'china', lat: 40.35, lon: 115.60, glass: ['red'],
     climate: ['干燥多风，昼夜温差大', 'Dry and windy, cold nights'],
     grapes: ['cabernet-sauvignon', 'marselan', 'chardonnay', ['龙眼', 'Longyan']],
-    text: ['离北京最近的产区。西北的怀来盆地夹在燕山和太行山余脉之间，桑干河、洋河流过，风大、干燥、昼夜温差大。1979 年，中国第一瓶干白在怀来沙城用本地古老的龙眼葡萄酿成；2001 年前后，马瑟兰也最先在这里的中法合作葡萄园试种。东边靠近渤海的昌黎是另一个老产区，以赤霞珠见长。',
-           'The region closest to Beijing. To the north-west, the Huailai basin between the Yan and Taihang ranges, crossed by the Sanggan and Yang rivers, is windy and dry with cold nights. China’s first dry white wine was made at Shacheng, in Huailai, in 1979, from the old local Longyan grape, and around 2001 Marselan was first planted in China at the Sino-French vineyard here. Changli, to the east near the Bohai Sea, is another long-established area, best known for Cabernet Sauvignon.'],
+    text: ['紧挨北京的产区。西北的怀来盆地和北京的延庆连成一片，合称延怀河谷，夹在燕山和太行山余脉之间，桑干河、洋河流过，风大、干燥、昼夜温差大。1979 年，中国第一瓶干白在怀来沙城用本地古老的龙眼葡萄酿成；2001 年前后，马瑟兰也最先在这里的中法合作葡萄园试种。东边靠近渤海的昌黎是另一个老产区，以赤霞珠见长。',
+           'Wine country on Beijing’s doorstep. To the north-west, the Huailai basin, which runs into Beijing’s Yanqing as the Yanhuai valley, lies between the Yan and Taihang ranges; crossed by the Sanggan and Yang rivers, it is windy and dry with cold nights. China’s first dry white wine was made at Shacheng, in Huailai, in 1979, from the old local Longyan grape, and around 2001 Marselan was first planted in China at the Sino-French vineyard here. Changli, to the east near the Bohai Sea, is another long-established area, best known for Cabernet Sauvignon.'],
     spots: [
       ['怀来', 'Huailai', 40.415, 115.518], ['昌黎', 'Changli', 39.704, 119.161], ['北京', 'Beijing', 39.906, 116.391, 1]
     ] }
