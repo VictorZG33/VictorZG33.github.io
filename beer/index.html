@@ -39,6 +39,7 @@
   --accent-soft: #DDE9D3;
   --dot: #8A8070;           /* unselected marks in the charts */
   --glass: rgba(31, 27, 22, 0.55);
+  --err: #B3261E;
   /* the four main hop oils, and the rest */
   --oil-1: #1baf7a; --oil-2: #eda100; --oil-3: #e87ba4; --oil-4: #6250d6; --oil-x: #BDB4A6;
   --font-cjk: "Noto Serif SC", "Songti SC", "STSong", "Source Han Serif SC", "SimSun", serif;
@@ -49,14 +50,14 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #13110E; --surface: #1C1814; --fg: #EDE6D9; --muted: #A0968A; --rule: #2E2822; --rule-strong: #564C40;
-    --accent: #8CC46A; --accent-soft: #24331B; --dot: #8C8273; --glass: rgba(237, 230, 217, 0.5);
+    --accent: #8CC46A; --accent-soft: #24331B; --dot: #8C8273; --glass: rgba(237, 230, 217, 0.5); --err: #F0806F;
     --oil-1: #199e70; --oil-2: #c98500; --oil-3: #d55181; --oil-4: #9085e9; --oil-x: #5C5348;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #13110E; --surface: #1C1814; --fg: #EDE6D9; --muted: #A0968A; --rule: #2E2822; --rule-strong: #564C40;
-  --accent: #8CC46A; --accent-soft: #24331B; --dot: #8C8273; --glass: rgba(237, 230, 217, 0.5);
+  --accent: #8CC46A; --accent-soft: #24331B; --dot: #8C8273; --glass: rgba(237, 230, 217, 0.5); --err: #F0806F;
   --oil-1: #199e70; --oil-2: #c98500; --oil-3: #d55181; --oil-4: #9085e9; --oil-x: #5C5348;
   color-scheme: dark;
 }
@@ -265,6 +266,51 @@ section.block { padding-top: 40px; }
 .oilkey b { color: var(--fg); font-weight: 600; }
 .src { margin: 12px 0 0; font-size: 12px; color: var(--muted); }
 
+/* 04: the calculator and the questions */
+.calc { margin-top: 0; }
+.calc-h { font-size: 18px; line-height: 1.3; }
+.lang-zh .calc-h { font-family: var(--font-cjk); font-weight: 900; letter-spacing: 0.03em; }
+.lang-en .calc-h { font-family: var(--font-latin); font-weight: 600; }
+.calc-hint { font-size: 13px; color: var(--muted); margin: 4px 0 12px; max-width: 46em; }
+.calc-presets { margin-bottom: 14px; }
+.calc-in { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 20px; }
+.fld { min-width: 0; }
+.fld label, .fld .lbl { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+.pair { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.pair input {
+  width: 6.4em; min-width: 0; font: 600 16px/1.2 var(--font-body); font-variant-numeric: tabular-nums; color: var(--fg);
+  background: var(--bg); border: 1px solid var(--rule-strong); border-radius: 6px; padding: 7px 8px;
+}
+.pair input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.pair input[aria-invalid="true"] { border-color: var(--err); }
+.pair .u { font-size: 12px; color: var(--muted); margin-right: 8px; }
+.calc-err { margin: 10px 0 0; font-size: 13px; color: var(--err); }
+.calc-out { margin-top: 16px; }
+.calc.stale .calc-out, .calc.stale .kcal { opacity: 0.45; }
+.kcal { margin-top: 14px; }
+.kcal h4 { margin: 0 0 8px; font-size: 13px; font-weight: 600; }
+.oilbar .k1 { background: var(--oil-4); color: #fff; } .oilbar .k2 { background: var(--oil-2); color: #0b0b0b; }
+@media (max-width: 560px) { .calc-in { grid-template-columns: minmax(0, 1fr); } }
+.qa { margin-top: 26px; }
+.qa-item { border-top: 1px solid var(--rule); padding: 18px 0 4px; scroll-margin-top: 12px; }
+.qa-q { font-size: 20px; line-height: 1.35; text-wrap: balance; }
+.lang-zh .qa-q { font-family: var(--font-cjk); font-weight: 900; letter-spacing: 0.02em; }
+.lang-en .qa-q { font-family: var(--font-latin); font-weight: 600; }
+.qa-short { margin: 8px 0 0; font-size: 15.5px; line-height: 1.65; max-width: 42em; }
+details.qa-more { border-top: 0; }
+.qa-more summary { justify-content: flex-start; gap: 8px; padding: 10px 0 12px; font-size: 13.5px; color: var(--accent); }
+.qa-body { font-size: 15px; line-height: 1.7; max-width: 42em; padding-bottom: 12px; }
+.qa-body h4 { margin: 18px 0 6px; font-size: 16px; line-height: 1.4; }
+.qa-body h4:first-child { margin-top: 2px; }
+.lang-zh .qa-body h4 { font-family: var(--font-cjk); font-weight: 900; letter-spacing: 0.03em; }
+.lang-en .qa-body h4 { font-family: var(--font-latin); font-weight: 600; }
+.qa-body p { margin: 0 0 10px; }
+.qa-body ul { margin: 0 0 12px; padding-left: 1.25em; list-style: disc; }
+.qa-body li { margin: 0 0 8px; }
+.qa-body li::marker { color: var(--muted); }
+.qa-body b { font-weight: 600; }
+.qa-refs { font-size: 12.5px; color: var(--muted); margin: 4px 0 0; }
+
 /* the numbers as tables */
 .tables { margin-top: 18px; }
 details { border-top: 1px solid var(--rule); }
@@ -396,6 +442,27 @@ footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 15p
       </figure>
     </section>
 
+    <section class="block" id="sweet" aria-labelledby="sweet-h">
+      <h2 class="sec" id="sweet-h"><span class="num">04</span><span class="t" id="sweet-t"></span></h2>
+      <p class="intro" id="sweet-intro"></p>
+      <div class="card calc" id="calc">
+        <h3 class="calc-h" id="calc-h"></h3>
+        <p class="calc-hint" id="calc-hint"></p>
+        <div class="chips calc-presets" id="calc-presets" role="group"></div>
+        <div class="calc-in">
+          <div class="fld"><label for="c-og" id="l-og"></label><div class="pair"><input id="c-og" type="number" inputmode="decimal" step="0.001" min="1.02" max="1.15"><span class="u">SG</span><input id="c-ogp" type="number" inputmode="decimal" step="0.1" min="5" max="34" aria-labelledby="l-og u-ogp"><span class="u" id="u-ogp">°P</span></div></div>
+          <div class="fld"><label for="c-fg" id="l-fg"></label><div class="pair"><input id="c-fg" type="number" inputmode="decimal" step="0.001" min="0.99" max="1.1"><span class="u">SG</span><input id="c-fgp" type="number" inputmode="decimal" step="0.1" min="-2.5" max="24" aria-labelledby="l-fg u-fgp"><span class="u" id="u-fgp">°P</span></div></div>
+          <div class="fld"><label for="c-abv" id="l-abv"></label><div class="pair"><input id="c-abv" type="number" inputmode="decimal" step="0.1" min="0" max="20"><span class="u">% vol</span></div></div>
+          <div class="fld"><span class="lbl" id="l-vol"></span><div class="seg" id="c-vol" role="group" aria-labelledby="l-vol"><button type="button" data-v="330">330 mL</button><button type="button" data-v="355">355 mL</button><button type="button" data-v="473">473 mL</button><button type="button" data-v="500">500 mL</button></div></div>
+        </div>
+        <p class="calc-err" id="calc-err" role="alert" hidden></p>
+        <dl class="vitals calc-out" id="calc-out"></dl>
+        <div class="kcal"><h4 id="kcal-h"></h4><div class="oilbar" id="kcal-bar" role="img"></div><div class="oilkey" id="kcal-key"></div></div>
+        <p class="chart-note" id="calc-note"></p>
+      </div>
+      <div class="qa" id="qa"></div>
+    </section>
+
     <div class="tables">
       <details id="t-styles"><summary id="t-styles-h"></summary><div class="tbl" id="t-styles-body"></div></details>
       <details id="t-hops"><summary id="t-hops-h"></summary><div class="tbl" id="t-hops-body"></div></details>
@@ -419,6 +486,8 @@ footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 15p
   var root = document.documentElement;
   var STYLE = {}, HOP = {};
   D.STYLES.forEach(function (s) { STYLE[s.id] = s; });
+  var QA = {};
+  (D.QA || []).forEach(function (q) { QA[q.id] = q; });
   D.HOPS.forEach(function (h) {
     HOP[h.id] = h;
     h.usedIn = D.STYLES.filter(function (s) { return s.hops.indexOf(h.id) >= 0; }).map(function (s) { return s.id; });
@@ -450,7 +519,7 @@ footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 15p
       srmHint: '拖动色条，看它从最浅到最深的样子',
       srmAria: '预览颜色（SRM）',
       steps: { malt: ['麦芽', 'Grain'], mash: ['糖化', 'Mash'], boil: ['煮沸', 'Boil'], ferment: ['发酵', 'Ferment'], cond: ['熟成', 'Condition'] },
-      facts: { serve: '侍酒', hops: '酒花', ex: '代表酒款', bjcp: 'BJCP' },
+      facts: { serve: '侍酒', hops: '酒花', ex: '代表酒款', bjcp: 'BJCP', read: '延伸阅读' },
       serve: function (g, a, b) { return g + ' · ' + a + '–' + b + '°C'; },
       glassAria: function (name, srm, glass) { return name + '，' + srm + ' SRM，盛在' + glass + '里'; },
       smapH: '风格地图',
@@ -461,7 +530,7 @@ footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 15p
       smapAria: function (n) { return n + ' 种啤酒风格按颜色和苦度排开的散点图，具体数字见下方的表格。'; },
       tipStyle: function (s) { return [['颜色', fr(s.srm) + ' SRM'], ['苦度', fr(s.ibu) + ' IBU'], ['酒精度', fr(s.abv) + '%']]; },
       hops: '酒花',
-      hopsIntro: '酒花是蛇麻（<i>Humulus lupulus</i>）雌株的花，一个个绿色的小球果。苞片根部金黄色的蛇麻腺里藏着两样关键的东西：<b>α 酸</b>，煮沸时异构化，变成苦味；<b>精油</b>，易挥发，决定香气。欧洲传统的“贵族酒花”α 酸低、香气细腻；美国和南半球培育的新品种 α 酸和精油都多，带着柑橘和热带水果的香。',
+      hopsIntro: '酒花是蛇麻（<i>Humulus lupulus</i>）雌株的花，一个个绿色的小球果。苞片根部金黄色的蛇麻腺里藏着两样关键的东西：<b>α 酸</b>，煮沸时异构化，变成苦味；<b>精油</b>，易挥发，决定香气。欧洲传统的“贵族酒花”α 酸低、香气细腻；美国和南半球培育的新品种 α 酸和精油都多，带着柑橘和热带水果的香。中国也种酒花，大多种在新疆和甘肃的河西走廊，以青岛大花（Tsingtao Flower）为主。',
       use: { aroma: '香型', bitter: '苦型', dual: '两用' },
       hopKicker: function (o, use) { return o + ' · ' + use; },
       hopMeta: function (h) { return [h.local, t(h.p), h.y ? t(h.y) : ''].filter(Boolean).join(' · '); },
@@ -482,10 +551,34 @@ footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 15p
       tStyles: '所有风格的数字',
       tHops: '所有酒花的数字',
       th: { style: '风格', og: '原麦汁', fg: '最终比重', abv: '酒精度', ibu: '苦度', srm: 'SRM', hop: '酒花', origin: '产地', use: '用途', alpha: 'α 酸', beta: 'β 酸', oil: '总油量' },
+      sweet: '残糖与甜感',
+      sweetIntro: '糖化留下多少糖、酵母吃掉多少，决定了一杯啤酒的酒体、甜感和热量。先用计算器算一杯，再看两个常被问到的问题。',
+      calcH: '算一杯：酒里还剩什么',
+      calcHint: '改原麦汁浓度或最终比重，酒精度跟着变；改酒精度，最终比重跟着变。国产啤酒标签上的“原麦汁浓度”就是 °P，配上标签上的酒精度，就够算出剩下的浸出物和热量。',
+      presets: { style: function (n) { return '当前风格：' + n; }, ddh: '浑浊双倍 IPA', wc: '西海岸 IPA', cn: '国产拉格 9°P · 3.6%', stout: '帝国世涛' },
+      presetsAria: '代入一杯酒的数字',
+      lOg: '原麦汁浓度', lFg: '最终比重', lAbv: '酒精度', lVol: '份量',
+      out: { abv: '酒精度', ae: '表观浸出物', re: '真实浸出物', att: '发酵度', kcal: '热量', wine: '按重量，相当于' },
+      abvSmall: function (abw) { return '按重量 ' + abw + '%'; },
+      aeSmall: '比重计读到的',
+      reSmall: function (g) { return '每升约 ' + g + ' 克'; },
+      att: function (a, r) { return '表观 ' + a + '%'; },
+      attSmall: function (r) { return '真实 ' + r + '%'; },
+      kcal: function (k) { return k + ' 千卡'; },
+      kcalSmall: function (v) { return '每 ' + v + ' 毫升'; },
+      wine: function (g) { return g <= 4 ? ['干型葡萄酒的残糖', '欧盟标签：每升 4 克以下'] : g <= 12 ? ['半干葡萄酒的残糖', '欧盟标签：每升 4–12 克'] : g <= 45 ? ['半甜葡萄酒的残糖', '欧盟标签：每升 12–45 克'] : ['甜型葡萄酒的残糖', '欧盟标签：每升 45 克以上']; },
+      kcalH: '热量从哪里来',
+      kcalParts: [['酒精', '每克约 7 千卡'], ['浸出物', '糊精、糖和蛋白质，每克约 4 千卡']],
+      kcalAria: function (a, e) { return '热量：酒精占 ' + a + '%，浸出物占 ' + e + '%。'; },
+      calcNote: '浸出物是酒里除了水和酒精以外溶着的一切。比重计读到的“表观浸出物”偏低，因为酒精比水轻；按 Balling 的公式把酒精的影响扣回去，才是真实浸出物。它的七八成是几乎不甜的糊精，所以一杯按重量和甜型葡萄酒差不多的 IPA，并不真有那么多糖：下面第一个问题讲的就是这个。',
+      err: { og: '原麦汁要在 1.020 到 1.150 之间（5–34°P）。', fg: '最终比重要比原麦汁低，也不能低于 0.990。', abv: '这么高的酒精度，原麦汁不够。' },
+      more: '展开全文',
+      refs: '参考：',
       methodH: '怎么算的',
       method: '<p><span class="k">颜色</span><br>SRM 的定义是 1 厘米厚的啤酒在 430 nm 处吸光度的 12.7 倍（ASBC Beer-10A），EBC 约为 SRM 的 1.97 倍。其他波长的吸收，用 A. J. deLange 从 99 种啤酒得出的平均光谱：<code>A(λ) = SRM/12.7 × (0.018747 e<sup>−(λ−430)/13.374</sup> + 0.98226 e<sup>−(λ−430)/80.514</sup>)</code>。杯子里每个像素的颜色，都是日光（D65）穿过那一点的啤酒之后剩下的光：按 Beer–Lambert 定律逐个波长衰减，再用 CIE 1931 标准观察者换算成 sRGB，和主页上薄膜颜色的算法一样。光在圆杯里走过的距离是 2√(R² − x²)，所以杯子中间深、边缘浅；杯子按常见的内径和高度等比例画。超出 sRGB 色域的颜色，保持亮度降低饱和度。这个模型假定啤酒是澄清的，浑浊的风格另外盖了一层乳白，只是示意；颜色和平均光谱差得远的啤酒（比如樱桃兰比克）也算不准。</p>' +
               '<p><span class="k">风格的数字</span><br>原麦汁浓度、最终比重、酒精度、苦度和颜色都是 BJCP 2021 风格指南给的范围，卡片下方标着对应的分类号。°P（柏拉图度，国产啤酒标签上的“原麦汁浓度”）由比重按 ASBC 的多项式换算。发酵度 = (OG − FG) ÷ (OG − 1)；苦甜比 BU:GU = IBU ÷ ((OG − 1) × 1000)，是酿酒师衡量苦和麦芽是否平衡的老办法，0.5 左右算平衡，越高越苦。这两项都按范围的中间值计算。</p>' +
               '<p><span class="k">酒花的数字</span><br>α 酸、β 酸、合葎草酮和精油的范围，来自各品种的育种者或原产地种植商、经销商公布的规格，每种酒花下面列着来源。精油组成按各成分范围的中间值画，剩下的归为“其他”。每年的收成和产地不同，实际数字会有出入。</p>' +
+              '<p><span class="k">计算器</span><br>°P 和比重互换用 ASBC 的多项式和它常用的反函数。真实浸出物按 Balling 的关系 RE = 0.1808 × OE + 0.8192 × AE，OE、AE 是原麦汁和最终比重换成的 °P；按重量的酒精度 ABW = (OE − RE) ÷ (2.0665 − 0.010665 × OE)，按体积 ABV = ABW × FG ÷ 0.794。热量（千卡）= (6.9 × ABW + 4.0 × (RE − 0.1)) × FG × 毫升数 ÷ 100：酒精每克约 7 千卡，浸出物扣掉约 0.1% 的矿物质后每克约 4 千卡。和葡萄酒的比较用欧盟标签的残糖分级：干型 4 克/升以下，半干 12 克以下，半甜 45 克以下，甜型 45 克以上。</p>' +
               '<p><span class="k">酿法</span><br>每种风格的步骤根据 BJCP 指南里的历史和原料说明，以及酒厂公开的做法整理，写的是传统或典型的做法，不是唯一的做法。</p>',
       footSig: '原麦汁',
       footNote: '数字是风格的范围，不是规矩；很多好喝的啤酒都出了格。',
@@ -516,7 +609,7 @@ footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 15p
       srmHint: 'Drag along the strip to see it from palest to darkest',
       srmAria: 'Preview colour (SRM)',
       steps: { malt: ['Grain', ''], mash: ['Mash', ''], boil: ['Boil', ''], ferment: ['Ferment', ''], cond: ['Condition', ''] },
-      facts: { serve: 'Serve', hops: 'Hops', ex: 'Classics', bjcp: 'BJCP' },
+      facts: { serve: 'Serve', hops: 'Hops', ex: 'Classics', bjcp: 'BJCP', read: 'Read on' },
       serve: function (g, a, b) { return 'In a ' + g + ' at ' + a + '–' + b + ' °C'; },
       glassAria: function (name, srm, glass) { return name + ', ' + srm + ' SRM, in a ' + glass; },
       smapH: 'The style map',
@@ -527,7 +620,7 @@ footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 15p
       smapAria: function (n) { return 'Scatter plot of ' + n + ' beer styles by colour and bitterness; the table below gives the numbers.'; },
       tipStyle: function (s) { return [['Colour', fr(s.srm) + ' SRM'], ['Bitterness', fr(s.ibu) + ' IBU'], ['Alcohol', fr(s.abv) + '%']]; },
       hops: 'Hops',
-      hopsIntro: 'Hops are the cones of the female hop plant, <i>Humulus lupulus</i>. Golden lupulin glands at the base of their bracts hold the two things that matter: <b>alpha acids</b>, which the boil turns bitter, and <b>essential oils</b>, volatile, which carry the aroma. Europe’s traditional “noble” hops are low in alpha acid and delicate in aroma; the newer American and southern-hemisphere varieties are rich in both, with citrus and tropical fruit.',
+      hopsIntro: 'Hops are the cones of the female hop plant, <i>Humulus lupulus</i>. Golden lupulin glands at the base of their bracts hold the two things that matter: <b>alpha acids</b>, which the boil turns bitter, and <b>essential oils</b>, volatile, which carry the aroma. Europe’s traditional “noble” hops are low in alpha acid and delicate in aroma; the newer American and southern-hemisphere varieties are rich in both, with citrus and tropical fruit. China grows hops too, mostly in Xinjiang and Gansu’s Hexi Corridor, and mostly Tsingtao Flower.',
       use: { aroma: 'aroma', bitter: 'bittering', dual: 'dual-purpose' },
       hopKicker: function (o, use) { return o + ' · ' + use; },
       hopMeta: function (h) { return [h.local !== h.n[1] ? h.local : '', t(h.p), h.y ? t(h.y) : ''].filter(Boolean).join(' · '); },
@@ -548,10 +641,34 @@ footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 15p
       tStyles: 'All the styles’ numbers',
       tHops: 'All the hops’ numbers',
       th: { style: 'Style', og: 'OG', fg: 'FG', abv: 'ABV', ibu: 'IBU', srm: 'SRM', hop: 'Hop', origin: 'From', use: 'Use', alpha: 'Alpha', beta: 'Beta', oil: 'Oil' },
+      sweet: 'Sugar and sweetness',
+      sweetIntro: 'How much sugar the mash leaves, and how much of it the yeast eats, decide a beer’s body, its sweetness and its calories. Work out a glass with the calculator, then read two questions people often ask.',
+      calcH: 'Work out a glass: what’s left in it',
+      calcHint: 'Change the original or final gravity and the alcohol follows; change the alcohol and the final gravity follows. Chinese labels give the original gravity in °P (原麦汁浓度) beside the alcohol, which is enough to work out the rest.',
+      presets: { style: function (n) { return 'This style: ' + n; }, ddh: 'Hazy double IPA', wc: 'West Coast IPA', cn: 'Chinese lager, 9 °P, 3.6%', stout: 'Imperial stout' },
+      presetsAria: 'Fill in a beer’s numbers',
+      lOg: 'Original gravity', lFg: 'Final gravity', lAbv: 'Alcohol', lVol: 'Serving',
+      out: { abv: 'Alcohol', ae: 'Apparent extract', re: 'Real extract', att: 'Attenuation', kcal: 'Energy', wine: 'By weight, like the sugar in a' },
+      abvSmall: function (abw) { return abw + '% by weight'; },
+      aeSmall: 'what a hydrometer reads',
+      reSmall: function (g) { return 'about ' + g + ' g a litre'; },
+      att: function (a) { return a + '% apparent'; },
+      attSmall: function (r) { return r + '% real'; },
+      kcal: function (k) { return k + ' kcal'; },
+      kcalSmall: function (v) { return 'in ' + v + ' mL'; },
+      wine: function (g) { return g <= 4 ? ['dry wine', 'under 4 g/L of sugar'] : g <= 12 ? ['medium-dry wine', '4–12 g/L of sugar'] : g <= 45 ? ['medium-sweet wine', '12–45 g/L of sugar'] : ['sweet wine', 'EU labels: over 45 g/L of sugar']; },
+      kcalH: 'Where the calories come from',
+      kcalParts: [['Alcohol', 'about 7 kcal a gram'], ['Extract', 'dextrins, sugars and protein, about 4 kcal a gram']],
+      kcalAria: function (a, e) { return 'Energy: ' + a + '% from alcohol, ' + e + '% from extract.'; },
+      calcNote: 'The extract is everything dissolved in the beer besides water and alcohol. A hydrometer reads it low, as the apparent extract, because alcohol is lighter than water; Balling’s formula puts the alcohol back to give the real extract. Seven or eight tenths of it are dextrins, which are barely sweet, so an IPA that weighs in like a sweet wine is nowhere near as sugary: that is the first question below.',
+      err: { og: 'Keep the original gravity between 1.020 and 1.150 (5–34 °P).', fg: 'The final gravity has to be below the original, and no lower than 0.990.', abv: 'That much alcohol needs a higher original gravity.' },
+      more: 'Read the full answer',
+      refs: 'References: ',
       methodH: 'How it is computed',
       method: '<p><span class="k">Colour</span><br>SRM is 12.7 times the absorbance of 1 cm of beer at 430 nm (ASBC Beer-10A); EBC is about 1.97 times SRM. At other wavelengths the absorbance follows A. J. deLange’s average spectrum of 99 beers: <code>A(λ) = SRM/12.7 × (0.018747 e<sup>−(λ−430)/13.374</sup> + 0.98226 e<sup>−(λ−430)/80.514</sup>)</code>. Every pixel of a glass is the daylight (D65) left after crossing the beer at that point, attenuated wavelength by wavelength by the Beer–Lambert law and turned into sRGB with the CIE 1931 observer, the same way the homepage computes a film’s colour. Light crosses 2√(R² − x²) of a round glass, so the middle is darker than the edges; the glasses are drawn to scale from typical inside dimensions. Colours outside sRGB lose saturation at constant luminance. The model assumes clear beer, so hazy styles get a milky layer that is only a sketch, and beers far from the average spectrum, such as a cherry lambic, come out wrong.</p>' +
               '<p><span class="k">The style numbers</span><br>Original and final gravity, alcohol, bitterness and colour are the ranges of the BJCP 2021 Style Guidelines, by the category under each card. Degrees Plato, the unit on Chinese and Czech labels, come from the gravity by the ASBC polynomial. Attenuation is (OG − FG) ÷ (OG − 1); BU:GU is IBU ÷ ((OG − 1) × 1000), the brewer’s old measure of bitterness against malt, balanced near 0.5 and more bitter the higher it goes. Both are taken at the middle of the ranges.</p>' +
               '<p><span class="k">The hop numbers</span><br>Alpha and beta acids, cohumulone and oils are the ranges published by each variety’s breeder or by the growers and merchants of its home country; the sources are listed under each hop. The oil bar uses the middle of each range and calls the rest “other”. Crops vary from year to year and farm to farm.</p>' +
+              '<p><span class="k">The calculator</span><br>Degrees Plato and gravity convert by the ASBC polynomial and its usual inverse. The real extract follows Balling: RE = 0.1808 × OE + 0.8192 × AE, with OE and AE the original and final gravity in °P. Alcohol by weight is ABW = (OE − RE) ÷ (2.0665 − 0.010665 × OE), and by volume ABV = ABW × FG ÷ 0.794. Energy, in kcal, is (6.9 × ABW + 4.0 × (RE − 0.1)) × FG × millilitres ÷ 100: about 7 kcal a gram of alcohol and 4 a gram of extract, less about 0.1% for minerals. The comparison with wine uses the EU’s label bands for residual sugar: dry under 4 g/L, medium dry under 12, medium sweet under 45, sweet above.</p>' +
               '<p><span class="k">The brewing steps</span><br>Each style’s steps follow the history and ingredients notes of the BJCP guidelines and what the breweries say about their own methods. They describe the traditional or typical way, not the only one.</p>',
       footSig: 'Original Gravity',
       footNote: 'The numbers are ranges, not rules; plenty of good beer breaks them.',
@@ -581,8 +698,10 @@ footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 15p
     var s = (+x).toFixed(d);
     return d ? s.replace(/\.?0+$/, '') : s;
   }
-  function fr(r, d) {   // a range as text, at most d decimals (default: as given)
-    var a = d == null ? String(r[0]) : num(r[0], d), b = d == null ? String(r[1]) : num(r[1], d);
+  function fr(r, d) {   // a range as text, at most d decimals (default: as given); [null, x] is "up to x"
+    var b = d == null ? String(r[1]) : num(r[1], d);
+    if (r[0] == null) return '≤' + b;
+    var a = d == null ? String(r[0]) : num(r[0], d);
     return a === b ? a : a + '–' + b;
   }
   function sg(r) { return r[0].toFixed(3) + '–' + r[1].toFixed(3); }
@@ -796,6 +915,9 @@ footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 15p
     renderStyleFilter(); renderStyleChips(); renderStyle(); renderStyleMap();
     renderHopFilter(); renderHopChips(); renderHop(); renderHopMap();
     renderTables();
+    $('sweet-t').textContent = Tx.sweet;
+    $('sweet-intro').textContent = Tx.sweetIntro;
+    renderCalc(); renderQA();
     document.title = Tx.title(t(STYLE[state.style].n));
   }
 
@@ -860,7 +982,10 @@ footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 15p
     $('s-facts').innerHTML =
       '<div><dt>' + esc(Tx.facts.serve) + '</dt><dd>' + esc(Tx.serve(t(glass.name), s.temp[0], s.temp[1])) + '</dd></div>' +
       (hops ? '<div><dt>' + esc(Tx.facts.hops) + '</dt><dd><div class="chips">' + hops + '</div></dd></div>' : '') +
-      '<div><dt>' + esc(Tx.facts.ex) + '</dt><dd>' + s.ex.map(esc).join(' · ') + '</dd></div>';
+      '<div><dt>' + esc(Tx.facts.ex) + '</dt><dd>' + s.ex.map(esc).join(' · ') + '</dd></div>' +
+      (s.read && s.read.length ? '<div><dt>' + esc(Tx.facts.read) + '</dt><dd>' + s.read.map(function (id) {
+        var q = QA[id]; return q ? '<a href="#' + id + '">' + esc(t(q.q)) + '</a>' : '';
+      }).filter(Boolean).join('<br>') + '</dd></div>' : '');
 
     state.preview = null;
     renderSrm();
@@ -1026,11 +1151,11 @@ footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 15p
     hmapGeom = scatter({
       svg: $('hmap-svg'), items: D.HOPS, selected: state.hop, visible: visibleHop,
       x: function (v) { return v / 20; }, xTicks: [0, 5, 10, 15, 20], xTitle: Tx.hmapX,
-      y0: 0, y1: 4, yTicks: [0, 1, 2, 3, 4], yTitle: Tx.hmapY,
+      y0: 0, y1: 5, yTicks: [0, 1, 2, 3, 4, 5], yTitle: Tx.hmapY,
       px: function (h) { return mid(h.alpha); }, py: function (h) { return mid(h.oil); },
       range: function (h) { return [h.alpha[0], h.alpha[1], h.oil[0], h.oil[1]]; },
       label: function (h) { return t(h.n); },
-      zones: [[0.6, 0.15, Tx.zones[0]], [19.6, 0.15, Tx.zones[1], 'end'], [19.6, 3.75, Tx.zones[2], 'end']]
+      zones: [[0.6, 0.18, Tx.zones[0]], [19.6, 0.18, Tx.zones[1], 'end'], [19.6, 4.7, Tx.zones[2], 'end']]
     });
     $('hmap-svg').setAttribute('aria-label', Tx.hmapAria(D.HOPS.length));
     $('hmap-tip').hidden = true;
@@ -1074,10 +1199,12 @@ footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 15p
 
     // the oils at the middle of their ranges; what is left is "other"
     var keys = ['myrcene', 'humulene', 'caryophyllene', 'farnesene'];
-    var vals = keys.map(function (k) { return h[k] ? mid(h[k]) : 0; });
+    var upTo = keys.map(function (k) { return !!(h[k] && h[k][0] == null); });
+    var vals = keys.map(function (k) { return h[k] ? (h[k][0] == null ? h[k][1] : mid(h[k])) : 0; });
     var sum = vals.reduce(function (a, b) { return a + b; }, 0);
     if (sum > 100) vals = vals.map(function (v) { return v * 100 / sum; });
     vals.push(Math.max(0, 100 - Math.min(100, sum)));
+    upTo.push(false);
     $('h-oils-h').textContent = Tx.oilsH;
     var bar = $('h-oilbar'), parts = [];
     bar.innerHTML = '';
@@ -1086,7 +1213,7 @@ footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 15p
       var sp = document.createElement('span');
       sp.className = i < 4 ? 'o' + (i + 1) : 'ox';
       sp.style.flex = v + ' 1 0';
-      var label = Math.round(v) + '%';
+      var label = (upTo[i] ? '≤' : '') + Math.round(v) + '%';
       sp.title = Tx.oils[i][0] + ' ' + label;
       parts.push(Tx.oils[i][0] + ' ' + label);
       bar.appendChild(sp);
@@ -1121,6 +1248,169 @@ footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 15p
     }
   }
 
+
+  /* ---------- 04: what is left in a glass ---------- */
+  function sgFromP(p) { return 1 + p / (258.6 - (p / 258.2) * 227.1); }
+  // Balling: real extract from original and apparent extract, alcohol by weight from original and real
+  function analyse(og, fg, vol) {
+    var OE = B.plato(og), AE = B.plato(fg), RE = 0.1808 * OE + 0.8192 * AE;
+    var abw = (OE - RE) / (2.0665 - 0.010665 * OE), abv = abw * fg / 0.79336;
+    var kAlc = 6.9 * abw * fg * vol / 100, kExt = 4.0 * Math.max(0, RE - 0.1) * fg * vol / 100;
+    return { OE: OE, AE: AE, RE: RE, abw: abw, abv: abv, gl: RE * fg * 10, ada: (OE - AE) / OE, rda: (OE - RE) / OE, kAlc: kAlc, kExt: kExt };
+  }
+  function abvOf(og, fg) { return analyse(og, fg, 100).abv; }
+  // the final gravity that gives this alcohol: alcohol falls as the final gravity rises, so bisect
+  function fgForAbv(og, abv) {
+    var lo = 0.990, hi = og;
+    if (abvOf(og, lo) < abv) return null;
+    for (var i = 0; i < 60; i++) { var m = (lo + hi) / 2; if (abvOf(og, m) > abv) lo = m; else hi = m; }
+    return (lo + hi) / 2;
+  }
+  var CALC_PRESETS = {
+    ddh: function () { return [1.075, 1.016]; },
+    wc: function () { return [1.065, 1.010]; },
+    cn: function () { var og = sgFromP(9); return [og, fgForAbv(og, 3.6)]; },
+    stout: function () { return [1.095, 1.024]; },
+    style: function () { var st = STYLE[state.style]; return [mid(st.og), mid(st.fg)]; }
+  };
+  var calc = { og: 1.075, fg: 1.016, vol: 473, preset: 'ddh', bad: null };
+
+  function setField(id, v, d) {
+    var el = $(id);
+    if (document.activeElement !== el) el.value = v == null ? '' : v.toFixed(d);
+  }
+  function renderCalc() {
+    var Tx = T();
+    $('calc-h').textContent = Tx.calcH;
+    $('calc-hint').textContent = Tx.calcHint;
+    $('l-og').textContent = Tx.lOg; $('l-fg').textContent = Tx.lFg; $('l-abv').textContent = Tx.lAbv; $('l-vol').textContent = Tx.lVol;
+    $('calc-presets').setAttribute('aria-label', Tx.presetsAria);
+    $('calc-presets').innerHTML = ['ddh', 'wc', 'cn', 'stout', 'style'].map(function (k) {
+      var label = k === 'style' ? Tx.presets.style(t(STYLE[state.style].n)) : Tx.presets[k];
+      return '<button type="button" class="chip small nosw" data-preset="' + k + '" aria-pressed="' + (calc.preset === k) + '">' + esc(label) + '</button>';
+    }).join('');
+    [].forEach.call($('c-vol').querySelectorAll('button'), function (b) { b.setAttribute('aria-pressed', +b.getAttribute('data-v') === calc.vol ? 'true' : 'false'); });
+    showCalc();
+  }
+  function showCalc() {
+    var Tx = T(), og = calc.og, fg = calc.fg;
+    setField('c-og', og, 3); setField('c-ogp', B.plato(og), 1);
+    setField('c-fg', fg, 3); setField('c-fgp', B.plato(fg), 1);
+    var err = $('calc-err');
+    ['c-og', 'c-ogp', 'c-fg', 'c-fgp', 'c-abv'].forEach(function (id) { $(id).removeAttribute('aria-invalid'); });
+    $('calc').classList.toggle('stale', !!calc.bad);
+    if (calc.bad) {
+      err.textContent = Tx.err[calc.bad]; err.hidden = false;
+      (calc.bad === 'og' ? ['c-og', 'c-ogp'] : calc.bad === 'fg' ? ['c-fg', 'c-fgp'] : ['c-abv']).forEach(function (id) { $(id).setAttribute('aria-invalid', 'true'); });
+      return;
+    }
+    err.hidden = true;
+    var a = analyse(og, fg, calc.vol);
+    setField('c-abv', a.abv, 1);
+    var wine = Tx.wine(a.gl), O = Tx.out;
+    var cells = [
+      [O.abv, a.abv.toFixed(1) + '%', Tx.abvSmall(a.abw.toFixed(1))],
+      [O.ae, a.AE.toFixed(1) + ' °P', Tx.aeSmall],
+      [O.re, a.RE.toFixed(1) + ' °P', Tx.reSmall(Math.round(a.gl))],
+      [O.att, Tx.att(Math.round(a.ada * 100)), Tx.attSmall(Math.round(a.rda * 100))],
+      [O.kcal, Tx.kcal(Math.round(a.kAlc + a.kExt)), Tx.kcalSmall(calc.vol)],
+      [O.wine, wine[0], wine[1]]
+    ];
+    $('calc-out').innerHTML = cells.map(function (c) {
+      return '<div><dt>' + esc(c[0]) + '</dt><dd>' + esc(c[1]) + '<small>' + esc(c[2]) + '</small></dd></div>';
+    }).join('');
+    var total = a.kAlc + a.kExt, pA = total ? Math.round(a.kAlc / total * 100) : 0, pE = 100 - pA;
+    $('kcal-h').textContent = Tx.kcalH;
+    var bar = $('kcal-bar');
+    bar.innerHTML = '';
+    [[pA, 'k1', 0], [pE, 'k2', 1]].forEach(function (x) {
+      if (x[0] <= 0) return;
+      var sp = document.createElement('span');
+      sp.className = x[1]; sp.style.flex = x[0] + ' 1 0';
+      sp.textContent = Tx.kcalParts[x[2]][0] + ' ' + x[0] + '%';
+      sp.title = sp.textContent;
+      bar.appendChild(sp);
+    });
+    [].forEach.call(bar.children, function (sp) { if (sp.scrollWidth > sp.clientWidth + 1) sp.textContent = sp.textContent.replace(/^\S+\s/, ''); if (sp.scrollWidth > sp.clientWidth + 1) sp.textContent = ''; });
+    bar.setAttribute('aria-label', Tx.kcalAria(pA, pE));
+    $('kcal-key').innerHTML = Tx.kcalParts.map(function (k, i) {
+      return '<span><i style="background:var(--oil-' + (i ? 2 : 4) + ')"></i><b>' + esc(k[0]) + '</b>' + esc(k[1]) + '</span>';
+    }).join('');
+    $('calc-note').textContent = Tx.calcNote;
+  }
+  function calcFrom(source) {
+    var v = parseFloat(String($(source).value).replace(',', '.'));
+    if (!isFinite(v)) return;
+    var og = calc.og, fg = calc.fg;
+    if (source === 'c-og') og = v;
+    else if (source === 'c-ogp') og = sgFromP(v);
+    else if (source === 'c-fg') fg = v;
+    else if (source === 'c-fgp') fg = sgFromP(v);
+    calc.preset = null;
+    if (og < 1.02 || og > 1.15) { calc.bad = 'og'; calc.og = og; showCalc(); renderCalcPresets(); return; }
+    if (source === 'c-abv') {
+      var f = v >= 0 ? fgForAbv(og, v) : null;
+      if (f == null) { calc.bad = 'abv'; showCalc(); renderCalcPresets(); return; }
+      fg = f;
+    }
+    calc.og = og; calc.fg = fg;
+    calc.bad = (fg >= og || fg < 0.99) ? 'fg' : null;
+    showCalc(); renderCalcPresets();
+  }
+  function renderCalcPresets() {
+    [].forEach.call($('calc-presets').querySelectorAll('button'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-preset') === calc.preset ? 'true' : 'false'); });
+  }
+  function usePreset(k) {
+    var v = CALC_PRESETS[k]();
+    calc.preset = k; calc.og = v[0]; calc.fg = v[1]; calc.bad = null;
+    ['c-og', 'c-ogp', 'c-fg', 'c-fgp', 'c-abv'].forEach(function (id) { if (document.activeElement === $(id)) $(id).blur(); });
+    showCalc(); renderCalcPresets();
+  }
+  ['c-og', 'c-ogp', 'c-fg', 'c-fgp', 'c-abv'].forEach(function (id) {
+    $(id).addEventListener('input', function () { calcFrom(id); });
+    $(id).addEventListener('change', function () { showCalc(); });   // tidy the field once the edit is done
+    $(id).addEventListener('blur', function () { showCalc(); });
+  });
+  $('calc-presets').addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('button[data-preset]') : null;
+    if (b) usePreset(b.getAttribute('data-preset'));
+  });
+  $('c-vol').addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('button[data-v]') : null;
+    if (!b) return;
+    calc.vol = +b.getAttribute('data-v');
+    [].forEach.call($('c-vol').querySelectorAll('button'), function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+    showCalc();
+  });
+
+  /* ---------- 04: the questions ---------- */
+  function inline(text) { return esc(text).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>'); }
+  function renderQA() {
+    var Tx = T(), box = $('qa');
+    var open = {};
+    [].forEach.call(box.querySelectorAll('details[data-q]'), function (d) { open[d.getAttribute('data-q')] = d.open; });
+    box.innerHTML = (D.QA || []).map(function (q) {
+      var body = q.body.map(function (b) {
+        if (b.h) return '<h4>' + inline(t(b.h)) + '</h4>';
+        if (b.p) return '<p>' + inline(t(b.p)) + '</p>';
+        if (b.li) return '<ul>' + b.li.map(function (x) { return '<li>' + inline(t(x)) + '</li>'; }).join('') + '</ul>';
+        return '';
+      }).join('');
+      var refs = (q.refs || []).map(function (r) { return '<a href="' + esc(r.u) + '" rel="noopener">' + esc(r.n) + '</a>'; }).join(state.lang === 'zh' ? '；' : '; ');
+      return '<article class="qa-item" id="' + q.id + '"><h3 class="qa-q">' + esc(t(q.q)) + '</h3><p class="qa-short">' + inline(t(q.short)) + '</p>' +
+        '<details class="qa-more" data-q="' + q.id + '"' + (open[q.id] ? ' open' : '') + '><summary>' + esc(Tx.more) + '</summary><div class="qa-body">' + body +
+        (refs ? '<p class="qa-refs">' + esc(Tx.refs) + refs + '</p>' : '') + '</div></details></article>';
+    }).join('');
+  }
+  // a link to a question opens its full answer
+  function openQuestion() {
+    var id = (location.hash || '').slice(1);
+    if (!QA[id]) return false;
+    var d = document.querySelector('details[data-q="' + id + '"]');
+    if (d) { d.open = true; $(id).scrollIntoView(); }
+    return true;
+  }
+
   /* ---------- the tables ---------- */
   function renderTables() {
     var Tx = T(), th = Tx.th;
@@ -1153,6 +1443,8 @@ footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 15p
     state.style = id;
     if (!visibleStyle(STYLE[id])) state.region = 'all';
     renderStyleFilter(); renderStyleChips(); renderStyle(); renderStyleMap();
+    if (calc.preset === 'style') usePreset('style');
+    renderCalc();
     document.title = T().title(t(STYLE[id].n));
     keepInURL();
     if (scroll) $('style-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1219,13 +1511,15 @@ footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 15p
 
   // a link followed within the page, or an address typed in, picks its style and hop
   window.addEventListener('hashchange', function () {
+    if (openQuestion()) return;
     var h = parseHash();
     if (h.s && STYLE[h.s] && h.s !== state.style) pickStyle(h.s);
     if (h.h && HOP[h.h] && h.h !== state.hop) pickHop(h.h);
   });
 
   render();
-  if (fromHash.h && HOP[fromHash.h] && !fromHash.s) $('hop-card').scrollIntoView();
+  if (openQuestion()) { /* opened and scrolled to */ }
+  else if (fromHash.h && HOP[fromHash.h] && !fromHash.s) $('hop-card').scrollIntoView();
   else if (fromHash.s && STYLE[fromHash.s]) $('style-card').scrollIntoView();
 })();
 </script>

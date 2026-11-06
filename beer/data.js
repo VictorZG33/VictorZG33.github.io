@@ -603,7 +603,7 @@ var OGData = (function () {
       n: ['美式 IPA', 'American IPA'], local: 'West Coast IPA',
       p: ['美国西海岸', 'the US West Coast'], y: ['1975 年', '1975'],
       og: [1.056, 1.070], fg: [1.008, 1.014], abv: [5.5, 7.5], ibu: [40, 70], srm: [6, 14],
-      glass: 'pint', temp: [7, 10], hops: ['simcoe', 'centennial', 'columbus', 'chinook', 'amarillo', 'citra', 'cascade'],
+      glass: 'pint', temp: [7, 10], hops: ['simcoe', 'centennial', 'columbus', 'chinook', 'amarillo', 'citra', 'cascade'], read: ['q-ddh'],
       ex: ['Bell’s Two Hearted Ale', 'Russian River Blind Pig IPA', 'Firestone Walker Union Jack'],
       sum: ['1975 年铁锚酒厂用整朵卡斯卡特酒花酿的 Liberty Ale，被看作第一款现代美式 IPA。西海岸的版本清澈、干爽、苦得直接，带松脂、柑橘和热带水果的香气。更烈更苦的是双倍 IPA。',
             'Anchor’s Liberty Ale of 1975, hopped with whole Cascade, is taken as the first modern American IPA. The West Coast take is clear, dry and frankly bitter, with resin, citrus and tropical fruit. Stronger and more bitter still is the double IPA.'],
@@ -625,7 +625,7 @@ var OGData = (function () {
       n: ['浑浊 IPA', 'Hazy IPA'], local: 'New England IPA',
       p: ['佛蒙特 · 新英格兰', 'Vermont, New England'], y: ['2000 年代', '2000s'],
       og: [1.060, 1.085], fg: [1.010, 1.015], abv: [6, 9], ibu: [25, 60], srm: [3, 7], haze: 0.9,
-      glass: 'tulip', temp: [6, 9], hops: ['citra', 'mosaic', 'galaxy', 'nelson', 'sabro', 'simcoe'],
+      glass: 'tulip', temp: [6, 9], hops: ['citra', 'mosaic', 'galaxy', 'nelson', 'sabro', 'simcoe'], read: ['q-ddh', 'q-mouth'],
       ex: ['The Alchemist Heady Topper', 'Tree House Julius', 'Trillium Congress Street'],
       sum: ['新英格兰的 IPA：浑得像橙汁，苦味柔和，满是芒果、百香果和桃子的香气，口感丝滑。佛蒙特州炼金术士酒厂的 Heady Topper 被看作源头，2010 年代席卷全美。',
             'New England’s IPA: opaque as orange juice, gently bitter, full of mango, passion fruit and peach, with a silky body. The Alchemist’s Heady Topper in Vermont is taken as the source; the style swept America in the 2010s.'],
@@ -638,8 +638,8 @@ var OGData = (function () {
                'Few hops in the boil; most go into a whirlpool below about 80 °C, for aroma without much bitterness, 25–60 IBU.'],
         ferment: ['用产酯的英式酵母（如 London Ale III）。发酵最旺盛时就开始干投，酵母会把酒花里的香叶醇等化合物转化成香茅醇这类更多的果香，称为“生物转化”。',
                   'An estery English strain such as London Ale III. Dry hops go in during active fermentation, when the yeast turns hop compounds such as geraniol into citronellol and other fruit, a process called biotransformation.'],
-        cond: ['发酵后再大量干投，加起来每升 10–20 克。不过滤，很怕氧化：要冷藏，几周内喝完，香气才不会变暗。',
-                'Another heavy dry hop after fermentation, 10–20 g a litre in all. Unfiltered and easily oxidised: keep it cold and drink it within weeks, before the aroma dulls.']
+        cond: ['发酵后再大量干投，加起来每升 10–20 克。酒花还自带淀粉酶，会把糊精继续切成糖（hop creep）。不过滤，很怕氧化：要冷藏，几周内喝完，香气才不会变暗。',
+                'Another heavy dry hop after fermentation, 10–20 g a litre in all; the hops bring their own amylases, which go on cutting dextrins into sugar (hop creep). Unfiltered and easily oxidised: keep it cold and drink it within weeks, before the aroma dulls.']
       }
     },
     {
@@ -676,196 +676,228 @@ var OGData = (function () {
     { key: 'jp', name: ['日本', 'Japan'] }
   ];
 
+  /* Who publishes the numbers */
+  var S = {
+    hull: function (path) { return { n: 'Hüll Hop Research Center', u: 'https://www.hopfenforschung.de/en/sorte/' + path + '/' }; },
+    haas: function (file) { return { n: 'John I. Haas', u: 'https://www.johnihaas.com/wp-content/uploads/' + file }; },
+    barth: function (path) { return { n: 'BarthHaas', u: 'https://www.barthhaas.com/hops-and-products/hops/' + path }; },
+    usda: function (id) { return { n: 'USDA-ARS', u: 'https://www.ars.usda.gov/ARSUserFiles/2450/hopcultivars/' + id + '.html' }; },
+    ycr: function (path) { return { n: 'Yakima Chief Ranches', u: 'https://yakimachiefranches.com/create/brands/' + path }; },
+    hbc: { n: 'Hop Breeding Company', u: 'https://www.hopbreeding.com/' },
+    nzhops: function (path) { return { n: 'NZ Hops', u: 'https://nzhops.co.nz/collections/new-zealand-hops/products/' + path }; }
+  };
+
   /* o: origin, use: aroma | bitter | dual. alpha, beta: % by weight; cohum: cohumulone, % of the alpha
-     acids; oil: total oil, mL per 100 g; myrcene to farnesene: % of the total oil. sub: hops that can
-     stand in for it. src: where the numbers come from. */
+     acids; oil: total oil, mL per 100 g; myrcene to farnesene: % of the total oil, [null, x] where only
+     an upper limit is published. sub: hops that can stand in for it. src: where the numbers come from:
+     the breeder where it publishes them, otherwise growers and merchants of the hop's home country. */
   var HOPS = [
     {
       id: 'hallertau', o: 'de', use: 'aroma',
       n: ['哈拉道中早熟', 'Hallertauer Mittelfrüh'], local: 'Hallertauer Mittelfrüh',
       p: ['德国 · 哈拉道', 'Hallertau, Bavaria'], y: ['传统品种', 'a landrace'],
       alpha: [3, 5.5], beta: [3, 5], cohum: [18, 28], oil: [0.7, 1.3],
-      myrcene: [20, 35], humulene: [45, 55], caryophyllene: [10, 15], farnesene: [0, 1],
-      aroma: [['花香', '草本', '香料', '木质'], ['floral', 'herbal', 'spicy', 'woody']],
-      story: ['哈拉道在慕尼黑北边，是世界上最大的连片酒花产区。中早熟是那里的老品种，贵族酒花里的头一个，香气柔和：花香、草本、淡淡的香料。它容易得黄萎病，种得越来越少，很多酒厂改用它的后代，比如哈拉道传统（Hallertauer Tradition）。',
-              'The Hallertau, north of Munich, is the largest continuous hop-growing area in the world, and Mittelfrüh is its old landrace, the first of the noble hops: soft, floral, herbal and lightly spicy. Prone to verticillium wilt, it has been planted less and less, and many brewers moved to its descendants such as Hallertauer Tradition.'],
-      sub: ['tettnang', 'spalt'], src: []
+      myrcene: [20, 28], humulene: [45, 55], caryophyllene: [10, 15], farnesene: [0, 1],
+      aroma: [['香料', '青草', '茶', '柑橘', '花香'], ['spicy', 'grassy', 'tea', 'citrus', 'floral']],
+      story: ['哈拉道在慕尼黑北边，是世界上最大的连片酒花产区，9 世纪就有种酒花的记载。中早熟是那里的老品种，贵族酒花里的头一个，香气柔和：香料、青草和茶，带一点柑橘和花香；葎草烯占了精油的一半。它容易得黄萎病，种得越来越少，很多酒厂改用它的后代，比如哈拉道传统（Hallertauer Tradition）。',
+              'The Hallertau, north of Munich, is the largest continuous hop-growing area in the world, with hops on record there since the 9th century. Mittelfrüh is its old landrace and the first of the noble hops: soft, spicy, grassy and tea-like, with a little citrus and flowers, and half its oil is humulene. Prone to verticillium wilt, it has been planted less and less, and many brewers moved to descendants such as Hallertauer Tradition.'],
+      sub: ['tettnang', 'spalt'],
+      src: [S.hull('hallertauer-mittelfrueh'), S.haas('2020/09/MiniSpecSheets-HallertauerMittelfruh.pdf')]
     },
     {
       id: 'tettnang', o: 'de', use: 'aroma',
       n: ['泰特南', 'Tettnanger'], local: 'Tettnanger',
       p: ['德国 · 博登湖畔的泰特南', 'Tettnang, by Lake Constance'], y: ['传统品种', 'a landrace'],
-      alpha: [3.5, 5.5], beta: [3.5, 5.5], cohum: [22, 28], oil: [0.5, 0.9],
+      parent: ['萨兹一系的地方品种', 'a landrace of the Saaz group'],
+      alpha: [2.5, 5.5], beta: [3, 5], cohum: [22, 28], oil: [0.5, 0.9],
       myrcene: [20, 35], humulene: [22, 32], caryophyllene: [6, 11], farnesene: [16, 24],
-      aroma: [['花香', '草本', '胡椒'], ['floral', 'herbal', 'peppery']],
-      story: ['博登湖北岸小城泰特南的地方品种，贵族酒花之一，产量不大，名气很大。它和萨兹是近亲，花香、草本里带一点胡椒；金合欢烯多，所以比哈拉道更“花”。',
-              'The landrace of Tettnang on the north shore of Lake Constance, one of the noble hops: a small crop with a big name. A close relative of Saaz, floral and herbal with a little pepper; its farnesene makes it more flowery than Hallertau.'],
-      sub: ['saaz', 'spalt'], src: []
+      aroma: [['胡椒', '红茶', '木质', '树脂', '蓝莓'], ['peppery', 'black tea', 'woody', 'resin', 'blueberry']],
+      story: ['博登湖北岸小城泰特南的地方品种，贵族酒花之一，产量不大，名气很大。它和萨兹同属一系：胡椒、红茶和木质，带一点树脂和蓝莓。金合欢烯占精油的两成左右，哈拉道几乎没有，这是两者闻起来不一样的原因之一。',
+              'The landrace of Tettnang on the north shore of Lake Constance, one of the noble hops: a small crop with a big name. It belongs to the Saaz group: pepper, black tea and wood, with a little resin and blueberry. Farnesene makes up about a fifth of its oil, where Hallertau has almost none, one reason the two smell different.'],
+      sub: ['saaz', 'spalt'],
+      src: [S.hull('tettnanger'), S.haas('2020/09/MiniSpecSheets-TettnangTettnanger.pdf')]
     },
     {
       id: 'spalt', o: 'de', use: 'aroma',
       n: ['斯帕尔特', 'Spalter'], local: 'Spalter',
       p: ['德国 · 弗兰肯的斯帕尔特', 'Spalt, Franconia'], y: ['传统品种', 'a landrace'],
-      alpha: [3, 5.5], beta: [3, 5], cohum: [22, 29], oil: [0.5, 1.1],
+      parent: ['萨兹一系的地方品种', 'a landrace of the Saaz group'],
+      alpha: [2.5, 5.5], beta: [3, 5], cohum: [22, 29], oil: [0.5, 1],
       myrcene: [20, 35], humulene: [20, 30], caryophyllene: [8, 13], farnesene: [12, 18],
-      aroma: [['木质', '泥土', '香料', '花香'], ['woody', 'earthy', 'spicy', 'floral']],
-      story: ['纽伦堡南边小城斯帕尔特的地方品种，1538 年这里成了德国第一个有官方质量印章的酒花产地。和萨兹、泰特南同属“萨兹型”，香气温和：木质、泥土和香料。',
-              'The landrace of Spalt, south of Nuremberg, which in 1538 became the first hop-growing area in Germany with an official seal of quality. A Saaz type, like Saaz and Tettnanger: mild, woody, earthy and spicy.'],
-      sub: ['saaz', 'tettnang'], src: []
+      aroma: [['木质', '茶', '松针', '香草'], ['woody', 'tea', 'pine', 'vanilla']],
+      story: ['纽伦堡南边小城斯帕尔特的地方品种，只种在那一带。1538 年，斯帕尔特成了德国第一个有官方质量印章的酒花产地。它和萨兹、泰特南同属一系，香气温和：木质、茶和松针，带一点香草。',
+              'The landrace of Spalt, south of Nuremberg, and grown only there. In 1538 Spalt became the first hop-growing area in Germany with an official seal of quality. Like Saaz and Tettnanger it belongs to the Saaz group: mild, woody, tea-like and piney, with a hint of vanilla.'],
+      sub: ['saaz', 'tettnang'],
+      src: [S.hull('spalter'), S.barth('spalt-spalter')]
     },
     {
       id: 'magnum', o: 'de', use: 'bitter',
       n: ['马格努姆', 'Hallertauer Magnum'], local: 'Hallertauer Magnum',
-      p: ['德国 · 哈拉道', 'Hallertau, Germany'], y: ['1993 年', '1993'],
-      by: ['许尔酒花研究所', 'the Hüll Hop Research Center'], parent: ['Galena × 德国雄株', 'Galena × a German male'],
+      p: ['德国 · 哈拉道', 'Hallertau, Germany'], y: ['1992 年', '1992'],
+      by: ['许尔酒花研究所', 'the Hüll Hop Research Center'], parent: ['Galena × 一株德国雄株', 'Galena × a German male'],
       alpha: [11, 16], beta: [5, 7], cohum: [21, 29], oil: [1.6, 2.6],
-      myrcene: [30, 45], humulene: [30, 45], caryophyllene: [8, 13], farnesene: [0, 1],
-      aroma: [['干净', '淡淡的香料', '柑橘'], ['clean', 'light spice', 'citrus']],
-      story: ['许尔酒花研究所育成、1993 年推出的高 α 酸品种。苦味干净，几乎不带香气，是全世界最常用的打苦酒花之一：很多啤酒在煮沸一开始加一点马格努姆打底，再用香型酒花收尾。',
-              'Bred at the Hüll hop research centre and released in 1993, a high-alpha hop with a clean bitterness and little aroma, and one of the most used bittering hops in the world: many beers start the boil with a little Magnum and finish with aroma hops.'],
-      sub: ['columbus', 'northern-brewer'], src: []
+      myrcene: [30, 45], humulene: [30, 45], caryophyllene: [8, 12], farnesene: [0, 1],
+      aroma: [['花香', '果香', '香料', '胡椒'], ['floral', 'fruity', 'spicy', 'peppery']],
+      story: ['许尔酒花研究所 1984 年杂交、1992 年登记的高 α 酸品种。苦味干净，香气淡，是全世界最常用的打苦酒花之一：很多啤酒在煮沸一开始加一点马格努姆打底，再用香型酒花收尾。',
+              'Crossed at the Hüll hop research centre in 1984 and registered in 1992, a high-alpha hop with a clean bitterness and a quiet aroma, and one of the most used bittering hops in the world: many beers start the boil with a little Magnum and finish with aroma hops.'],
+      sub: ['columbus', 'northern-brewer'],
+      src: [S.hull('hallertauer-magnum'), S.haas('2020/09/Hallertauer-Magnum-Specs.pdf')]
     },
     {
       id: 'saaz', o: 'cz', use: 'aroma',
       n: ['萨兹', 'Saaz'], local: 'Žatecký poloraný červeňák',
       p: ['捷克 · 扎泰茨', 'Žatec, Bohemia'], y: ['传统品种', 'a landrace'],
-      alpha: [2.5, 4.5], beta: [4, 6], cohum: [23, 28], oil: [0.4, 0.8],
-      myrcene: [25, 40], humulene: [15, 25], caryophyllene: [6, 9], farnesene: [11, 20],
-      aroma: [['草本', '泥土', '香料', '柠檬'], ['herbal', 'earthy', 'spicy', 'lemon']],
-      story: ['波希米亚扎泰茨（德语叫萨兹）一带的地方品种，在那里种了几百年，四大“贵族酒花”之一。α 酸很低，β 酸往往比 α 酸还高，香气细腻：草本、泥土、香料，带一点柠檬。捷克皮尔森离不开它，比利时的酿酒师也爱用。',
-              'A landrace of the country around Žatec (Saaz in German) in Bohemia, grown there for centuries, and one of the four “noble” hops. Very low in alpha acid, often with more beta acid than alpha, and delicate: herbal, earthy and spicy with a little lemon. Czech pilsner can’t do without it, and Belgian brewers love it too.'],
-      sub: ['tettnang', 'spalt'], src: []
+      parent: ['地方品种；今天种的多是 1952 年起选出的无性系', 'a landrace; most of what is grown today are clones selected from 1952 on'],
+      alpha: [2.5, 4.5], beta: [4, 6], cohum: [23, 26], oil: [0.4, 0.8],
+      myrcene: [25, 40], humulene: [15, 30], caryophyllene: [6, 9], farnesene: [14, 20],
+      aroma: [['细腻的酒花香', '香料', '花香', '柑橘'], ['fine hop aroma', 'spicy', 'floral', 'citrus']],
+      story: ['波希米亚扎泰茨（德语叫萨兹）一带的地方品种，那里种酒花的记载可以追溯到 14 世纪。四大“贵族酒花”之一，α 酸很低，β 酸往往比 α 酸还高，香气细腻：香料、花香，带一点柑橘。捷克皮尔森离不开它，比利时的酿酒师也爱用。',
+              'The landrace of the country around Žatec (Saaz in German) in Bohemia, where hop growing is on record from the 14th century, and one of the four “noble” hops. Very low in alpha acid, often with more beta acid than alpha, and delicate: spicy and floral with a little citrus. Czech pilsner can’t do without it, and Belgian brewers love it too.'],
+      sub: ['tettnang', 'spalt'],
+      src: [{ n: 'Hop Research Institute Žatec', u: 'https://www.chizatec.cz/atlas-odrud-chmele/?arc=36' }, S.haas('2020/09/MiniSpecSheets-Saaz.pdf'), { n: 'Hopsteiner', u: 'https://pim.hopsteiner.de/api/v1/en/varieties/saz.pdf' }]
     },
     {
       id: 'styrian', o: 'cz', use: 'aroma',
       n: ['施蒂利亚哥尔丁', 'Styrian Golding'], local: 'Savinjski golding',
-      p: ['斯洛文尼亚 · 萨维尼亚河谷', 'the Savinja valley, Slovenia'], y: null,
-      parent: ['法格尔的克隆', 'a clone of Fuggle'],
-      alpha: [2.5, 6], beta: [2, 3.5], cohum: [25, 30], oil: [0.5, 1],
-      myrcene: [27, 33], humulene: [34, 38], caryophyllene: [9, 11], farnesene: [2, 5],
-      aroma: [['泥土', '白胡椒', '柠檬', '花香'], ['earthy', 'white pepper', 'lemon', 'floral']],
-      story: ['名字叫“哥尔丁”，其实是法格尔：斯洛文尼亚人当年以为从英国引进的是哥尔丁，后来的基因检测证明它就是法格尔。在萨维尼亚河谷的土地上，它长出了更细腻的香气：泥土、白胡椒、一点柠檬和花香。比利时的酿酒师特别喜欢它。',
-              'A Golding in name only: the Slovenian growers who brought it from England took it for Goldings, and genetic tests have since shown it is Fuggle. In the soil of the Savinja valley it grew a finer aroma, earthy, with white pepper and a little lemon and flowers, and Belgian brewers took to it.'],
-      sub: ['fuggle', 'ekg'], src: []
+      p: ['斯洛文尼亚 · 萨维尼亚河谷', 'the Savinja valley, Slovenia'], y: ['19 世纪末起', 'since the late 1800s'],
+      parent: ['法格尔，斯洛文尼亚种的无性系', 'Fuggle, as a Slovenian clone'],
+      alpha: [2.8, 6.1], beta: [1.8, 4.1], cohum: [25, 33], oil: [0.3, 1.7],
+      myrcene: [25, 38], humulene: [29, 38], caryophyllene: [9, 12], farnesene: [6, 8],
+      aroma: [['绿茶', '花香', '梨', '柠檬', '草本'], ['green tea', 'floral', 'pear', 'lemon', 'herbal']],
+      story: ['名字叫“哥尔丁”，其实是法格尔：斯洛文尼亚人当年以为从英国引进的是哥尔丁，后来的基因检测证明它就是法格尔。在萨维尼亚河谷的土地上，它长出了更细腻的香气：绿茶、花香、梨和柠檬，带一点草本。比利时的酿酒师特别喜欢它。斯洛文尼亚的官方品种名录把它的后代 Celeia 也叫作 Styrian Golding，买的时候要看清是哪一种。',
+              'A Golding in name only: the Slovenian growers who brought it from England took it for Goldings, and genetic tests have since shown it is Fuggle. In the soil of the Savinja valley it grew a finer aroma, green tea, flowers, pear and lemon, with something herbal, and Belgian brewers took to it. Slovenia’s official variety list also calls its descendant Celeia “Styrian Golding”, so check which one you are buying.'],
+      sub: ['fuggle', 'ekg'],
+      src: [{ n: 'IHPS, Slovenia', u: 'https://www.ihps.si/opisna-sortna-lista-za-hmelj/' }, S.barth('styrian-savinjski-golding'), { n: 'Hopsteiner', u: 'https://www.hopsteiner.de/en/products/all-hop-varieties/detail/ssg' }]
     },
     {
       id: 'ekg', o: 'uk', use: 'aroma',
       n: ['东肯特哥尔丁', 'East Kent Goldings'], local: 'East Kent Goldings',
       p: ['英格兰 · 肯特郡东部', 'East Kent, England'], y: ['18 世纪末', 'late 1700s'],
-      by: ['肯特郡的哥尔丁先生', 'a Mr Golding of Kent'],
-      alpha: [4, 6.5], beta: [1.9, 3.5], cohum: [20, 30], oil: [0.4, 1],
-      myrcene: [20, 26], humulene: [38, 44], caryophyllene: [12, 16], farnesene: [0, 1],
-      aroma: [['蜂蜜', '泥土', '薰衣草', '香料'], ['honey', 'earthy', 'lavender', 'spicy']],
-      story: ['18 世纪末肯特郡一位哥尔丁先生选出的品种。只有种在东肯特的才能叫 East Kent Goldings，这是受保护的原产地名称。蜂蜜、泥土、薰衣草和一点橘子酱般的甜香，是英国苦啤和 IPA 的经典味道。',
-              'Selected by a Mr Golding in Kent in the late 1700s. Only Goldings grown in East Kent may be sold as East Kent Goldings, a protected designation of origin. Honey, earth, lavender and a marmalade sweetness: the classic aroma of English bitter and IPA.'],
-      sub: ['fuggle', 'styrian'], src: []
+      by: ['肯特郡莫灵的哥尔丁先生', 'a Mr Golding of Malling, Kent'], parent: ['从 Canterbury Whitebine 里选出', 'a selection from Canterbury Whitebine'],
+      alpha: [4, 6], beta: [1.9, 3], cohum: [25, 30], oil: [0.4, 0.8],
+      myrcene: [25, 42], humulene: [27, 36], caryophyllene: [null, 9], farnesene: [0, 1],
+      aroma: [['蜂蜜', '花香', '香料', '泥土'], ['honey', 'floral', 'spicy', 'earthy']],
+      story: ['18 世纪末，肯特郡莫灵的一位哥尔丁先生从老品种 Canterbury Whitebine 里选出了它，1790 年前后已经上市，1838 年起以 East Kent Goldings 的名字出售。只有种在东肯特的才能用这个名字，这是受保护的原产地名称。蜂蜜、花香、香料和泥土，是英国苦啤和 IPA 的经典味道。',
+              'Selected from the old Canterbury Whitebine by a Mr Golding of Malling, Kent, in the late 1700s, it was on the market by about 1790 and has been sold as East Kent Goldings since 1838. Only Goldings grown in East Kent may carry the name, a protected designation of origin. Honey, flowers, spice and earth: the classic aroma of English bitter and IPA.'],
+      sub: ['fuggle', 'styrian'],
+      src: [{ n: 'British Hop Association', u: 'https://www.britishhops.org.uk/varieties/east-kent-goldings/' }, S.barth('east-kent-golding')]
     },
     {
       id: 'fuggle', o: 'uk', use: 'aroma',
       n: ['法格尔', 'Fuggle'], local: 'Fuggle',
       p: ['英格兰 · 肯特', 'Kent, England'], y: ['1875 年', '1875'],
-      by: ['理查德·法格尔推出', 'introduced by Richard Fuggle'], parent: ['花园里自己长出来的实生苗', 'a chance seedling in a garden'],
-      alpha: [3, 6], beta: [1.5, 3], cohum: [23, 33], oil: [0.7, 1.4],
-      myrcene: [24, 28], humulene: [33, 38], caryophyllene: [9, 13], farnesene: [4, 6],
-      aroma: [['泥土', '木质', '薄荷', '青草'], ['earthy', 'woody', 'minty', 'grassy']],
-      story: ['1861 年在肯特郡一户人家的花园里自己长出来的实生苗，1875 年由理查德·法格尔推广，一度占英国酒花种植面积的七成以上。泥土、木质、薄荷和青草的味道，是英式波特和苦啤的底色。美国的威拉米特是它的后代，斯洛文尼亚的“施蒂利亚哥尔丁”就是它本身。',
-              'A chance seedling that came up in a garden in Kent in 1861 and was introduced by Richard Fuggle in 1875, it once made up more than 70% of English hop acreage. Earthy, woody, minty and grassy, it is the backbone of English porter and bitter. America’s Willamette is its offspring; Slovenia’s “Styrian Golding” is Fuggle itself.'],
-      sub: ['styrian', 'ekg'], src: []
+      by: ['肯特郡布伦奇利的理查德·法格尔推出', 'introduced by Richard Fuggle of Brenchley, Kent'], parent: ['1861 年选出的一株实生苗，亲本不明', 'a seedling picked out in 1861; parents unknown'],
+      alpha: [3.5, 6.5], beta: [2, 4], cohum: [27, 33], oil: [0.7, 1.1],
+      myrcene: [25, 30], humulene: [30, 38], caryophyllene: [11, 15], farnesene: [6, 8],
+      aroma: [['泥土', '薄荷', '青草', '花香'], ['earthy', 'minty', 'grassy', 'floral']],
+      story: ['1861 年在肯特郡一户人家的花园里选出的实生苗，1875 年由理查德·法格尔推广，后来一度占到英国酒花种植面积的七成以上。泥土、薄荷、青草和花香，是英式波特和苦啤的底色。美国的威拉米特是它的后代，斯洛文尼亚的“施蒂利亚哥尔丁”就是它本身。',
+              'A seedling picked out in a garden in Kent in 1861 and introduced by Richard Fuggle in 1875, it later made up more than 70% of English hop acreage. Earthy, minty, grassy and floral, it is the backbone of English porter and bitter. America’s Willamette is its offspring; Slovenia’s “Styrian Golding” is Fuggle itself.'],
+      sub: ['styrian', 'ekg'],
+      src: [{ n: 'British Hop Association', u: 'https://www.britishhops.org.uk/varieties/fuggle/' }, { n: 'Charles Faram', u: 'https://charlesfaram.com/wp-content/uploads/2025/01/Fuggle-Hop-Variety-Specifications-and-Characteristics.pdf' }]
     },
     {
       id: 'northern-brewer', o: 'uk', use: 'dual',
       n: ['北酿', 'Northern Brewer'], local: 'Northern Brewer',
-      p: ['英格兰育成，如今主要种在德国', 'bred in England, now grown mostly in Germany'], y: ['1934 年育成', 'bred in 1934'],
-      by: ['英国怀伊学院', 'Wye College, England'], parent: ['坎特伯雷哥尔丁 × 带北美野生血统的雄株', 'Canterbury Golding × a male with wild North American blood'],
-      alpha: [6, 10], beta: [3, 5], cohum: [20, 30], oil: [1, 1.6],
-      myrcene: [25, 45], humulene: [25, 35], caryophyllene: [12, 15], farnesene: [0, 1],
-      aroma: [['木质', '薄荷', '松针', '泥土'], ['woody', 'minty', 'piney', 'earthy']],
-      story: ['1934 年英国怀伊学院育成，如今主要种在德国的哈拉道。木质、薄荷和松针般的香气，苦味有力。加州蒸汽啤酒用的就是它，德国的珍珠（Perle）是它的后代。',
-              'Bred at Wye College in England in 1934 and now grown mostly in Germany’s Hallertau. Woody, minty and piney, with a firm bitterness; it is the hop of California common, and Germany’s Perle is its offspring.'],
-      sub: ['chinook', 'magnum'], src: []
+      p: ['英格兰育成，如今主要种在德国', 'bred in England, now grown mostly in Germany'], y: ['1934 年杂交', 'crossed in 1934'],
+      by: ['英国怀伊学院的 E. S. Salmon 教授', 'Prof. E. S. Salmon, Wye College, England'], parent: ['坎特伯雷哥尔丁 × 带北美野生血统的雄株', 'Canterbury Golding × a male with wild North American blood'],
+      alpha: [8, 10], beta: [3, 5], cohum: [27, 33], oil: [1.5, 2],
+      myrcene: [25, 45], humulene: [35, 50], caryophyllene: [10, 20], farnesene: [0, 1],
+      aroma: [['木质', '薄荷', '松针', '草本'], ['woody', 'minty', 'piney', 'herbal']],
+      story: ['1934 年在英国怀伊学院杂交，1940 年代交给种植者，如今主要种在德国的哈拉道（这里的数字也是德国产的）。木质、薄荷和松针般的香气，苦味有力。加州蒸汽啤酒用的就是它，德国的珍珠（Perle）是它的后代。',
+              'Crossed at Wye College in England in 1934 and released to growers in the 1940s, it is now grown mostly in Germany’s Hallertau, and the numbers here are German-grown. Woody, minty and piney, with a firm bitterness; it is the hop of California common, and Germany’s Perle is its offspring.'],
+      sub: ['chinook', 'magnum'],
+      src: [S.haas('2020/09/MiniSpecSheets-NorthernBrewer.pdf'), S.hull('northern-brewer')]
     },
     {
       id: 'cascade', o: 'us', use: 'aroma',
       n: ['卡斯卡特', 'Cascade'], local: 'Cascade',
       p: ['美国 · 俄勒冈', 'Oregon, USA'], y: ['1972 年', '1972'],
-      by: ['美国农业部与俄勒冈州立大学', 'the USDA and Oregon State University'], parent: ['法格尔 × 俄国的 Serebrianka', 'Fuggle × Serebrianka, a Russian hop'],
-      alpha: [4.5, 8.9], beta: [3.6, 7.5], cohum: [33, 40], oil: [0.8, 2.5],
-      myrcene: [45, 60], humulene: [8, 16], caryophyllene: [3, 6], farnesene: [4, 8],
-      aroma: [['葡萄柚', '花香', '柑橘', '松针'], ['grapefruit', 'floral', 'citrus', 'pine']],
-      story: ['美国农业部和俄勒冈州立大学育成，1972 年推出，第一个大获成功的美国香型酒花。葡萄柚和花香：1975 年铁锚酒厂的 Liberty Ale 和 1980 年的内华达山脉淡色艾尔都靠它，开启了美国精酿的“柑橘时代”。',
-              'Bred by the USDA and Oregon State University and released in 1972, the first American aroma hop to take off. Grapefruit and flowers: it made Anchor’s Liberty Ale of 1975 and Sierra Nevada Pale Ale of 1980, and opened American craft beer’s citrus age.'],
-      sub: ['centennial', 'amarillo'], src: []
+      by: ['美国农业部与俄勒冈州立大学', 'the USDA and Oregon State University'], parent: ['法格尔 ×（俄国的 Serebrianka × 法格尔的实生苗）', 'Fuggle × a seedling of Serebrianka, a Russian hop, and Fuggle'],
+      alpha: [4.5, 7], beta: [4.8, 7], cohum: [33, 40], oil: [0.7, 1.4],
+      myrcene: [45, 60], humulene: [8, 13], caryophyllene: [3, 6], farnesene: [3, 7],
+      aroma: [['花香', '葡萄柚', '松脂', '青柠'], ['floral', 'grapefruit', 'pine resin', 'lime']],
+      story: ['美国农业部和俄勒冈州立大学育成，1956 年选出，1972 年推出，第一个大获成功的美国香型酒花。花香和葡萄柚：1975 年铁锚酒厂的 Liberty Ale 和 1980 年的内华达山脉淡色艾尔都靠它，开启了美国精酿的“柑橘时代”。',
+              'Bred by the USDA and Oregon State University, selected in 1956 and released in 1972, the first American aroma hop to take off. Flowers and grapefruit: it made Anchor’s Liberty Ale of 1975 and Sierra Nevada Pale Ale of 1980, and opened American craft beer’s citrus age.'],
+      sub: ['centennial', 'amarillo'],
+      src: [S.usda('56013'), S.haas('2020/09/MiniSpecSheets-Cascade.pdf')]
     },
     {
       id: 'centennial', o: 'us', use: 'dual',
       n: ['百年', 'Centennial'], local: 'Centennial',
       p: ['美国 · 华盛顿州', 'Washington, USA'], y: ['1990 年', '1990'],
-      by: ['华盛顿州立大学与美国农业部', 'Washington State University and the USDA'],
-      alpha: [9.5, 11.5], beta: [3.5, 4.5], cohum: [28, 30], oil: [1.5, 2.5],
+      by: ['美国农业部与华盛顿州立大学', 'the USDA and Washington State University'], parent: ['约四分之三是 Brewer’s Gold 的血统，其余来自法格尔、东肯特哥尔丁等', 'about three-quarters Brewer’s Gold, the rest Fuggle, East Kent Golding and others'],
+      alpha: [9.5, 11.5], beta: [3.4, 4.5], cohum: [29, 30], oil: [1.5, 2.5],
       myrcene: [45, 55], humulene: [10, 18], caryophyllene: [5, 8], farnesene: [0, 1],
-      aroma: [['柠檬', '柑橘', '花香', '松针'], ['lemon', 'citrus', 'floral', 'pine']],
-      story: ['1974 年育成、1990 年推出，因为香气浓郁被叫作“超级卡斯卡特”：柠檬、柑橘和花香，α 酸约 10%，打苦增香两用。贝尔酒厂的 Two Hearted 只用它一种酒花。',
-              'Bred in 1974 and released in 1990, and nicknamed “super Cascade” for its intensity: lemon, citrus and flowers at about 10% alpha, for bitterness and aroma alike. Bell’s Two Hearted Ale uses nothing else.'],
-      sub: ['cascade', 'columbus'], src: []
+      aroma: [['柑橘', '花香', '橙子', '松脂'], ['citrus', 'floral', 'orange', 'pine resin']],
+      story: ['1974 年杂交、1990 年推出，因为香气浓郁被叫作“超级卡斯卡特”：柑橘、橙子和花香，α 酸约 10%，打苦增香两用。贝尔酒厂的 Two Hearted 只用它一种酒花。2018 年那项证实干投会让啤酒再发酵（hop creep）的研究，用的也是它。',
+              'Crossed in 1974 and released in 1990, and nicknamed “super Cascade” for its intensity: citrus, orange and flowers at about 10% alpha, for bitterness and aroma alike. Bell’s Two Hearted Ale uses nothing else. It was also the hop in the 2018 study that pinned down hop creep, the refermentation dry hopping can set off.'],
+      sub: ['cascade', 'columbus'],
+      src: [S.usda('21507'), S.haas('2020/08/MiniSpecSheets-Centennial.pdf')]
     },
     {
       id: 'chinook', o: 'us', use: 'dual',
       n: ['奇努克', 'Chinook'], local: 'Chinook',
       p: ['美国 · 华盛顿州', 'Washington, USA'], y: ['1985 年', '1985'],
-      by: ['美国农业部', 'the USDA'], parent: ['Petham Golding × 美国农业部的雄株', 'Petham Golding × a USDA male'],
-      alpha: [12, 14], beta: [3, 4], cohum: [29, 35], oil: [1.5, 2.7],
-      myrcene: [35, 40], humulene: [18, 25], caryophyllene: [9, 11], farnesene: [0, 1],
-      aroma: [['松脂', '葡萄柚', '香料', '烟熏'], ['pine resin', 'grapefruit', 'spicy', 'smoky']],
-      story: ['1985 年美国农业部推出的高 α 酸品种，本来是为了打苦，香气却很有个性：松脂、葡萄柚、香料和一点烟熏。西海岸 IPA 里的松树味，很多来自它。',
-              'A high-alpha hop released by the USDA in 1985, bred for bittering but with a personality of its own: pine resin, grapefruit, spice and a little smoke. Much of the pine in West Coast IPA is Chinook.'],
-      sub: ['columbus', 'simcoe'], src: []
+      by: ['美国农业部与华盛顿州立大学', 'the USDA and Washington State University'], parent: ['Petham Golding × 一株美国农业部的高 α 酸雄株', 'Petham Golding × a high-alpha USDA male'],
+      alpha: [12, 14], beta: [3, 4], cohum: [29, 35], oil: [1.7, 2.7],
+      myrcene: [35, 40], humulene: [18, 23], caryophyllene: [9, 11], farnesene: [0, 1],
+      aroma: [['松脂', '葡萄柚', '杏子', '杜松'], ['pine resin', 'grapefruit', 'apricot', 'juniper']],
+      story: ['1985 年推出的高 α 酸品种，本来是为了打苦，香气却很有个性：松脂、葡萄柚、杏子，还有一点杜松。西海岸 IPA 里的松树味，很多来自它。',
+              'A high-alpha hop released in 1985, bred for bittering but with a personality of its own: pine resin, grapefruit, apricot and a touch of juniper. Much of the pine in West Coast IPA is Chinook.'],
+      sub: ['columbus', 'simcoe'],
+      src: [S.usda('21226'), S.haas('2020/08/MiniSpecSheets-Chinook.pdf')]
     },
     {
       id: 'columbus', o: 'us', use: 'bitter',
       n: ['哥伦布', 'Columbus'], local: 'CTZ: Columbus, Tomahawk, Zeus',
       p: ['美国 · 华盛顿州', 'Washington, USA'], y: ['1990 年代', '1990s'],
-      alpha: [14, 18], beta: [4.5, 6], cohum: [28, 35], oil: [2.5, 3.5],
-      myrcene: [25, 55], humulene: [9, 25], caryophyllene: [6, 12], farnesene: [0, 1],
-      aroma: [['大麻般的 dank', '黑胡椒', '甘草', '柑橘'], ['dank', 'black pepper', 'liquorice', 'citrus']],
-      story: ['哥伦布、战斧和宙斯三个名字，说的是同一个品种，或者几乎相同，合称 CTZ，这是当年两家公司争夺品种权留下的。α 酸高达 14–18%，是美式 IPA 打苦的主力，香气很冲：大麻般的“dank”、黑胡椒和甘草。',
-              'Columbus, Tomahawk and Zeus are one hop, or near enough, together CTZ, the legacy of a dispute between two companies over the variety. At 14–18% alpha it is the bittering workhorse of American IPA, with a pungent aroma: dank and cannabis-like, black pepper and liquorice.'],
-      sub: ['chinook', 'magnum'], src: []
+      by: ['哥伦布出自 Hopunion，宙斯出自 Hopsteiner', 'Columbus from Hopunion, Zeus from Hopsteiner'], parent: ['自然授粉，亲本不明', 'open-pollinated; parents unknown'],
+      alpha: [15, 17], beta: [4.5, 5], cohum: [28, 32], oil: [2.5, 3.5],
+      myrcene: [50, 60], humulene: [12, 18], caryophyllene: [9, 11], farnesene: [0, 1],
+      aroma: [['黑胡椒', '柠檬', '青葱', '芒果'], ['black pepper', 'lemon', 'green onion', 'mango']],
+      story: ['哥伦布、战斧和宙斯三个名字，说的是同一个品种，或者几乎相同，合称 CTZ，这是当年几家公司争夺品种权留下的。α 酸高达 15–17%，是美式 IPA 打苦的主力。香气很冲：黑胡椒、柠檬，还有酒友叫作“dank”的那种大麻和青葱般的气息。',
+              'Columbus, Tomahawk and Zeus are one hop, or near enough, together CTZ, the legacy of a dispute over who owned it. At 15–17% alpha it is the bittering workhorse of American IPA, with a pungent aroma: black pepper and lemon, and the cannabis-and-green-onion note drinkers call dank.'],
+      sub: ['chinook', 'magnum'],
+      src: [S.haas('2020/09/MiniSpecSheets-Columbus.pdf'), S.haas('2020/09/MiniSpecSheets-Zeus.pdf')]
     },
     {
       id: 'simcoe', o: 'us', use: 'dual',
       n: ['西姆科', 'Simcoe'], local: 'Simcoe',
       p: ['美国 · 华盛顿州', 'Washington, USA'], y: ['2000 年', '2000'],
-      by: ['Yakima Chief Ranches', 'Yakima Chief Ranches'],
+      by: ['Yakima Chief Ranches', 'Yakima Chief Ranches'], parent: ['亲本不明', 'parents unknown'],
       alpha: [12, 14], beta: [4, 5], cohum: [15, 20], oil: [2, 2.5],
-      myrcene: [60, 65], humulene: [10, 15], caryophyllene: [5, 8], farnesene: [0, 1],
-      aroma: [['百香果', '杏子', '松针', '泥土'], ['passion fruit', 'apricot', 'pine', 'earthy']],
-      story: ['2000 年由 Yakima Chief Ranches 推出，α 酸 12–14%，香气复杂：百香果、杏子、松针，还有一点酿酒师委婉地叫作“猫味”（catty）的气息。Pliny the Elder 这样的西海岸双倍 IPA 让它成了经典；马赛克是它的女儿。',
-              'Released by Yakima Chief Ranches in 2000, at 12–14% alpha, with a complex aroma: passion fruit, apricot and pine, and a note brewers politely call “catty”. West Coast double IPAs such as Pliny the Elder made it a classic; Mosaic is its daughter.'],
-      sub: ['mosaic', 'chinook'], src: []
+      myrcene: [60, 65], humulene: [10, 15], caryophyllene: [5, 8], farnesene: [0, 0],
+      aroma: [['柑橘', '杏桃', '热带水果', '木质', '泥土'], ['citrus', 'stone fruit', 'tropical fruit', 'woody', 'earthy']],
+      story: ['2000 年由 Yakima Chief Ranches 推出，α 酸 12–14%，香气复杂：柑橘、杏桃和热带水果，底下有木质和泥土，还有一点酿酒师委婉地叫作“猫味”（catty）的气息。Pliny the Elder 这样的西海岸双倍 IPA 让它成了经典；马赛克是它的女儿。',
+              'Released by Yakima Chief Ranches in 2000, at 12–14% alpha, with a complex aroma: citrus, stone fruit and tropical fruit over wood and earth, and a note brewers politely call “catty”. West Coast double IPAs such as Pliny the Elder made it a classic; Mosaic is its daughter.'],
+      sub: ['mosaic', 'chinook'],
+      src: [S.ycr('simcoe')]
     },
     {
       id: 'amarillo', o: 'us', use: 'aroma',
       n: ['阿马里洛', 'Amarillo'], local: 'Amarillo',
-      p: ['美国 · 华盛顿州', 'Washington, USA'], y: ['2000 年前后', 'about 2000'],
-      by: ['维吉尔·加马什农场', 'Virgil Gamache Farms'], parent: ['在酒花田里偶然发现的一株', 'a chance find in a hop yard'],
-      alpha: [7, 11], beta: [5.5, 8], cohum: [21, 24], oil: [1.5, 1.9],
+      p: ['美国 · 华盛顿州', 'Washington, USA'], y: ['1990 年发现，2003 年获专利', 'found in 1990, patented in 2003'],
+      by: ['维吉尔·加马什农场', 'Virgil Gamache Farms'], parent: ['在一片 Liberty 酒花田里发现的来历不明的植株', 'a plant of unknown origin found in a field of Liberty hops'],
+      alpha: [8, 11], beta: [6, 7], cohum: [21, 24], oil: [1.5, 1.9],
       myrcene: [68, 70], humulene: [9, 11], caryophyllene: [2, 4], farnesene: [2, 4],
-      aroma: [['橙子', '葡萄柚', '花香', '杏子'], ['orange', 'grapefruit', 'floral', 'apricot']],
-      story: ['不是育种育出来的，而是维吉尔·加马什农场在自家酒花田里偶然发现的一株，后来以 Amarillo 的名字申请了专利。橙子、葡萄柚和花香，比卡斯卡特更甜、更像橙子。',
-              'Not bred but found: a chance plant in a hop yard of Virgil Gamache Farms in Washington, later patented as Amarillo. Orange, grapefruit and flowers, sweeter and more orange than Cascade.'],
-      sub: ['cascade', 'centennial'], src: []
+      aroma: [['橙子', '橘子', '花香', '杏子', '甜瓜'], ['orange', 'tangerine', 'floral', 'apricot', 'melon']],
+      story: ['不是育种育出来的：1990 年，维吉尔·加马什农场在自家一片 Liberty 酒花田里发现了这株来历不明的植株，2003 年以 Amarillo 的名字获得专利。橙子、橘子和花香，带一点杏子和甜瓜，比卡斯卡特更甜、更像橙子。',
+              'Not bred but found: in 1990 Virgil Gamache Farms came across a plant of unknown origin in one of its fields of Liberty hops, patented in 2003 as Amarillo. Orange, tangerine and flowers, with apricot and melon: sweeter and more orange than Cascade.'],
+      sub: ['cascade', 'centennial'],
+      src: [S.haas('2020/09/MiniSpecSheets-Amarillo.pdf')]
     },
     {
       id: 'citra', o: 'us', use: 'dual',
       n: ['西楚', 'Citra'], local: 'HBC 394',
-      p: ['美国 · 华盛顿州', 'Washington, USA'], y: ['2008 年', '2008'],
-      by: ['Hop Breeding Company', 'the Hop Breeding Company'],
-      alpha: [11, 15], beta: [3, 4.5], cohum: [20, 35], oil: [1.5, 3],
-      myrcene: [60, 70], humulene: [7, 12], caryophyllene: [5, 8], farnesene: [0, 1],
-      aroma: [['葡萄柚', '青柠', '百香果', '荔枝', '芒果'], ['grapefruit', 'lime', 'passion fruit', 'lychee', 'mango']],
-      story: ['Hop Breeding Company 育成，2008 年推出，编号 HBC 394。香气浓烈：葡萄柚、青柠、百香果、荔枝和芒果。它几乎凭一己之力把美式 IPA 从松针苦带到了热带水果香，如今是美国种得最多的酒花之一。',
-              'Bred by the Hop Breeding Company and released in 2008 as HBC 394. Loud: grapefruit, lime, passion fruit, lychee and mango. It all but single-handedly moved American IPA from pine to tropical fruit, and is now among the most planted hops in the United States.'],
-      sub: ['galaxy', 'mosaic'], src: []
+      p: ['美国 · 华盛顿州', 'Washington, USA'], y: ['2007 年', '2007'],
+      by: ['Hop Breeding Company', 'the Hop Breeding Company'], parent: ['哈拉道中早熟 × 带美国泰特南血统的雄株', 'Hallertauer Mittelfrüh × a male descended from US Tettnanger'],
+      alpha: [11, 13], beta: [3.5, 4.5], cohum: [22, 24], oil: [2.2, 2.8],
+      myrcene: [60, 65], humulene: [11, 13], caryophyllene: [6, 8], farnesene: [0, 0],
+      aroma: [['葡萄柚', '青柠', '芒果', '热带水果', '杏桃'], ['grapefruit', 'lime', 'mango', 'tropical fruit', 'stone fruit']],
+      story: ['Hop Breeding Company 育成，编号 HBC 394，2007 年推出。有意思的是，它的母本是哈拉道中早熟这种贵族酒花。香气却浓烈：葡萄柚、青柠、芒果和其他热带水果。它几乎凭一己之力把美式 IPA 从松针苦带到了热带水果香，如今是美国种得最多的酒花之一。',
+              'Bred by the Hop Breeding Company as HBC 394 and released in 2007, with, of all things, the noble Hallertauer Mittelfrüh as its mother. Yet it is loud: grapefruit, lime, mango and other tropical fruit. It all but single-handedly moved American IPA from pine to tropical fruit, and is now among the most planted hops in the United States.'],
+      sub: ['galaxy', 'mosaic'],
+      src: [S.hbc, S.ycr('citra')]
     },
     {
       id: 'mosaic', o: 'us', use: 'dual',
@@ -873,74 +905,155 @@ var OGData = (function () {
       p: ['美国 · 华盛顿州', 'Washington, USA'], y: ['2012 年', '2012'],
       by: ['Hop Breeding Company', 'the Hop Breeding Company'], parent: ['西姆科 × 带 Nugget 血统的雄株', 'Simcoe × a male descended from Nugget'],
       alpha: [11.5, 13.5], beta: [3.2, 3.9], cohum: [24, 26], oil: [1, 1.5],
-      myrcene: [47, 53], humulene: [13, 16], caryophyllene: [5, 8], farnesene: [0, 1],
-      aroma: [['蓝莓', '热带水果', '柑橘', '松针'], ['blueberry', 'tropical fruit', 'citrus', 'pine']],
-      story: ['编号 HBC 369，2012 年推出，西姆科的女儿。香气像马赛克拼贴一样一层叠一层：蓝莓、热带水果、柑橘、松针和草本，名字就是这么来的。浑浊 IPA 里最常见的酒花之一。',
-              'HBC 369, released in 2012, a daughter of Simcoe. Its aroma is layered like a mosaic, hence the name: blueberry, tropical fruit, citrus, pine and herbs. One of the commonest hops in hazy IPA.'],
-      sub: ['citra', 'simcoe'], src: []
+      myrcene: [47, 53], humulene: [13, 16], caryophyllene: [5.2, 7.8], farnesene: [0, 0],
+      aroma: [['莓果', '热带水果', '柑橘', '花香', '泥土'], ['berry', 'tropical fruit', 'citrus', 'floral', 'earthy']],
+      story: ['编号 HBC 369，2012 年推出，西姆科的女儿。香气像马赛克拼贴一样一层叠一层：莓果（很多人说像蓝莓）、热带水果、柑橘、花香和泥土，名字就是这么来的。浑浊 IPA 里最常见的酒花之一。',
+              'HBC 369, released in 2012, a daughter of Simcoe. Its aroma is layered like a mosaic, hence the name: berries (blueberry, many say), tropical fruit, citrus, flowers and earth. One of the commonest hops in hazy IPA.'],
+      sub: ['citra', 'simcoe'],
+      src: [S.hbc, S.ycr('mosaic')]
     },
     {
       id: 'sabro', o: 'us', use: 'aroma',
       n: ['萨布罗', 'Sabro'], local: 'HBC 438',
       p: ['美国 · 华盛顿州', 'Washington, USA'], y: ['2018 年', '2018'],
-      by: ['Hop Breeding Company', 'the Hop Breeding Company'], parent: ['新墨西哥野生酒花 × 雄株', 'a wild New Mexico hop × a male'],
-      alpha: [12, 16], beta: [4, 7], cohum: [20, 24], oil: [2.5, 3.5],
-      myrcene: [40, 50], humulene: [20, 25], caryophyllene: [7, 9], farnesene: [0, 1],
-      aroma: [['椰子', '橘子', '奶油', '雪松', '薄荷'], ['coconut', 'tangerine', 'cream', 'cedar', 'mint']],
-      story: ['编号 HBC 438，2018 年推出，亲本之一是新墨西哥州山里的野生酒花（Humulus lupulus var. neomexicanus）。香气独一份：椰子、橘子、奶油和热带水果，还有一丝薄荷和雪松。',
-              'HBC 438, released in 2018, with a wild hop from the mountains of New Mexico, Humulus lupulus var. neomexicanus, among its parents. Like nothing else: coconut, tangerine, cream and tropical fruit, with a breath of mint and cedar.'],
-      sub: [], src: []
+      by: ['Hop Breeding Company', 'the Hop Breeding Company'], parent: ['新墨西哥野生酒花（neomexicanus）的雌株，自然授粉', 'open-pollinated from a female neomexicanus, a wild New Mexico hop'],
+      alpha: [12, 16], beta: [4, 7], cohum: [22.6, 22.6], oil: [2.5, 3.5],
+      myrcene: [40, 55], humulene: [10, 15], caryophyllene: [15, 20], farnesene: [0, 1],
+      aroma: [['橘子', '椰子', '热带水果', '雪松', '薄荷', '奶油'], ['tangerine', 'coconut', 'tropical fruit', 'cedar', 'mint', 'cream']],
+      story: ['编号 HBC 438，2018 年推出，母本是新墨西哥州山里的野生酒花（Humulus lupulus var. neomexicanus）。香气独一份：橘子、椰子、奶油和热带水果，还有一丝雪松和薄荷。',
+              'HBC 438, released in 2018, from a wild hop of the New Mexico mountains, Humulus lupulus var. neomexicanus. Like nothing else: tangerine, coconut, cream and tropical fruit, with a breath of cedar and mint.'],
+      sub: [],
+      src: [{ n: 'Hop Breeding Company', u: 'https://www.hopbreeding.com/doc/Sabro-Brand-Hops.pdf' }, S.haas('2020/09/MiniSpecSheets-Sabro.pdf')]
     },
     {
       id: 'nelson', o: 'nz', use: 'dual',
       n: ['尼尔森苏维', 'Nelson Sauvin'], local: 'Nelson Sauvin',
       p: ['新西兰 · 尼尔森', 'Nelson, New Zealand'], y: ['2000 年', '2000'],
-      by: ['新西兰园艺研究所', 'HortResearch, New Zealand'], parent: ['Smoothcone × 新西兰雄株', 'Smoothcone × a New Zealand male'],
-      alpha: [12, 13], beta: [6, 8], cohum: [22, 26], oil: [1, 1.2],
-      myrcene: [20, 25], humulene: [35, 40], caryophyllene: [10, 12], farnesene: [0, 1],
-      aroma: [['白葡萄', '醋栗', '百香果', '青草'], ['white grape', 'gooseberry', 'passion fruit', 'cut grass']],
-      story: ['2000 年由新西兰园艺研究所推出，名字取自产地尼尔森和长相思葡萄（Sauvignon Blanc），因为它真的闻起来像新西兰的长相思：白葡萄、醋栗、百香果和一点青草。喝惯白葡萄酒的人很容易爱上它。',
-              'Released by New Zealand’s HortResearch in 2000 and named for the Nelson region and for Sauvignon blanc, because it really does smell like a New Zealand sauvignon: white grape, gooseberry, passion fruit and cut grass. White-wine drinkers fall for it easily.'],
-      sub: [], src: []
+      by: ['新西兰园艺研究所（今 Plant & Food Research）', 'HortResearch, now Plant & Food Research'], parent: ['三倍体：Smoothcone × 新西兰雄株', 'a triploid: Smoothcone × a New Zealand male'],
+      alpha: [10, 13], beta: [5, 6.5], cohum: [22, 27], oil: [1.2, 2],
+      myrcene: [40, 60], humulene: [20, 30], caryophyllene: [5, 7.5], farnesene: [0.1, 0.5],
+      aroma: [['白葡萄', '醋栗', '百香果', '柑橘'], ['white grape', 'gooseberry', 'passion fruit', 'citrus']],
+      story: ['2000 年由新西兰园艺研究所推出，名字取自产地尼尔森和长相思葡萄（Sauvignon Blanc），因为它真的闻起来像新西兰的长相思：白葡萄、醋栗、百香果和柑橘。喝惯白葡萄酒的人很容易爱上它。',
+              'Released by New Zealand’s HortResearch in 2000 and named for the Nelson region and for Sauvignon blanc, because it really does smell like a New Zealand sauvignon: white grape, gooseberry, passion fruit and citrus. White-wine drinkers fall for it easily.'],
+      sub: [],
+      src: [S.nzhops('nelson-sauvin'), S.haas('2020/10/MiniSpecSheets-NelsonSauvin.pdf')]
     },
     {
       id: 'motueka', o: 'nz', use: 'dual',
       n: ['莫图依卡', 'Motueka'], local: 'Motueka',
-      p: ['新西兰 · 尼尔森地区', 'Nelson region, New Zealand'], y: ['1998 年', '1998'],
-      by: ['新西兰园艺研究所', 'HortResearch, New Zealand'], parent: ['萨兹 × 新西兰品系，三分之二是萨兹', 'Saaz × New Zealand stock, two-thirds Saaz'],
-      alpha: [6.5, 7.5], beta: [5, 5.5], cohum: [27, 31], oil: [0.8, 0.8],
-      myrcene: [45, 50], humulene: [3, 4], caryophyllene: [1.5, 2.5], farnesene: [11, 13],
-      aroma: [['青柠', '柠檬皮', '热带水果', '香草植物'], ['lime', 'lemon zest', 'tropical fruit', 'fresh herbs']],
-      story: ['1998 年推出，三分之二是萨兹的血统，有人叫它“新西兰萨兹”，香气却更明亮：青柠、柠檬皮和热带水果。新西兰皮尔森和不少比利时风格的啤酒都爱用它。',
-              'Released in 1998, two-thirds Saaz by parentage and sometimes called New Zealand Saaz, but brighter: lime, lemon zest and tropical fruit. A favourite for New Zealand pilsner and for Belgian-style beers.'],
-      sub: ['saaz'], src: []
+      p: ['新西兰 · 尼尔森地区', 'Nelson region, New Zealand'], y: ['1996 年', '1996'],
+      by: ['新西兰园艺研究所（今 Plant & Food Research）', 'HortResearch, now Plant & Food Research'], parent: ['三倍体：萨兹 × 新西兰品系', 'a triploid: Saaz × New Zealand stock'],
+      alpha: [5.5, 10], beta: [4.5, 6.5], cohum: [28, 31], oil: [0.8, 1.4],
+      myrcene: [60, 69], humulene: [1, 5], caryophyllene: [0.8, 1.8], farnesene: [6, 10],
+      aroma: [['青柠', '柑橘', '热带水果', '柠檬皮'], ['fresh lime', 'citrus', 'tropical fruit', 'lemon zest']],
+      story: ['1996 年以 “B Saaz” 的名字推出，2007 年才改叫莫图依卡。它是萨兹和新西兰品系杂交的三倍体，香气却比萨兹明亮得多：新鲜的青柠、柠檬皮和热带水果。新西兰皮尔森和不少比利时风格的啤酒都爱用它。',
+              'Released in 1996 as “B Saaz” and renamed Motueka in 2007, it is a triploid of Saaz and New Zealand stock, yet far brighter than Saaz: fresh lime, lemon zest and tropical fruit. A favourite for New Zealand pilsner and for Belgian-style beers.'],
+      sub: ['saaz'],
+      src: [S.nzhops('motueka')]
     },
     {
       id: 'galaxy', o: 'nz', use: 'dual',
       n: ['银河', 'Galaxy'], local: 'Galaxy',
       p: ['澳大利亚', 'Australia'], y: ['2009 年', '2009'],
-      by: ['Hop Products Australia', 'Hop Products Australia'], parent: ['高 α 酸雌株 × 珍珠（Perle）雄株', 'a high-alpha female × a Perle male'],
-      alpha: [13.5, 15], beta: [5.8, 6], cohum: [32, 42], oil: [2.4, 2.7],
-      myrcene: [33, 69], humulene: [1, 2], caryophyllene: [7, 9], farnesene: [2, 4],
-      aroma: [['百香果', '桃子', '柑橘', '菠萝'], ['passion fruit', 'peach', 'citrus', 'pineapple']],
-      story: ['澳大利亚 Hop Products Australia 育成，2009 年推出，α 酸和精油都很高。百香果、桃子和柑橘，香气强得一点点就够。浑浊 IPA 和澳大利亚的淡色艾尔都离不开它。',
-              'Bred by Hop Products Australia and released in 2009, high in both alpha acid and oil. Passion fruit, peach and citrus, so intense that a little goes a long way. A mainstay of hazy IPA and of Australian pale ale.'],
-      sub: ['citra'], src: []
+      by: ['Hop Products Australia', 'Hop Products Australia'], parent: ['澳大利亚高 α 酸品系 × 珍珠（Perle）', 'a high-alpha Australian line × Perle'],
+      alpha: [15.7, 19.8], beta: [7.8, 9.9], cohum: [32, 43], oil: [2.6, 3.3],
+      myrcene: [32, 56], humulene: [0.8, 2.2], caryophyllene: [7, 14.7], farnesene: [2.8, 5.1],
+      aroma: [['百香果', '桃子', '柑橘', '橙子', '柠檬'], ['passion fruit', 'peach', 'citrus', 'orange', 'lemon']],
+      story: ['澳大利亚 Hop Products Australia 在 1994 年杂交、2009 年推出，α 酸和精油都很高。百香果、桃子和柑橘，香气强得一点点就够。浑浊 IPA 和澳大利亚的淡色艾尔都离不开它。',
+              'Crossed by Hop Products Australia in 1994 and released in 2009, high in both alpha acid and oil. Passion fruit, peach and citrus, so intense that a little goes a long way. A mainstay of hazy IPA and of Australian pale ale.'],
+      sub: ['citra'],
+      src: [{ n: 'Hop Products Australia', u: 'https://hops.com.au/galaxy/' }]
     },
     {
       id: 'sorachi', o: 'jp', use: 'dual',
       n: ['空知王牌', 'Sorachi Ace'], local: 'Sorachi Ace',
       p: ['日本 · 北海道', 'Hokkaido, Japan'], y: ['1984 年', '1984'],
-      by: ['札幌啤酒', 'Sapporo Breweries'], parent: ['Brewer’s Gold × 萨兹 × 北海道品系', 'Brewer’s Gold × Saaz × a Hokkaido line'],
-      alpha: [11, 16], beta: [6, 8], cohum: [23, 28], oil: [2, 3],
-      myrcene: [45, 55], humulene: [20, 26], caryophyllene: [7, 11], farnesene: [2, 5],
-      aroma: [['柠檬', '莳萝', '椰子', '木质'], ['lemon', 'dill', 'coconut', 'woody']],
-      story: ['札幌啤酒 1978 年在北海道育成、1984 年登记，名字来自北海道的空知地区。本来为札幌自家的啤酒而育，却是在美国精酿里走红的：柠檬、莳萝、椰子和一点木香，辨识度极高。布鲁克林酒厂的 Sorachi Ace 赛松让它出了名。',
-              'Bred by Sapporo in Hokkaido in 1978 and registered in 1984, named for the Sorachi district. Meant for Sapporo’s own beers, it found its following among American craft brewers instead: lemon, dill, coconut and a little wood, impossible to mistake. Brooklyn Brewery’s Sorachi Ace saison made its name.'],
-      sub: [], src: []
+      by: ['札幌啤酒', 'Sapporo Breweries'], parent: ['（Brewer’s Gold × 萨兹）× 雄株 Beikei No. 2', '(Brewer’s Gold × Saaz) × the male Beikei No. 2'],
+      alpha: [11.5, 14.5], beta: [6, 7.5], cohum: [20, 25], oil: [2.5, 4.5],
+      myrcene: [40, 55], humulene: [20, 26], caryophyllene: [7, 11], farnesene: [2, 5],
+      aroma: [['柠檬', '柠檬草', '莳萝', '荔枝', '雪松'], ['lemon', 'lemongrass', 'dill', 'lychee', 'cedar']],
+      story: ['札幌啤酒在北海道育成，1984 年推出，名字来自北海道的空知地区。本来为札幌自家的啤酒而育，却是在美国精酿里走红的：柠檬、柠檬草、莳萝和雪松，辨识度极高。布鲁克林酒厂的 Sorachi Ace 赛松让它出了名。',
+              'Bred by Sapporo in Hokkaido and released in 1984, named for the Sorachi district. Meant for Sapporo’s own beers, it found its following among American craft brewers instead: lemon, lemongrass, dill and cedar, impossible to mistake. Brooklyn Brewery’s Sorachi Ace saison made its name.'],
+      sub: [],
+      src: [S.barth('sorachi-ace'), { n: 'Hopsteiner', u: 'https://www.hopsteiner.de/en/products/all-hop-varieties/detail/sor' }]
     }
   ];
 
-  return { REGIONS: REGIONS, FERMENTS: FERMENTS, GLASSES: GLASSES, STYLES: STYLES, HOP_ORIGINS: HOP_ORIGINS, HOPS: HOPS };
+  /* Questions and answers for the sugar-and-sweetness section. Each answer is a list of blocks:
+     h (a subheading), p (a paragraph) or li (a list); **text** is set in bold. refs: the papers it rests on. */
+  var QA = [
+    {
+      id: 'q-ddh',
+      refs: [{ n: 'Kirkendall, Mitchell & Chadwick, J. Am. Soc. Brew. Chem. 76 (2018) 178–184', u: 'https://doi.org/10.1080/03610470.2018.1469081' }],
+      q: ['双倍干投 IPA 里还有残糖吗？为什么喝起来那么甜？', 'Is there sugar left in a double dry-hopped IPA, and why does it taste so sweet?'],
+      short: ['有，而且通常比西海岸 IPA 多不少。不过“喝起来甜”里，真正的糖只占一小部分，剩下的是低苦度、果香、水质、口感和酒精一起骗过了舌头。',
+              'Yes, and usually a good deal more than in a West Coast IPA. But real sugar is only a small part of the sweetness you taste; the rest is low bitterness, fruity aroma, the water, the texture and the alcohol fooling your tongue together.'],
+      body: [
+        { h: ['残糖本身', 'The sugar itself'] },
+        { p: ['双倍干投（DDH）的酒大多走浑浊 IPA 的路线。BJCP 给浑浊 IPA 的最终比重是 1.010–1.015，不少浑浊双倍 IPA 会收在 1.016–1.020；西海岸 IPA 多在 1.008–1.012。这是故意做出来的：糖化温度偏高（66–68°C，多留糊精），大量燕麦和小麦，酵母用发酵度偏低的英式菌株（London Ale III 一类，表观发酵度 70–75%）。',
+              'Double dry-hopped (DDH) beers are mostly hazy IPAs. The BJCP gives hazy IPA a final gravity of 1.010–1.015, and many hazy double IPAs finish at 1.016–1.020; West Coast IPAs mostly finish at 1.008–1.012. That is by design: a warmer mash, at 66–68 °C, that leaves more dextrins; plenty of oats and wheat; and a less attenuative English yeast such as London Ale III, at 70–75% apparent attenuation.'] },
+        { p: ['算一支原麦汁 1.075、最终比重 1.016、约 8% 的浑浊双倍 IPA（上面的计算器默认就是它）：表观浸出物约 4°P；扣掉酒精把比重拉低的那部分，真实浸出物约 6.6°P，也就是每升溶着 60 多克固形物。按重量，这比欧盟标签上“甜型”葡萄酒的门槛（残糖每升 45 克）还高，成分却完全不同。葡萄酒的残糖是葡萄糖和果糖，甜度分别约为蔗糖的 0.7 和 1.5 倍；啤酒这 60 多克里，七八成是由四个以上葡萄糖连成的糊精，几乎不甜，贡献的是酒体，此外还有蛋白质和多肽。真正尝得出甜的麦芽糖和麦芽三糖（甜度只有蔗糖的 0.3–0.5 倍，麦芽三糖更低）通常只有每升几克。所以“残糖多”是对的，“残的都是甜的糖”只对了一小部分。',
+              'Take a hazy double IPA of OG 1.075 and FG 1.016, about 8% alcohol, the calculator’s first example above: the apparent extract is about 4 °P; take out the alcohol, which pulls the gravity down, and the real extract is about 6.6 °P, some 60-odd grams of dissolved solids in every litre. By weight that is more than the 45 g/L of residual sugar at which EU labels call a wine sweet, but it is made of something else entirely. A wine’s residual sugar is glucose and fructose, about 0.7 and 1.5 times as sweet as sucrose. Seven or eight tenths of the beer’s 60-odd grams are dextrins, chains of four or more glucose units that are barely sweet and give body, and there are proteins and peptides too. The sugars you can actually taste, maltose and maltotriose, at 0.3–0.5 times the sweetness of sucrose and maltotriose less, usually come to a few grams a litre. So there is plenty left; very little of it is sweet sugar.'] },
+        { h: ['干投本身会造出真的糖：hop creep', 'Dry hopping makes real sugar: hop creep'] },
+        { p: ['酒花自己带着淀粉酶：α-淀粉酶、β-淀粉酶、极限糊精酶和糖化酶。干投把它们带进发酵好的酒里，它们会继续把糊精切成葡萄糖和麦芽糖。Brown 和 Morris 早在 1893 年就记录过这种现象，2018 年 Kirkendall 等人在《美国酿造化学家学会杂志》（JASBC）上用百年（Centennial）酒花把它坐实了。投得越多，带进去的酶越多。之后有两种走向：',
+              'Hops carry their own starch-cutting enzymes: alpha- and beta-amylase, limit dextrinase and glucoamylase. Dry hopping brings them into finished beer, where they go on cutting dextrins into glucose and maltose. Brown and Morris described it in 1893; Kirkendall and colleagues pinned it down with Centennial in the Journal of the American Society of Brewing Chemists in 2018. The more hops, the more enzyme. Then one of two things happens:'] },
+        { li: [
+          ['罐里还有活酵母，温度也够：这些糖被再发酵掉，酒精和二氧化碳上升，可能冒出双乙酰，酒反而变干一点。',
+           'With live yeast still in the tank and warm enough, the new sugar ferments: alcohol and carbon dioxide go up, diacetyl may appear, and the beer ends up a little drier.'],
+          ['为了锁住香气，干投后很快冷却沉降、装罐，酵母少、温度低，撑不起继续发酵：切出来的葡萄糖和麦芽糖就真的留在了酒里。低温让酶变慢，但不会完全停下，所以放久的浑浊 IPA 可能越放越甜：糖在慢慢积累，能遮住它的酒花香却在一天天变淡。罐里如果还有不少酵母，更常见的结果是在罐里再发酵，罐子胀气。',
+           'If the brewer chills and packages soon after the dry hop to keep the aroma, there is too little yeast at too low a temperature to go on fermenting, and the glucose and maltose stay in the beer. Cold slows the enzymes without stopping them, so an old hazy IPA can grow sweeter: sugar slowly builds up while the hop aroma that hid it fades. Where plenty of yeast is left in the can, refermentation and a swollen can are the commoner result.']
+        ] },
+        { h: ['为什么尝起来比实际还甜', 'Why it tastes sweeter than it is'] },
+        { li: [
+          ['**苦度低。** 浑浊 IPA 的酒花几乎都在回旋沉淀和干投时加入，煮沸中异构化的 α 酸很少，IBU 常常只有 30–50，喝起来还要更低。重干投带来的苦主要来自 humulinone（α 酸的氧化产物）和多酚，质感软，压不住甜。同样的最终比重放进一支 60–70 IBU 的西海岸 IPA，就觉得干。',
+           '**Low bitterness.** Nearly all the hops go into the whirlpool and the dry hop, so few alpha acids are isomerised in the boil: often only 30–50 IBU, tasting lower still. The bitterness heavy dry hopping does bring, from humulinones (oxidised alpha acids) and polyphenols, is soft and can’t hold the sweetness down. The same final gravity in a 60–70 IBU West Coast IPA tastes dry.'],
+          ['**香气骗舌头。** 柑橘和热带水果的香气来自硫醇（3MH、3MHA、4MMP）和酯，在大脑里和“甜的水果”绑得很紧；闻到的气味会放大尝到的甜，这是感官科学里很稳定的效应。捏住鼻子喝一口，甜感会掉一截。',
+           '**Aroma fools the tongue.** The citrus and tropical-fruit aromas, from thiols (3MH, 3MHA, 4MMP) and esters, are tied tightly in the brain to sweet fruit, and smells that go with sweet things make a taste seem sweeter, one of the steadiest effects in sensory science. Pinch your nose and take a sip, and much of the sweetness goes.'],
+          ['**水质。** 浑浊 IPA 的水里，氯离子常是硫酸根的两三倍。氯离子让酒圆润、显甜，硫酸根让酒干爽、显苦，西海岸 IPA 正好反过来。',
+           '**Water.** Hazy IPAs are often brewed with two or three times as much chloride as sulfate. Chloride makes beer round and sweet-tasting, sulfate dry and bitter; West Coast IPAs do the opposite.'],
+          ['**口感和 pH。** 燕麦和小麦的蛋白质、β-葡聚糖、酒花多酚和糊精一起撑出绵密的酒体。重干投还会把 pH 抬高 0.1–0.3，酸撑不住，整个酒更圆、更钝。',
+           '**Texture and pH.** Oat and wheat proteins, beta-glucans, hop polyphenols and dextrins together build a plush body. Heavy dry hopping also raises the pH by 0.1–0.3, leaving less acidity to lift the beer, so it rounds off.'],
+          ['**酒精本身。** 8–9% 的乙醇自带一点甜和暖。',
+           '**The alcohol.** At 8–9%, ethanol tastes a little sweet and warm on its own.'],
+          ['**真加了糖的。** 标着 milkshake 或 lactose 的，是直接加了酵母吃不掉的乳糖，那就是真甜。',
+           '**Real added sugar.** A beer labelled milkshake or lactose has lactose in it, which brewer’s yeast can’t ferment: that one is truly sweet.']
+        ] },
+        { h: ['这是风格的选择，不是干投的必然', 'A choice of style, not a law of dry hopping'] },
+        { p: ['在很多酒友的印象里，Tree House、Trillium、Other Half 一派偏甜偏厚，Hill Farmstead 一派则把浑浊 IPA 做得明显更干、苦度更有存在感，同样是双倍干投。想知道一杯酒的甜到底来自糖还是来自感觉，最简单的办法是放到室温、搅掉气再尝：香气和气泡的干扰小了，剩下的甜才属于糖和酒精。要量化，可以用自酿葡萄酒的人测残糖的还原糖片剂（原来的 Clinitest 已经停产，现在有用法相同的 AimTab）：它测的是还原糖，主要抓葡萄糖、麦芽糖、麦芽三糖这些真正甜的部分；长链糊精每克的还原端很少，几乎不显色。',
+              'To many drinkers the Tree House, Trillium and Other Half school leans sweet and thick, while Hill Farmstead and its like make hazy IPAs noticeably drier, with bitterness you can feel, on just as much dry hop. To tell whether a glass is sweet from sugar or from impression, let it warm to room temperature and stir out the gas before tasting again: with less aroma and carbonation in the way, the sweetness left belongs to sugar and alcohol. To put a number on it, use the reducing-sugar tablets home winemakers test residual sugar with (Clinitest is discontinued; AimTab works the same way). They react to reducing sugars, which catches the sweet ones, glucose, maltose and maltotriose, while long dextrins, with few reducing ends per gram, barely register.'] }
+      ]
+    },
+    {
+      id: 'q-mouth',
+      refs: [{ n: 'Lapis, Penner & Lim, Chem. Senses 39 (2014) 737–747', u: 'https://doi.org/10.1093/chemse/bju031' },
+             { n: 'Lapis, Penner & Lim, Chem. Senses 41 (2016) 755–762', u: 'https://doi.org/10.1093/chemse/bjw088' }],
+      q: ['糊精喝进嘴里或肚子里，会被人体的淀粉酶切成单糖、尝出甜来吗？', 'In the mouth or in the gut, do our own amylases turn the dextrins into sugar, and sweetness?'],
+      short: ['在嘴里只多切出一点点，远不够尝出甜；到了肠道会全部变成葡萄糖被吸收，但那里不产生甜的感觉，你只感受得到热量。',
+              'In the mouth, a very little, nowhere near enough to taste. In the gut all of it becomes glucose and is absorbed, but nothing there tastes sweet; what you notice is the calories.'],
+      body: [
+        { h: ['在嘴里：酶不对，底物不对，条件也不对', 'In the mouth: the wrong enzyme, the wrong substrate, the wrong conditions'] },
+        { li: [
+          ['**酶的类型不对。** 唾液淀粉酶是内切的 α-1,4 酶，产物是麦芽糖、麦芽三糖和带着 α-1,6 分支的极限糊精，几乎不出葡萄糖。真正把它们切成葡萄糖的，是小肠刷状缘上的麦芽糖酶-葡糖淀粉酶和蔗糖酶-异麦芽糖酶，嘴里没有。所以就算全切完，上限也只是麦芽糖那种 0.3–0.5 倍蔗糖的甜。',
+           '**The wrong enzyme.** Salivary amylase is an endo-acting alpha-1,4 enzyme: it makes maltose, maltotriose and limit dextrins that keep their alpha-1,6 branches, and almost no glucose. The enzymes that finish the job, maltase-glucoamylase and sucrase-isomaltase on the brush border of the small intestine, are not in the mouth. Even if it cut everything, the ceiling would be maltose, at 0.3–0.5 times the sweetness of sucrose.'],
+          ['**底物已经被同类的酶处理到了极限。** 啤酒里剩下的糊精，是大麦的 α-淀粉酶（同样是内切 α-1,4）和 β-淀粉酶在糖化锅里切不动了才剩下的，多是分支点附近的 α-1,6 键和短的分支片段。唾液淀粉酶对 α-1,6 键同样无能为力，能多切的只有高温糖化时 β-淀粉酶早早失活、没来得及修剪的直链片段，产物也还是麦芽糖和麦芽三糖。',
+           '**A substrate already worn down by the same kind of enzyme.** The dextrins left in beer are what barley’s alpha-amylase, also endo-acting on alpha-1,4 bonds, and its beta-amylase could not cut in the mash: alpha-1,6 branch points and the short branched pieces around them. Salivary amylase can’t cut alpha-1,6 bonds either. All it can add is the straight stretches beta-amylase never got to trim because a hot mash killed it early, and those again give maltose and maltotriose.'],
+          ['**条件差，时间短。** 唾液淀粉酶最适 pH 是 6.7–7，啤酒是 4.3–4.6；一口 20–30 毫升的酒对上 1 毫升左右的唾液，缓冲不动，酶只剩一小部分活性。5–10°C 的酒温再砍掉一截，乙醇也有抑制。从入口到咽下只有几秒，而麦芽糖在水里的察觉阈值就在 1% 左右，在又苦又酸又有酒精的酒里更高。要在几秒里从每升 50 克糊精中切出每升 10 克麦芽糖，差着一两个数量级。对比一下嚼饼干嚼出甜味：底物七成是淀粉，口腔的温度，中性的 pH，还要十几秒到一两分钟，而且人和人差别很大（唾液淀粉酶基因 AMY1 的拷贝数从 2 到 15 不等）。',
+           '**Poor conditions and no time.** Salivary amylase works best at pH 6.7–7; beer is at 4.3–4.6, and a 20–30 mL sip against about 1 mL of saliva can’t be buffered, so only a fraction of the enzyme stays active. Beer at 5–10 °C slows it further, and ethanol inhibits it. From sip to swallow is a few seconds, while maltose is only just detectable in water at around 1%, and needs more in a bitter, acidic, alcoholic drink. Cutting 10 g/L of maltose out of 50 g/L of dextrin in a few seconds is one or two orders of magnitude out of reach. Compare chewing a cracker until it tastes sweet: the substrate is 70% starch, at mouth temperature and neutral pH, and it still takes from ten seconds to a minute or two, and people differ widely, since the salivary amylase gene, AMY1, comes in anything from 2 to 15 copies.']
+        ] },
+        { p: ['所以把酒含在嘴里半分钟，理论上能多出一点麦芽糖，但会被酒变暖、跑气、嗅觉适应这些更大的变化淹没。',
+              'Hold the beer in your mouth for half a minute and in theory you make a little more maltose, but it is swamped by bigger changes: the beer warming, the gas escaping, your nose adapting.'] },
+        { h: ['糊精其实有“味道”，只是不叫甜', 'Dextrins do have a taste, just not a sweet one'] },
+        { p: ['俄勒冈州立大学 Juyun Lim 组的研究（Chemical Senses，2014、2016）发现，人能尝出葡萄糖的寡糖（约 7 个和 14 个葡萄糖连成的），用 lactisole 把甜味受体 T1R2/T1R3 封住以后依然尝得出，受试者说那是“淀粉味”而不是甜；40 多个葡萄糖的长链就尝不出了。实验在样品里加了阿卡波糖，防止唾液先把寡糖切成小糖。放到浑浊 IPA 里，这就是那种糯、满、谷物般的感觉的一部分。它本身不甜，但和果香、低苦、高氯放在一起，大脑很容易把它归进“甜”那一格。',
+              'Juyun Lim’s group at Oregon State University (Chemical Senses, 2014 and 2016) found that people can taste glucose oligomers, chains of about 7 and 14 glucose units, even with the sweet receptor, T1R2/T1R3, blocked by lactisole; the tasters called it starchy, not sweet. A chain of about 44 units went undetected. Acarbose was added to the samples to keep saliva from cutting the oligomers into small sugars first. In a hazy IPA this is part of the soft, full, cereal-like impression. It isn’t sweet in itself, but next to fruity aroma, low bitterness and a lot of chloride the brain easily files it under sweet.'] },
+        { p: ['想直观感受“甜被锁在糊精里”：取一杯跑了气的酒，加一点酿 Brut IPA 用的糖化酶（amyloglucosidase，外切酶，能切 α-1,6 键，直接产出葡萄糖），室温放几个小时，再和没加的对照比，应该会明显变甜。这正是嘴里缺的那种酶，也正是 hop creep 里酒花在罐里慢慢做的事。',
+              'To taste the sweetness locked in the dextrins: take a glass of flat beer, add a little of the amyloglucosidase used for brut IPA, an exo-acting enzyme that also cuts alpha-1,6 bonds and releases glucose directly, leave it a few hours at room temperature and taste it against an untreated glass. It should be clearly sweeter. That is the enzyme the mouth lacks, and the work hop creep does slowly in the tank.'] },
+        { h: ['到了肚子里：全变成葡萄糖，但没有甜的感觉', 'In the gut: all of it becomes glucose, with no sweetness'] },
+        { p: ['咽下去以后，唾液淀粉酶很快被胃酸灭活；到了十二指肠，胰淀粉酶接手，再由刷状缘上的酶切成葡萄糖吸收。糊精最终几乎全部进入血液，麦芽糊精的升糖指数和葡萄糖差不多。但这一步不产生任何能感觉到的甜：肠道的内分泌细胞上确实有甜味受体，参与 GLP-1、GIP 这些激素的调节，却不进入意识。你唯一“感觉”得到的是热量：一罐 473 毫升（16 盎司）、约 8%、真实浸出物 6.6°P 的浑浊双倍 IPA 约 330 千卡，其中近四成来自浸出物，大部分就是这些在嘴里尝不出甜的糊精。',
+              'Once swallowed, salivary amylase is soon inactivated by stomach acid; in the duodenum pancreatic amylase takes over, and the brush-border enzymes cut the pieces into glucose to be absorbed. Nearly all the dextrin ends up in the blood, and maltodextrin’s glycaemic index is about that of glucose. But none of this is a sweetness you notice: the gut’s endocrine cells do carry sweet receptors, which help set hormones such as GLP-1 and GIP, but they don’t reach awareness. All you can “feel” is the energy: a 473 mL (16 oz) can of hazy double IPA at about 8%, with a real extract of 6.6 °P, has about 330 kcal, nearly two-fifths of them from the extract, most of it dextrins you can’t taste as sweet.'] }
+      ]
+    }
+  ];
+
+  return { REGIONS: REGIONS, FERMENTS: FERMENTS, GLASSES: GLASSES, STYLES: STYLES, HOP_ORIGINS: HOP_ORIGINS, HOPS: HOPS, QA: QA };
 })();
 if (typeof module !== 'undefined') module.exports = OGData;
