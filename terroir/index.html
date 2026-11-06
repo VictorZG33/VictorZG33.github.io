@@ -1,0 +1,1262 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="风土 Terroir: a wine primer by Wentao Zhang, in Chinese and English. How each style of wine is made, what the 36 main grapes taste like, and a map of 59 wine regions that zooms into their villages and sub-regions.">
+<meta property="og:title" content="风土 Terroir">
+<meta property="og:description" content="风土 Terroir: a wine primer by Wentao Zhang, in Chinese and English. How each style of wine is made, what the 36 main grapes taste like, and a map of 59 wine regions that zooms into their villages and sub-regions.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://wentaoz.com/terroir/">
+<meta property="og:site_name" content="Wentao Zhang">
+<meta property="og:image" content="https://wentaoz.com/terroir/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="风土 Terroir, a wine primer: the colours of wine from lemon to tawny, and the map of wine regions.">
+<meta name="twitter:card" content="summary_large_image">
+<script>
+/* Apply the theme picked with the Dark button (here or on the homepage) before first paint */
+(function () { try { var t = localStorage.getItem('wentaoz.theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {} })();
+</script>
+<link rel="canonical" href="https://wentaoz.com/terroir/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20fill%3D%22%23F5F1EA%22%2F%3E%3Cpath%20d%3D%22M9%205h14c0%207-2.6%2011.5-7%2011.5S9%2012%209%205z%22%20fill%3D%22%238E1F35%22%2F%3E%3Crect%20x%3D%2215%22%20y%3D%2216%22%20width%3D%222%22%20height%3D%228%22%20fill%3D%22%23231A1C%22%2F%3E%3Crect%20x%3D%2211%22%20y%3D%2224%22%20width%3D%2210%22%20height%3D%222%22%20fill%3D%22%23231A1C%22%2F%3E%3C%2Fsvg%3E">
+<title>风土 Terroir</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,500;1,400;1,500&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Serif+SC:wght@600;900&display=swap">
+<style>
+/* Layout: one 980px column in three numbered parts, how wine is made, the grapes, the regions,
+   under a strip of the colours wine takes in the glass. Paper and garnet ink like a cellar
+   atlas; the map is the one full-width object, sea in a cool grey under warm land. Colour
+   carries meaning in two places only: the colour of each style of wine (validated as a set in
+   both modes), and the garnet of the regions on the map. */
+:root {
+  --bg: #F5F1EA;            /* atlas paper */
+  --surface: #FCFAF6;
+  --fg: #231A1C;            /* ink with a wine bias */
+  --muted: #6B6163;
+  --rule: #DED6CB;
+  --rule-strong: #A99F96;
+  --accent: #8E1F35;        /* garnet: links, focus, selection, the regions on the map */
+  --accent-soft: #F1DDE0;
+  /* the map */
+  --sea: #E2E8EB; --land: #E8E1D4; --land-edge: #C7BCAC; --lake: #E2E8EB;
+  --river: #9AB0BE; --border-line: #ADA192; --belt: rgba(142, 31, 53, 0.075);
+  --dot: #8E1F35; --spot: #4E4547; --city: #84797B; --halo: rgba(245, 241, 234, 0.92);
+  /* the colour of each style of wine; checked as a set for colour-blind and normal-vision separation */
+  --w-white: #C9A227; --w-rose: #E8829F; --w-red: #96203F; --w-amber: #C06212;
+  --font-cjk: "Noto Serif SC", "Songti SC", "STSong", "Source Han Serif SC", "SimSun", serif;
+  --font-latin: "EB Garamond", "Garamond", "Iowan Old Style", "Times New Roman", serif;
+  --font-body: "IBM Plex Sans", -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #16131A; --surface: #1E1A22; --fg: #ECE6DF; --muted: #A0969A; --rule: #312B34; --rule-strong: #5A525C;
+    --accent: #E0667A; --accent-soft: #3B2228;
+    --sea: #171B21; --land: #2B2630; --land-edge: #433B48; --lake: #171B21;
+    --river: #46606F; --border-line: #5F5563; --belt: rgba(224, 102, 122, 0.08);
+    --dot: #E0667A; --spot: #D9D1CB; --city: #9A9094; --halo: rgba(22, 19, 26, 0.9);
+    --w-white: #B0902C; --w-rose: #D07090; --w-red: #A52F47; --w-amber: #CC7026;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #16131A; --surface: #1E1A22; --fg: #ECE6DF; --muted: #A0969A; --rule: #312B34; --rule-strong: #5A525C;
+  --accent: #E0667A; --accent-soft: #3B2228;
+  --sea: #171B21; --land: #2B2630; --land-edge: #433B48; --lake: #171B21;
+  --river: #46606F; --border-line: #5F5563; --belt: rgba(224, 102, 122, 0.08);
+  --dot: #E0667A; --spot: #D9D1CB; --city: #9A9094; --halo: rgba(22, 19, 26, 0.9);
+  --w-white: #B0902C; --w-rose: #D07090; --w-red: #A52F47; --w-amber: #CC7026;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); scroll-padding-top: 56px; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.6;
+  -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: 100%;
+}
+h1, h2, h3, p, ol, ul, dl, dd, figure { margin: 0; }
+ol, ul { padding: 0; list-style: none; }
+button, input, select { font: inherit; color: inherit; }
+a { color: inherit; text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.page {
+  max-width: 980px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 56px;
+}
+.lang-zh .en-only, .lang-en .zh-only { display: none; }
+.latin { font-family: var(--font-latin); font-style: italic; }
+
+/* header, shared with the other pages of the site */
+.home { display: inline-block; margin-bottom: 8px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); text-decoration: none; }
+.home:hover, .home:focus-visible { color: var(--fg); }
+.top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--rule-strong); }
+.brand { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.brand .name { font-family: var(--font-cjk); font-weight: 900; font-size: 21px; letter-spacing: 0.06em; }
+.brand .name-latin { font-family: var(--font-latin); font-style: italic; font-size: 22px; }
+.eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.08em; color: var(--muted); margin-top: 4px; }
+.tools { display: flex; align-items: center; gap: 8px; flex: none; }
+.pill {
+  appearance: none; border: 1px solid var(--rule-strong); border-radius: 999px; background: transparent; color: var(--muted);
+  font: 500 12px/1 var(--font-body); padding: 7px 11px; cursor: pointer; letter-spacing: 0.04em;
+}
+.pill[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.lang { display: inline-flex; border: 1px solid var(--rule-strong); border-radius: 999px; overflow: hidden; }
+.lang button { appearance: none; border: 0; background: transparent; color: var(--muted); font: 500 12px/1 var(--font-body); padding: 7px 11px; cursor: pointer; letter-spacing: 0.04em; }
+.lang button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+
+/* the three parts, kept in reach while scrolling */
+.toc {
+  position: sticky; top: 0; z-index: 20; display: flex; gap: 4px 22px; flex-wrap: wrap;
+  margin: 0 -16px; padding: 10px 16px; background: var(--bg); border-bottom: 1px solid var(--rule);
+}
+.toc a { display: inline-flex; align-items: baseline; gap: 7px; text-decoration: none; color: var(--muted); font-weight: 500; font-size: 14.5px; }
+.toc a b { font: 500 11px/1 var(--font-mono); }
+.toc a:hover, .toc a.on { color: var(--fg); }
+.toc a.on b { color: var(--accent); }
+
+/* hero: what terroir means, over the colours of wine */
+.hero { padding-block: 34px 6px; }
+.hero h1 { font-weight: 900; line-height: 1.12; letter-spacing: 0.02em; text-wrap: balance; }
+.lang-zh .hero h1 { font-family: var(--font-cjk); font-size: clamp(34px, 7vw, 54px); }
+.lang-en .hero h1 { font-family: var(--font-latin); font-weight: 500; font-size: clamp(38px, 7.5vw, 60px); letter-spacing: -0.01em; line-height: 1.05; }
+.hero .lead { margin-top: 16px; max-width: 40em; font-size: 17.5px; line-height: 1.7; }
+.lang-en .hero .lead { font-size: 17px; }
+.colours { margin-top: 28px; }
+.colours-h { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.cstrip { display: flex; gap: 10px; }
+.cgroup { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.cgroup .cg-name { font-size: 12.5px; font-weight: 600; }
+.cbar { display: flex; gap: 2px; height: clamp(40px, 8vw, 64px); }
+.cbar span { flex: 1 1 0; min-width: 0; border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06); }
+.cnames { display: flex; gap: 2px; }
+.cnames span { flex: 1 1 0; min-width: 0; text-align: center; font-size: 11.5px; color: var(--muted); line-height: 1.3; overflow-wrap: anywhere; }
+.colours .cap { margin-top: 12px; font-size: 13.5px; color: var(--muted); max-width: 62em; }
+@media (max-width: 600px) {
+  .lang-zh .cnames span { writing-mode: vertical-rl; text-orientation: upright; letter-spacing: 0.08em; line-height: 1; display: flex; justify-content: center; }
+  .lang-en .cnames { display: none; }
+}
+
+/* parts */
+.part { padding-top: 46px; }
+.part-h { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; padding-bottom: 10px; border-bottom: 1px solid var(--rule-strong); }
+.part-h .no { font: 500 13px/1 var(--font-mono); color: var(--accent); }
+.part-h h2 { font-size: 26px; line-height: 1.2; }
+.lang-zh .part-h h2 { font-family: var(--font-cjk); font-weight: 900; letter-spacing: 0.08em; }
+.lang-en .part-h h2 { font-family: var(--font-latin); font-weight: 500; font-size: 30px; }
+.part-h .other { font-family: var(--font-latin); font-style: italic; font-size: 17px; color: var(--muted); }
+.lang-en .part-h .other { font-family: var(--font-cjk); font-style: normal; font-weight: 600; font-size: 15px; }
+.part .intro { margin-top: 14px; max-width: 42em; font-size: 15.5px; color: var(--fg); }
+.label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.lang-zh .label { letter-spacing: 0.16em; }
+
+/* 1. how wine is made */
+.make-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 16px; margin-top: 22px; }
+@media (max-width: 760px) { .make-top { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; min-width: 0; }
+.card h3 { font-size: 15px; font-weight: 600; margin-bottom: 10px; }
+.eq { display: grid; gap: 12px; }
+.eq .f { font-family: var(--font-mono); font-size: 14.5px; font-weight: 500; letter-spacing: 0.01em; overflow-wrap: anywhere; }
+.eq .f sub { font-size: 0.72em; line-height: 0; }
+.eq .w { font-size: 13.5px; color: var(--muted); margin-top: 2px; }
+.eq .w b { color: var(--fg); font-weight: 600; }
+.chem-note { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--rule); font-size: 13.5px; color: var(--muted); display: grid; gap: 8px; }
+.chem-note .n { font-family: var(--font-mono); font-size: 12.5px; color: var(--fg); }
+
+/* skin contact: one row per style, a range bar on a log time axis */
+.skin .sub { font-size: 13px; color: var(--muted); margin: -4px 0 12px; }
+.srow { display: grid; grid-template-columns: 9.5rem minmax(0, 1fr); gap: 4px 12px; align-items: center; padding: 5px 0; }
+.lang-en .srow { grid-template-columns: 8.5rem minmax(0, 1fr); }
+.srow .nm { font-size: 13.5px; font-weight: 600; line-height: 1.3; }
+.srow .nm span { display: block; font-weight: 400; font-size: 12px; color: var(--muted); }
+.track { position: relative; height: 22px; }
+.track::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--rule); }
+.track .tick-l { position: absolute; top: 4px; bottom: 4px; width: 1px; background: var(--rule); }
+.track .bar { position: absolute; top: 4px; height: 14px; border-radius: 4px; cursor: default; }
+.track .bar.tail { opacity: 0.45; }
+.track .bar:hover, .track .bar:focus-visible { filter: brightness(1.08); box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px var(--rule-strong); }
+.saxis { position: relative; height: 18px; margin-left: calc(9.5rem + 12px); font: 500 10.5px/1 var(--font-mono); color: var(--muted); }
+.lang-en .saxis { margin-left: calc(8.5rem + 12px); }
+.saxis span { position: absolute; top: 4px; transform: translateX(-50%); white-space: nowrap; }
+.saxis span:last-child { transform: translateX(-100%); }
+@media (max-width: 480px) {
+  .srow, .lang-en .srow { grid-template-columns: minmax(0, 1fr); }
+  .saxis, .lang-en .saxis { margin-left: 0; }
+  .saxis span:nth-child(4) { display: none; }   /* "1 month" would run into "6 months"; its tick stays */
+}
+.tip {
+  position: fixed; z-index: 50; pointer-events: none; max-width: 260px;
+  padding: 7px 10px; border-radius: 6px; background: var(--fg); color: var(--bg);
+  font-size: 12.5px; line-height: 1.4; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+}
+.tip b { font-weight: 600; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  appearance: none; display: inline-flex; align-items: center; gap: 7px; min-height: 36px;
+  padding: 7px 13px; border: 1px solid var(--rule-strong); border-radius: 999px; background: var(--surface);
+  font-size: 14px; font-weight: 500; line-height: 1.2; cursor: pointer; text-decoration: none; color: var(--fg);
+}
+.chip:hover { border-color: var(--fg); }
+.chip[aria-selected="true"], .chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.chip .sw { width: 10px; height: 10px; border-radius: 50%; flex: none; box-shadow: 0 0 0 1.5px var(--surface); }
+.chip[aria-selected="true"] .sw, .chip[aria-pressed="true"] .sw { box-shadow: 0 0 0 1.5px var(--bg); }
+.chip .ct { font: 500 11px/1 var(--font-mono); color: var(--muted); }
+.chip[aria-selected="true"] .ct, .chip[aria-pressed="true"] .ct { color: inherit; opacity: 0.75; }
+.chip.small { min-height: 30px; padding: 5px 11px; font-size: 13px; }
+.sw.red { background: var(--w-red); } .sw.white { background: var(--w-white); } .sw.rose { background: var(--w-rose); } .sw.amber { background: var(--w-amber); }
+.sw.fizz { background: var(--w-white); box-shadow: 0 0 0 1.5px var(--surface), 0 0 0 3px var(--w-white); }
+
+.styles { margin-top: 26px; }
+.style-panel { margin-top: 16px; padding: 18px 20px 20px; background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; }
+.style-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.style-head .glass { width: 22px; height: 22px; border-radius: 50%; flex: none; }
+.style-head h3 { font-size: 21px; line-height: 1.2; }
+.lang-zh .style-head h3 { font-family: var(--font-cjk); font-weight: 900; letter-spacing: 0.04em; }
+.lang-en .style-head h3 { font-family: var(--font-latin); font-weight: 500; font-size: 24px; }
+.style-head .other { font-family: var(--font-latin); font-style: italic; color: var(--muted); font-size: 16px; }
+.lang-en .style-head .other { font-family: var(--font-cjk); font-style: normal; font-weight: 600; font-size: 14px; }
+.style-lead { margin-top: 10px; max-width: 44em; font-size: 15.5px; }
+.variants { margin-top: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.variants .label { margin-right: 4px; }
+.steps { margin-top: 18px; counter-reset: st; display: grid; gap: 0; }
+.steps li { position: relative; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 0 12px; padding-bottom: 16px; }
+.steps li::before {
+  counter-increment: st; content: counter(st);
+  display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--fg); color: var(--bg); font: 500 12px/1 var(--font-mono); position: relative; z-index: 1;
+}
+.steps li::after { content: ""; position: absolute; left: 12.5px; top: 28px; bottom: 2px; width: 1px; background: var(--rule-strong); }
+.steps li:last-child::after { display: none; }
+.steps li:last-child { padding-bottom: 0; }
+.steps .t { font-weight: 600; font-size: 15.5px; line-height: 1.3; padding-top: 3px; }
+.steps .t .other { font-weight: 400; color: var(--muted); font-size: 13.5px; margin-left: 6px; }
+.steps .t .other.latin { font-size: 15px; }
+.steps .k { display: inline-block; margin-top: 5px; padding: 2px 8px; border-radius: 4px; background: var(--accent-soft); color: var(--fg); font: 500 12px/1.5 var(--font-mono); }
+.steps .d { margin-top: 5px; font-size: 14.5px; color: var(--fg); max-width: 46em; }
+.style-where { margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--rule); display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.style-where .label { margin-right: 4px; }
+
+/* 2. grapes */
+.gtools { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+.gtools .grow { flex: 1 1 220px; display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+.gtools select, .gtools input {
+  min-height: 38px; padding: 7px 12px; font-size: 14.5px; background: var(--surface);
+  border: 1px solid var(--rule-strong); border-radius: 8px;
+}
+.gtools input { flex: 1 1 200px; min-width: 0; max-width: 320px; }
+.gtools input::placeholder { color: var(--muted); }
+.gtools label { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.gcount { margin-top: 12px; font-size: 13px; color: var(--muted); }
+.grid { margin-top: 10px; display: grid; grid-template-columns: repeat(auto-fill, minmax(272px, 1fr)); gap: 12px; }
+.gcard { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; min-width: 0; }
+.gcard.open { grid-column: 1 / -1; border-color: var(--rule-strong); }
+.gbtn { appearance: none; display: block; width: 100%; text-align: left; background: none; border: 0; padding: 14px 16px 15px; cursor: pointer; border-radius: 12px; }
+.gbtn:hover .gname { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 4px; }
+.ghead { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.ghead .sw { width: 11px; height: 11px; border-radius: 50%; align-self: center; flex: none; }
+.gname { font-size: 18px; font-weight: 600; line-height: 1.25; }
+.lang-zh .gname { font-family: var(--font-cjk); font-weight: 900; letter-spacing: 0.03em; }
+.lang-en .gname { font-family: var(--font-latin); font-weight: 500; font-size: 21px; }
+.gother { font-family: var(--font-latin); font-style: italic; font-size: 15.5px; color: var(--muted); }
+.lang-en .gother { font-family: var(--font-cjk); font-style: normal; font-size: 13.5px; font-weight: 600; }
+.gaka { width: 100%; font-size: 12.5px; color: var(--muted); }
+.meters { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 5px 12px; margin-top: 12px; align-items: center; }
+.meters .mt { font-size: 12.5px; color: var(--muted); }
+.meters .pips { display: flex; gap: 3px; }
+.meters .pips i { width: 100%; max-width: 30px; height: 7px; border-radius: 2px; background: var(--rule); }
+.meters .pips i.on { background: var(--fg); }
+.gnotes { display: block; margin-top: 12px; font-size: 13.5px; color: var(--muted); }
+.gmore { padding: 0 16px 18px; display: grid; gap: 14px; }
+.gmore .txt { font-size: 15px; max-width: 46em; }
+.gfacts { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 14px; font-size: 14px; }
+.gfacts dt { color: var(--muted); font-size: 13px; padding-top: 1px; }
+.gempty { margin-top: 16px; color: var(--muted); }
+
+/* 3. regions and the map */
+.views { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 6px; }
+.views .chip { min-height: 32px; padding: 5px 12px; font-size: 13.5px; }
+.mapwrap { position: relative; margin-top: 14px; }
+.map {
+  position: relative; width: 100%; aspect-ratio: 16 / 10; overflow: hidden; border-radius: 12px;
+  background: var(--sea); border: 1px solid var(--rule); touch-action: manipulation; user-select: none; -webkit-user-select: none;
+}
+.map.world { background: var(--bg); }
+@media (max-width: 640px) { .map { aspect-ratio: 1 / 1; } }
+.map svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.map .geo { transition: opacity 0.18s ease; }
+.map.fading .geo, .map.fading .marks { opacity: 0; }
+.g-sea { fill: var(--sea); }
+.g-land { fill: var(--land); stroke: var(--land-edge); stroke-width: 0.8px; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.g-lake { fill: var(--lake); stroke: var(--land-edge); stroke-width: 0.6px; vector-effect: non-scaling-stroke; }
+.g-river { fill: none; stroke: var(--river); stroke-width: 1px; vector-effect: non-scaling-stroke; stroke-linejoin: round; stroke-linecap: round; }
+.g-border { fill: none; stroke: var(--border-line); stroke-width: 0.8px; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.g-belt { fill: var(--belt); }
+.marks { position: absolute; inset: 0; transition: opacity 0.18s ease; }
+.map.moving .lb { opacity: 0; }
+.mk { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+button.mk { appearance: none; border: 0; padding: 0; background: none; cursor: pointer; }
+.mk .dot { position: absolute; left: -12px; top: -12px; width: 24px; height: 24px; display: block; }
+.mk .dot::before {
+  content: ""; position: absolute; left: 50%; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%;
+  background: var(--dot); box-shadow: 0 0 0 2px var(--halo);
+}
+.mk.tiny .dot::before { width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; box-shadow: 0 0 0 1.5px var(--halo); }
+.mk.away .dot::before { background: transparent; box-shadow: inset 0 0 0 2px var(--dot), 0 0 0 2px var(--halo); }
+.mk.sel .dot::before { width: 14px; height: 14px; margin: -7px 0 0 -7px; box-shadow: 0 0 0 2px var(--halo), 0 0 0 4px var(--fg); }
+.mk.dim .dot::before { opacity: 0.45; }
+.mk.dim .lb { opacity: 0.7; }
+.mk .lb {
+  position: absolute; left: 9px; top: -9px; white-space: nowrap; pointer-events: none;
+  font-size: 12.5px; font-weight: 600; line-height: 18px; color: var(--fg);
+  text-shadow: 0 0 2px var(--halo), 0 0 3px var(--halo), 0 0 4px var(--halo);
+  transition: opacity 0.15s ease;
+}
+.mk .lb.off { visibility: hidden; }
+.mk:hover .lb.off, .mk:focus-visible .lb.off { visibility: visible; z-index: 3; }
+.mk:hover, .mk:focus-visible { z-index: 4; }
+.mk:focus-visible { outline: none; }
+.mk:focus-visible .dot { outline: 2px solid var(--accent); outline-offset: -3px; border-radius: 50%; }
+button.mk.area:focus-visible .lb { box-shadow: 0 0 0 2px var(--accent); }
+.mk.spot .dot { left: -4px; top: -4px; width: 8px; height: 8px; }
+.mk.spot .dot::before { width: 6px; height: 6px; margin: -3px 0 0 -3px; background: var(--spot); box-shadow: 0 0 0 1.5px var(--halo); }
+.mk.spot .lb { font-weight: 500; font-size: 12px; }
+.mk.city .dot, .mk.ref .dot { left: -3px; top: -3px; width: 6px; height: 6px; }
+.mk.city .dot::before, .mk.ref .dot::before { width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; border-radius: 1px; background: var(--city); box-shadow: 0 0 0 1px var(--halo); }
+.mk.city .lb, .mk.ref .lb { font-weight: 400; font-size: 11.5px; color: var(--city); }
+.mk.belt .lb, .mk.area .lb { position: absolute; }
+.mk.belt .lb { font: 500 10.5px/1 var(--font-mono); color: var(--muted); letter-spacing: 0.06em; }
+button.mk.area .lb { pointer-events: auto; font-size: 13px; font-weight: 600; padding: 3px 8px; line-height: 18px; border-radius: 999px; background: var(--halo); text-shadow: none; box-shadow: 0 0 0 1px var(--rule-strong); }
+button.mk.area .lb b { font: 500 10.5px/1 var(--font-mono); color: var(--muted); margin-left: 5px; }
+button.mk.area:hover .lb { box-shadow: 0 0 0 1px var(--fg); }
+.mapbar { position: absolute; left: 10px; top: 10px; z-index: 6; display: flex; gap: 6px; }
+.mapbar button { appearance: none; border: 1px solid var(--rule-strong); border-radius: 999px; background: var(--surface); padding: 6px 12px; font-size: 13px; font-weight: 500; cursor: pointer; }
+.mapbar button:hover { border-color: var(--fg); }
+.mapmsg { position: absolute; inset: 0; display: grid; place-items: center; font-size: 14px; color: var(--muted); }
+.mapnote { margin-top: 10px; font-size: 13px; color: var(--muted); max-width: 62em; }
+.rlist { margin-top: 18px; }
+.rlist .label { display: block; margin-bottom: 8px; }
+.rlist .chips + .label { margin-top: 16px; }
+.rcard { margin-top: 16px; padding: 18px 20px 20px; background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; }
+.rcard .hint { color: var(--muted); font-size: 14.5px; }
+.rhead { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.rhead h3 { font-size: 24px; line-height: 1.2; }
+.lang-zh .rhead h3 { font-family: var(--font-cjk); font-weight: 900; letter-spacing: 0.04em; }
+.lang-en .rhead h3 { font-family: var(--font-latin); font-weight: 500; font-size: 27px; }
+.rhead .other { font-family: var(--font-latin); font-style: italic; font-size: 17px; color: var(--muted); }
+.lang-en .rhead .other { font-family: var(--font-cjk); font-style: normal; font-size: 15px; font-weight: 600; }
+.rmeta { margin-top: 4px; font-size: 13.5px; color: var(--muted); }
+.rtext { margin-top: 12px; font-size: 15.5px; max-width: 46em; }
+.rfacts { margin-top: 16px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px 16px; align-items: start; }
+.rfacts dt { padding-top: 7px; }
+.rfacts dd .plain { display: inline-flex; align-items: center; min-height: 30px; padding: 5px 4px; font-size: 13.5px; color: var(--muted); }
+.rspots { font-size: 14px; padding-top: 5px; }
+@media (max-width: 520px) { .rfacts { grid-template-columns: minmax(0, 1fr); gap: 4px; } .rfacts dd { margin-bottom: 8px; } }
+
+footer { margin-top: 48px; padding-top: 14px; border-top: 1px solid var(--rule-strong); font-size: 13px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: space-between; }
+footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 16px; color: var(--fg); }
+footer p { max-width: 52em; }
+.nojs { margin: 22px 0 0; font-size: 17px; max-width: 34em; }
+@media (prefers-reduced-motion: reduce) { .map .geo, .marks, .mk .lb { transition: none; } }
+</style>
+<noscript><style>.tools, .toc, main { display: none; }</style></noscript>
+</head>
+<body>
+<div class="page lang-zh" id="page">
+  <header class="top">
+    <div>
+      <a class="home" href="../">← wentaoz.com</a>
+      <div class="brand"><span class="name" lang="zh-CN">风土</span><span class="name-latin" lang="en">Terroir</span></div>
+      <div class="eyebrow" id="eyebrow"></div>
+    </div>
+    <div class="tools">
+      <button type="button" class="pill" id="btn-theme" aria-pressed="false" hidden></button>
+      <div class="lang" role="group" aria-label="Language">
+        <button type="button" id="btn-zh" aria-pressed="true" lang="zh-CN">中文</button>
+        <button type="button" id="btn-en" aria-pressed="false" lang="en">EN</button>
+      </div>
+    </div>
+  </header>
+
+  <noscript><p class="nojs">风土这一页由 JavaScript 生成，请开启后刷新。<br><span lang="en">This page is drawn by JavaScript. Turn it on and reload.</span></p></noscript>
+
+  <nav class="toc" id="toc" aria-label="Contents">
+    <a href="#make"><b>1</b><span id="toc1"></span></a>
+    <a href="#grapes"><b>2</b><span id="toc2"></span></a>
+    <a href="#regions"><b>3</b><span id="toc3"></span></a>
+  </nav>
+
+  <main>
+    <section class="hero">
+      <h1 id="heroTitle"></h1>
+      <p class="lead" id="heroLead"></p>
+      <figure class="colours" id="colours">
+        <div class="colours-h"><span id="coloursH"></span></div>
+        <div class="cstrip" id="cstrip"></div>
+        <figcaption class="cap" id="coloursCap"></figcaption>
+      </figure>
+    </section>
+
+    <section class="part" id="make" aria-labelledby="makeH">
+      <div class="part-h"><span class="no">1</span><h2 id="makeH"></h2><span class="other" id="makeO"></span></div>
+      <p class="intro" id="makeIntro"></p>
+      <div class="make-top">
+        <div class="card">
+          <h3 id="chemH"></h3>
+          <div class="eq" id="eq"></div>
+          <div class="chem-note" id="chemNote"></div>
+        </div>
+        <figure class="card skin" id="skin">
+          <h3 id="skinH"></h3>
+          <p class="sub" id="skinSub"></p>
+          <div id="skinRows"></div>
+          <div class="saxis" id="skinAxis" aria-hidden="true"></div>
+        </figure>
+      </div>
+      <div class="styles">
+        <div class="chips" role="tablist" id="styleTabs"></div>
+        <div class="style-panel" role="tabpanel" id="stylePanel"></div>
+      </div>
+    </section>
+
+    <section class="part" id="grapes" aria-labelledby="grapesH">
+      <div class="part-h"><span class="no">2</span><h2 id="grapesH"></h2><span class="other" id="grapesO"></span></div>
+      <p class="intro" id="grapesIntro"></p>
+      <div class="gtools">
+        <div class="chips" role="group" id="gFilter"></div>
+        <div class="grow">
+          <label><span id="gSortL"></span><select id="gSort"></select></label>
+          <input type="search" id="gSearch" autocomplete="off" spellcheck="false">
+        </div>
+      </div>
+      <p class="gcount" id="gCount" aria-live="polite"></p>
+      <ol class="grid" id="gGrid"></ol>
+      <p class="gempty" id="gEmpty" hidden></p>
+    </section>
+
+    <section class="part" id="regions" aria-labelledby="regionsH">
+      <div class="part-h"><span class="no">3</span><h2 id="regionsH"></h2><span class="other" id="regionsO"></span></div>
+      <p class="intro" id="regionsIntro"></p>
+      <div class="views chips" role="group" id="viewChips"></div>
+      <div class="mapwrap">
+        <div class="map world" id="map">
+          <svg class="geo" id="mapSvg" aria-hidden="true" preserveAspectRatio="xMidYMid meet"></svg>
+          <div class="marks" id="mapMarks"></div>
+          <div class="mapbar" id="mapBar" hidden><button type="button" id="mapBack"></button></div>
+          <p class="mapmsg" id="mapMsg" hidden></p>
+        </div>
+      </div>
+      <p class="mapnote" id="mapNote"></p>
+      <div class="rlist" id="rList"></div>
+      <article class="rcard" id="rCard" aria-live="polite"></article>
+    </section>
+  </main>
+
+  <footer>
+    <span class="sig">风土 Terroir</span>
+    <p id="footNote"></p>
+  </footer>
+</div>
+<div class="tip" id="tip" role="tooltip" hidden></div>
+
+<script src="data.js"></script>
+<script>
+(function () {
+  'use strict';
+  var D = window.TerroirData;
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+
+  var GRAPE = {}, REGION = {}, STYLE = {}, VIEW = {};
+  D.grapes.forEach(function (g) { GRAPE[g.id] = g; });
+  D.regions.forEach(function (r) { REGION[r.id] = r; });
+  D.styles.forEach(function (s) { STYLE[s.id] = s; });
+  D.views.forEach(function (v) { VIEW[v.id] = v; });
+
+  // which regions grow each grape, and which styles each region makes, from the regions and styles themselves
+  var GRAPE_REGIONS = {};
+  D.regions.forEach(function (r) { r.grapes.forEach(function (g) { if (typeof g === 'string') (GRAPE_REGIONS[g] = GRAPE_REGIONS[g] || []).push(r.id); }); });
+  var REGION_STYLES = {};
+  D.regions.forEach(function (r) {
+    var list = [];
+    r.glass.forEach(function (c) { if (c === 'red' || c === 'white' || c === 'rose') list.push(c); });
+    if (r.fizz) list.push('sparkling');
+    REGION_STYLES[r.id] = list;
+  });
+  D.styles.forEach(function (s) {
+    var where = (s.where || []).slice();
+    (s.variants || []).forEach(function (v) { where = where.concat(v.where || []); });
+    where.forEach(function (id) { var l = REGION_STYLES[id]; if (l && l.indexOf(s.id) < 0) l.push(s.id); });
+  });
+  var STYLE_ORDER = D.styles.map(function (s) { return s.id; });
+  Object.keys(REGION_STYLES).forEach(function (id) { REGION_STYLES[id].sort(function (a, b) { return STYLE_ORDER.indexOf(a) - STYLE_ORDER.indexOf(b); }); });
+  var REGIONS_IN = {};
+  D.regions.forEach(function (r) { (REGIONS_IN[r.view] = REGIONS_IN[r.view] || []).push(r.id); });
+
+  var I18N = {
+    zh: {
+      eyebrow: '葡萄酒入门 · 酿造 · 品种 · 产区',
+      toc: ['酿造', '品种', '产区'],
+      heroTitle: '一杯酒里的风土',
+      heroLead: '同一种葡萄，种在不同的地方、用不同的方法酿，会变成完全不同的酒。法国人把土壤、气候、地形和人的手艺合在一起叫作 terroir，中文译作“风土”。这一页分三部分：酒是怎么酿的，主要的葡萄是什么味道，它们长在世界的哪里。',
+      coloursH: '酒的颜色',
+      coloursCap: '品酒先看颜色。白葡萄酒随着陈年，从柠檬绿、柠檬黄变成金黄、琥珀，最后发棕，越来越深；红葡萄酒正相反，从年轻时的紫红变成宝石红、石榴红，最后褪成茶色，越来越浅，所以颜色深的红酒多半还年轻，或者果皮厚、带皮时间长。桃红介于两者之间。',
+      colourGroups: { white: '白葡萄酒', rose: '桃红', red: '红葡萄酒' },
+      colours: { white: ['柠檬绿', '柠檬黄', '金黄', '琥珀', '棕'], rose: ['粉红', '三文鱼', '橙红'], red: ['紫红', '宝石红', '石榴红', '茶色', '棕'] },
+      makeH: '酿造', makeO: 'How wine is made',
+      makeIntro: '所有葡萄酒都从同一件事开始：酵母把葡萄里的糖变成酒精。不同的是发酵之前和之后做了什么：果皮泡多久、在什么容器里陈年、要不要气泡、要不要甜。下面先看发酵本身，再按酒的种类一步步看。',
+      chemH: '发酵的化学',
+      eq: [
+        ['C<sub>6</sub>H<sub>12</sub>O<sub>6</sub> → 2 C<sub>2</sub>H<sub>5</sub>OH + 2 CO<sub>2</sub>', '<b>酒精发酵</b>：酵母把葡萄糖变成乙醇和二氧化碳，同时放热。'],
+        ['C<sub>4</sub>H<sub>6</sub>O<sub>5</sub> → C<sub>3</sub>H<sub>6</sub>O<sub>3</sub> + CO<sub>2</sub>', '<b>苹果酸-乳酸发酵</b>：乳酸菌把尖锐的苹果酸变成柔和的乳酸。']
+      ],
+      chemNote: [
+        ['每升约 16.5–17 克糖 → 1% 酒精', '按方程式，每升 15.4 克糖就能产生 1%（体积）的酒精；酵母自己还要用掉一些，实际约需 16.5–17 克。所以糖度 24 °Brix 的葡萄汁，发酵干后约有 14% 的酒精。'],
+        ['二氧化硫：每升几十毫克', '酒标上的“二氧化硫”用来防氧化、抑制杂菌，酵母发酵时自己也会产生一点。']
+      ],
+      skinH: '果皮泡多久，决定了酒的颜色',
+      skinSub: '几乎所有葡萄的汁都是无色的，颜色和单宁来自果皮。横轴是对数刻度。',
+      skin: {
+        white: ['白葡萄酒', '多数直接压榨，最多几小时'], rose: ['桃红', '2–20 小时'],
+        red: ['红葡萄酒', '4 天到 4 周，少数更久'], orange: ['橙酒', '4 天到 6 个月']
+      },
+      skinTip: function (n, d) { return '<b>' + esc(n) + '</b>：带皮 ' + esc(d); },
+      ticks: ['1 小时', '1 天', '1 周', '1 个月', '6 个月'],
+      method: '做法', where: '代表产区',
+      grapesH: '品种', grapesO: 'Grapes',
+      grapesIntro: function (n) { return '世界上最重要的 ' + n + ' 个酿酒葡萄品种。刻度比较的是每个品种的典型风格（1 低，5 高）：具体到每一瓶酒，会因产地、年份和酿法而不同。点开卡片看介绍、配餐和主要产区。'; },
+      filters: { all: '全部', red: '红葡萄', white: '白葡萄' },
+      sortL: '排序',
+      sorts: { order: '常见顺序', body: '酒体从重到轻', acid: '酸度从高到低', tannin: '单宁从高到低', aroma: '芳香从浓到淡' },
+      search: '搜索，比如 黑皮诺 或 Riesling',
+      count: function (n, all) { return n === all ? '共 ' + all + ' 个品种' : '显示 ' + n + ' / ' + all + ' 个品种'; },
+      none: '没有找到这个品种。',
+      m: { body: '酒体', tannin: '单宁', acid: '酸度', aroma: '芳香' },
+      lvl: ['低', '中低', '中', '中高', '高'],
+      origin: '原产', notes: '常见香气', pair: '配餐', inRegions: '主要产区', aka: '又名',
+      regionsH: '产区', regionsO: 'Regions',
+      regionsIntro: function (n) { return n + ' 个产区。点地图上的点，或下面的名字，地图会放大到它的村庄和子产区。世界上大多数葡萄园都在南北纬 30° 到 50° 之间（地图上的浅色带）：离赤道更近太热，离两极更近太冷，例外往往靠海拔，比如阿根廷的萨尔塔和云南的香格里拉。'; },
+      back: function (v) { return '‹ ' + v; },
+      belts: ['北纬 30°–50°', '南纬 30°–50°'],
+      inView: '这一带的产区', areas: '按地区看', restOfEurope: '欧洲其他产区，按国家看',
+      hint: '在地图上点一个产区，或从上面的名字里选一个。',
+      climate: '气候', grapesF: '主要品种', spotsF: '村庄与子产区', stylesF: '风格',
+      mapNote: '地图底图：Natural Earth。只画了各方都承认的陆地国界。',
+      loading: '地图加载中…', failed: '地图没能加载，请检查网络后刷新。',
+      count2: function (n) { return n + ' 个'; },
+      footNote: '风土是我做的一份葡萄酒入门。地图底图来自 Natural Earth（公有领域），村镇位置核对自 OpenStreetMap。葡萄酒每个年份都在变，这里写的是大致、典型的样子。',
+      theme: '深色',
+      sep: '、', colon: '：'
+    },
+    en: {
+      eyebrow: 'A wine primer · making · grapes · regions',
+      toc: ['Making', 'Grapes', 'Regions'],
+      heroTitle: 'What is in a glass',
+      heroLead: 'The same grape, grown in different places and made in different ways, becomes quite different wines. The French call the sum of soil, climate, lie of the land and the grower’s craft terroir; Chinese renders it 风土, wind and earth. This page has three parts: how wine is made, what the main grapes taste like, and where in the world they grow.',
+      coloursH: 'The colours of wine',
+      coloursCap: 'Tasting starts with colour. With age, white wines deepen from lemon-green and lemon to gold and amber, and finally brown; reds go the other way, fading from the purple of youth to ruby, garnet and at last tawny, so a deep red is usually young, thick-skinned or long on its skins. Rosé sits between them.',
+      colourGroups: { white: 'White', rose: 'Rosé', red: 'Red' },
+      colours: { white: ['lemon-green', 'lemon', 'gold', 'amber', 'brown'], rose: ['pink', 'salmon', 'orange'], red: ['purple', 'ruby', 'garnet', 'tawny', 'brown'] },
+      makeH: 'How wine is made', makeO: '酿造',
+      makeIntro: 'Every wine begins the same way: yeast turns the sugar in grapes into alcohol. What differs is what happens before and after: how long the juice sits on the skins, what it ages in, whether it gets bubbles, whether it stays sweet. First the fermentation itself, then each style, step by step.',
+      chemH: 'The chemistry of fermentation',
+      eq: [
+        ['C<sub>6</sub>H<sub>12</sub>O<sub>6</sub> → 2 C<sub>2</sub>H<sub>5</sub>OH + 2 CO<sub>2</sub>', '<b>Alcoholic fermentation</b>: yeast turns glucose into ethanol and carbon dioxide, giving off heat.'],
+        ['C<sub>4</sub>H<sub>6</sub>O<sub>5</sub> → C<sub>3</sub>H<sub>6</sub>O<sub>3</sub> + CO<sub>2</sub>', '<b>Malolactic conversion</b>: lactic bacteria turn sharp malic acid into softer lactic acid.']
+      ],
+      chemNote: [
+        ['About 16.5–17 g of sugar a litre → 1% alcohol', 'By the equation, 15.4 g of sugar a litre gives 1% alcohol by volume; the yeast keeps some for itself, so in practice it takes about 16.5–17 g. Juice at 24 °Brix ferments dry to about 14%.'],
+        ['Sulphur dioxide: tens of milligrams a litre', 'The “contains sulphites” on a label is there against oxygen and spoilage microbes; yeast makes a little of it during fermentation too.']
+      ],
+      skinH: 'Time on the skins sets the colour',
+      skinSub: 'The juice of almost every grape is colourless; colour and tannin come from the skins. The time axis is logarithmic.',
+      skin: {
+        white: ['White', 'pressed at once, or a few hours at most'], rose: ['Rosé', '2–20 hours'],
+        red: ['Red', '4 days to 4 weeks, a few longer'], orange: ['Orange', '4 days to 6 months']
+      },
+      skinTip: function (n, d) { return '<b>' + esc(n) + '</b>: ' + esc(d) + ' on skins'; },
+      ticks: ['1 hour', '1 day', '1 week', '1 month', '6 months'],
+      method: 'Method', where: 'Made in',
+      grapesH: 'Grapes', grapesO: '品种',
+      grapesIntro: function (n) { return 'The ' + n + ' most important wine grapes in the world. The scales compare each grape’s typical style (1 low, 5 high); any one bottle varies with place, vintage and winemaking. Open a card for the story, food and main regions.'; },
+      filters: { all: 'All', red: 'Red grapes', white: 'White grapes' },
+      sortL: 'Sort',
+      sorts: { order: 'Usual order', body: 'Body, fullest first', acid: 'Acidity, highest first', tannin: 'Tannin, highest first', aroma: 'Aroma, most intense first' },
+      search: 'Search, e.g. Riesling or 黑皮诺',
+      count: function (n, all) { return n === all ? all + ' grapes' : n + ' of ' + all + ' grapes'; },
+      none: 'No grape matches.',
+      m: { body: 'Body', tannin: 'Tannin', acid: 'Acidity', aroma: 'Aroma' },
+      lvl: ['low', 'medium−', 'medium', 'medium+', 'high'],
+      origin: 'From', notes: 'Typical notes', pair: 'With food', inRegions: 'Main regions', aka: 'Also',
+      regionsH: 'Regions', regionsO: '产区',
+      regionsIntro: function (n) { return n + ' regions. Pick a dot on the map, or a name below, and the map zooms in to its villages and sub-regions. Most of the world’s vineyards lie between 30° and 50° north and south (the pale bands on the map): nearer the equator is too hot, nearer the poles too cold, and the exceptions usually make it up with altitude, as Salta in Argentina and Shangri-La in Yunnan do.'; },
+      back: function (v) { return '‹ ' + v; },
+      belts: ['30°–50° N', '30°–50° S'],
+      inView: 'Regions here', areas: 'By area', restOfEurope: 'The rest of Europe, by country',
+      hint: 'Pick a region on the map, or one of the names above.',
+      climate: 'Climate', grapesF: 'Main grapes', spotsF: 'Villages and sub-regions', stylesF: 'Styles',
+      mapNote: 'Base map: Natural Earth. Only land borders that every side recognises are drawn.',
+      loading: 'Loading the map…', failed: 'The map did not load. Check the connection and reload.',
+      count2: function (n) { return String(n); },
+      footNote: 'Terroir is a wine primer I made. The base map is from Natural Earth (public domain) and the places on it were checked against OpenStreetMap. Wine changes with every vintage; this is the typical picture.',
+      theme: 'Dark',
+      sep: ', ', colon: ': '
+    }
+  };
+
+  var COLOURS = {   // the colours of wine in the glass, for the strip at the top (not data colours)
+    white: ['#E4E2A0', '#EED879', '#DDB13F', '#C27F28', '#8A5726'],
+    rose: ['#F1A5B3', '#EC9C82', '#DF8352'],
+    red: ['#521536', '#861A2D', '#74272A', '#94502E', '#6A4126']
+  };
+
+  // ---------- state ----------
+  var state = { lang: 'zh', style: 'red', variant: 0, gc: 'all', gsort: 'order', gq: '', open: {}, view: 'world', region: null, zoomed: false };
+  try {
+    var saved = localStorage.getItem('terroir.lang');
+    if (saved === 'zh' || saved === 'en') state.lang = saved;
+    else state.lang = (navigator.language || 'zh').toLowerCase().indexOf('zh') === 0 ? 'zh' : 'en';
+  } catch (e) { state.lang = 'zh'; }
+  var L = function () { return I18N[state.lang]; };
+  var T = function (pair) { return pair ? pair[state.lang === 'zh' ? 0 : 1] : ''; };
+  var O = function (pair) { return pair ? pair[state.lang === 'zh' ? 1 : 0] : ''; };   // the other language
+  var otherAttr = function () { return state.lang === 'zh' ? ' lang="en"' : ' lang="zh-CN"'; };
+
+  // ---------- small helpers ----------
+  var tip = $('tip');
+  function showTip(html, x, y) {
+    tip.innerHTML = html; tip.hidden = false;
+    var w = tip.offsetWidth, h = tip.offsetHeight;
+    tip.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, x - w / 2)) + 'px';
+    tip.style.top = Math.max(8, y - h - 10) + 'px';
+  }
+  function hideTip() { tip.hidden = true; }
+  function setHash(h) { try { history.replaceState(null, '', h ? '#' + h : location.pathname + location.search); } catch (e) {} }
+  function scrollToEl(el) {
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+  }
+
+  // ---------- hero ----------
+  function renderHero() {
+    var l = L();
+    $('heroTitle').textContent = l.heroTitle;
+    $('heroLead').textContent = l.heroLead;
+    $('coloursH').textContent = l.coloursH;
+    $('coloursCap').textContent = l.coloursCap;
+    var h = '';
+    ['white', 'rose', 'red'].forEach(function (g) {
+      var n = COLOURS[g].length;
+      h += '<div class="cgroup" style="flex:' + n + ' 1 0"><span class="cg-name">' + esc(l.colourGroups[g]) + '</span><div class="cbar">';
+      COLOURS[g].forEach(function (c, i) { h += '<span style="background:' + c + '" title="' + esc(l.colours[g][i]) + '"></span>'; });
+      h += '</div><div class="cnames" aria-hidden="true">';
+      l.colours[g].forEach(function (nm) { h += '<span>' + esc(nm) + '</span>'; });
+      h += '</div></div>';
+    });
+    $('cstrip').innerHTML = h;
+  }
+
+  // ---------- 1. how wine is made ----------
+  var SKIN = [   // hours on skins, on a log axis from half an hour to 6,000 hours
+    { id: 'white', glass: 'white', from: 0.5, to: 6 },
+    { id: 'rose', glass: 'rose', from: 2, to: 20 },
+    { id: 'red', glass: 'red', from: 96, to: 720, tail: 1440 },
+    { id: 'orange', glass: 'amber', from: 96, to: 4380 }
+  ];
+  var LOG0 = Math.log(0.5), LOG1 = Math.log(6000);
+  var pos = function (h) { return (Math.log(h) - LOG0) / (LOG1 - LOG0) * 100; };
+
+  function renderMake() {
+    var l = L();
+    $('makeH').textContent = l.makeH;
+    $('makeO').textContent = l.makeO; $('makeO').lang = state.lang === 'zh' ? 'en' : 'zh-CN';
+    $('makeIntro').textContent = l.makeIntro;
+    $('chemH').textContent = l.chemH;
+    $('eq').innerHTML = l.eq.map(function (e) { return '<div><div class="f">' + e[0] + '</div><div class="w">' + e[1] + '</div></div>'; }).join('');
+    $('chemNote').innerHTML = l.chemNote.map(function (n) { return '<div><div class="n">' + esc(n[0]) + '</div>' + esc(n[1]) + '</div>'; }).join('');
+    $('skinH').textContent = l.skinH;
+    $('skinSub').textContent = l.skinSub;
+    var ticks = [1, 24, 168, 720, 4380], rows = '';
+    SKIN.forEach(function (s) {
+      var nm = l.skin[s.id], a = pos(s.from), b = pos(s.to), lines = '';
+      ticks.forEach(function (t) { lines += '<i class="tick-l" style="left:' + pos(t).toFixed(2) + '%"></i>'; });
+      rows += '<div class="srow"><div class="nm">' + esc(nm[0]) + '<span>' + esc(nm[1]) + '</span></div><div class="track">' + lines +
+        (s.tail ? '<i class="bar tail" style="left:' + b.toFixed(2) + '%;width:' + (pos(s.tail) - b).toFixed(2) + '%;background:var(--w-' + s.glass + ')"></i>' : '') +
+        '<i class="bar" tabindex="0" data-skin="' + s.id + '" role="img" aria-label="' + esc(nm[0] + l.colon + nm[1]) + '" style="left:' + a.toFixed(2) + '%;width:' + (b - a).toFixed(2) + '%;background:var(--w-' + s.glass + ')"></i></div></div>';
+    });
+    $('skinRows').innerHTML = rows;
+    $('skinAxis').innerHTML = ticks.map(function (t, i) { return '<span style="left:' + pos(t).toFixed(2) + '%">' + esc(l.ticks[i]) + '</span>'; }).join('');
+
+    var tabs = '';
+    D.styles.forEach(function (s) {
+      var sw = s.fizz ? 'fizz' : s.glass;
+      tabs += '<button type="button" class="chip" role="tab" id="tab-' + s.id + '" aria-controls="stylePanel" aria-selected="' + (s.id === state.style) + '" tabindex="' + (s.id === state.style ? 0 : -1) + '" data-style="' + s.id + '"><i class="sw ' + sw + '" aria-hidden="true"></i>' + esc(T(s.name)) + '</button>';
+    });
+    $('styleTabs').innerHTML = tabs;
+    $('styleTabs').setAttribute('aria-label', state.lang === 'zh' ? '酒的种类' : 'Styles of wine');
+    renderStyle();
+  }
+
+  function renderStyle() {
+    var l = L(), s = STYLE[state.style];
+    var variants = s.variants || [{ steps: s.steps, where: s.where }];
+    var vi = Math.min(state.variant, variants.length - 1), v = variants[vi];
+    var h = '<div class="style-head"><i class="glass sw ' + (s.fizz ? 'fizz' : s.glass) + '" aria-hidden="true"></i><h3>' + esc(T(s.name)) + '</h3><span class="other"' + otherAttr() + '>' + esc(O(s.name)) + '</span></div>';
+    h += '<p class="style-lead">' + esc(T(s.lead)) + '</p>';
+    if (s.variants) {
+      h += '<div class="variants" role="group" aria-label="' + esc(l.method) + '"><span class="label">' + esc(l.method) + '</span>';
+      s.variants.forEach(function (x, i) { h += '<button type="button" class="chip small" aria-pressed="' + (i === vi) + '" data-variant="' + i + '">' + esc(T(x.name)) + '</button>'; });
+      h += '</div>';
+    }
+    h += '<ol class="steps">';
+    v.steps.forEach(function (st) {
+      var term = O(st.t);
+      h += '<li><div><div class="t">' + esc(T(st.t)) + '<span class="other' + (state.lang === 'zh' ? ' latin' : '') + '"' + otherAttr() + '>' + esc(term) + '</span></div>' +
+        (st.k ? '<span class="k">' + esc(T(st.k)) + '</span>' : '') + '<p class="d">' + esc(T(st.d)) + '</p></div></li>';
+    });
+    h += '</ol>';
+    var where = v.where || s.where || [];
+    if (where.length) {
+      h += '<div class="style-where"><span class="label">' + esc(l.where) + '</span>';
+      where.forEach(function (id) { h += regionChip(id); });
+      h += '</div>';
+    }
+    $('stylePanel').innerHTML = h;
+    $('stylePanel').setAttribute('aria-labelledby', 'tab-' + s.id);
+  }
+  function regionChip(id) {
+    var r = REGION[id];
+    return '<button type="button" class="chip small" data-goregion="' + id + '">' + esc(T(r.name)) + '</button>';
+  }
+  function styleChip(id) {
+    var s = STYLE[id];
+    return '<button type="button" class="chip small" data-gostyle="' + id + '"><i class="sw ' + (s.fizz ? 'fizz' : s.glass) + '" aria-hidden="true"></i>' + esc(T(s.name)) + '</button>';
+  }
+  function grapeChip(g) {
+    if (typeof g !== 'string') return '<span class="plain">' + esc(T(g)) + '</span>';
+    var x = GRAPE[g];
+    return '<button type="button" class="chip small" data-gogrape="' + g + '"><i class="sw ' + x.c + '" aria-hidden="true"></i>' + esc(T(x.name)) + '</button>';
+  }
+
+  // ---------- 2. grapes ----------
+  function grapeMatches(g, q) {
+    if (!q) return true;
+    var hay = [g.name[0], g.name[1], g.aka ? g.aka[0] : '', g.aka ? g.aka[1] : '', g.id].join(' ').toLowerCase();
+    return hay.indexOf(q) >= 0;
+  }
+  function renderGrapeTools() {
+    var l = L();
+    $('grapesH').textContent = l.grapesH;
+    $('grapesO').textContent = l.grapesO; $('grapesO').lang = state.lang === 'zh' ? 'en' : 'zh-CN';
+    $('grapesIntro').textContent = l.grapesIntro(D.grapes.length);
+    var f = '';
+    ['all', 'red', 'white'].forEach(function (k) {
+      f += '<button type="button" class="chip" aria-pressed="' + (state.gc === k) + '" data-gc="' + k + '">' + (k === 'all' ? '' : '<i class="sw ' + k + '" aria-hidden="true"></i>') + esc(l.filters[k]) + '</button>';
+    });
+    $('gFilter').innerHTML = f;
+    $('gFilter').setAttribute('aria-label', state.lang === 'zh' ? '葡萄颜色' : 'Grape colour');
+    $('gSortL').textContent = l.sortL;
+    var so = '';
+    ['order', 'body', 'acid', 'tannin', 'aroma'].forEach(function (k) { so += '<option value="' + k + '"' + (state.gsort === k ? ' selected' : '') + '>' + esc(l.sorts[k]) + '</option>'; });
+    $('gSort').innerHTML = so;
+    $('gSearch').placeholder = l.search;
+    $('gSearch').setAttribute('aria-label', l.search);
+  }
+  function meterRow(label, v, lvl) {
+    var pips = '';
+    for (var i = 1; i <= 5; i++) pips += '<i' + (i <= v ? ' class="on"' : '') + '></i>';
+    return '<span class="mt" aria-hidden="true">' + esc(label) + '</span><span class="pips" role="img" aria-label="' + esc(label + ' ' + v + '/5, ' + lvl[v - 1]) + '">' + pips + '</span>';
+  }
+  function renderGrapes() {
+    var l = L(), q = state.gq.trim().toLowerCase();
+    var list = D.grapes.filter(function (g) { return (state.gc === 'all' || g.c === state.gc) && grapeMatches(g, q); });
+    var key = state.gsort;
+    if (key !== 'order') {
+      list = list.slice().sort(function (a, b) {
+        var va = a.s[key] || 0, vb = b.s[key] || 0;   // reds have no aroma score and whites no tannin: they sort last
+        return vb - va;
+      });
+    }
+    var h = '';
+    list.forEach(function (g) {
+      var open = !!state.open[g.id];
+      var keys = g.c === 'red' ? ['body', 'tannin', 'acid'] : ['body', 'acid', 'aroma'];
+      var aka = g.aka ? [g.aka[0], g.aka[1]].filter(Boolean).join(' ') : '';
+      h += '<li class="gcard' + (open ? ' open' : '') + '" id="grape-' + g.id + '">' +
+        '<button type="button" class="gbtn" aria-expanded="' + open + '" aria-controls="gm-' + g.id + '" data-grape="' + g.id + '">' +
+        '<span class="ghead"><i class="sw ' + g.c + '" aria-hidden="true"></i><span class="gname">' + esc(T(g.name)) + '</span><span class="gother"' + otherAttr() + '>' + esc(O(g.name)) + '</span>' +
+        (aka ? '<span class="gaka">' + esc(l.aka) + ' ' + esc(aka) + '</span>' : '') + '</span>' +
+        '<span class="meters">' + keys.map(function (k) { return meterRow(l.m[k], g.s[k], l.lvl); }).join('') + '</span>' +
+        '<span class="gnotes">' + esc(g.notes.map(T).join(l.sep)) + '</span></button>';
+      h += '<div class="gmore" id="gm-' + g.id + '"' + (open ? '' : ' hidden') + '>';
+      if (open) {
+        h += '<p class="txt">' + esc(T(g.text)) + '</p><dl class="gfacts">' +
+          '<dt>' + esc(l.origin) + '</dt><dd>' + esc(T(g.origin)) + '</dd>' +
+          '<dt>' + esc(l.pair) + '</dt><dd>' + esc(T(g.pair)) + '</dd></dl>';
+        var rs = GRAPE_REGIONS[g.id] || [];
+        if (rs.length) h += '<div><span class="label">' + esc(l.inRegions) + '</span><div class="chips" style="margin-top:8px">' + rs.map(regionChip).join('') + '</div></div>';
+      }
+      h += '</div></li>';
+    });
+    $('gGrid').innerHTML = h;
+    $('gCount').textContent = l.count(list.length, D.grapes.length);
+    $('gEmpty').textContent = l.none;
+    $('gEmpty').hidden = list.length > 0;
+  }
+  function openGrape(id, scroll) {
+    var g = GRAPE[id]; if (!g) return;
+    state.open[id] = true;
+    if (state.gc !== 'all' && state.gc !== g.c) state.gc = 'all';
+    if (state.gq && !grapeMatches(g, state.gq.trim().toLowerCase())) { state.gq = ''; $('gSearch').value = ''; }
+    renderGrapeTools(); renderGrapes();
+    setHash('grape=' + id);
+    if (scroll) { var el = $('grape-' + id); if (el) scrollToEl(el); }
+  }
+
+  // ---------- 3. regions and the map ----------
+  var R = Math.PI / 180;
+  // The same projections d3-geo used to draw the maps (tools/build-map.mjs), so dots land on the land
+  function projectFor(p) {
+    if (p.type === 'equalEarth') {
+      var A1 = 1.340264, A2 = -0.081106, A3 = 0.000893, A4 = 0.003796, M = Math.sqrt(3) / 2;
+      return function (lon, lat) {
+        var l = Math.asin(M * Math.sin(lat * R)), l2 = l * l, l6 = l2 * l2 * l2;
+        var x = lon * R * Math.cos(l) / (M * (A1 + 3 * A2 * l2 + l6 * (7 * A3 + 9 * A4 * l2)));
+        var y = l * (A1 + A2 * l2 + l6 * (A3 + A4 * l2));
+        return [p.translate[0] + p.scale * x, p.translate[1] - p.scale * y];
+      };
+    }
+    var l0 = p.center[0] * R, s0 = Math.sin(p.center[1] * R), c0 = Math.cos(p.center[1] * R);
+    return function (lon, lat) {
+      var dl = lon * R - l0, sp = Math.sin(lat * R), cp = Math.cos(lat * R), cd = Math.cos(dl);
+      var k = Math.sqrt(2 / (1 + s0 * sp + c0 * cp * cd));
+      return [p.translate[0] + p.scale * k * cp * Math.sin(dl), p.translate[1] - p.scale * k * (c0 * sp - s0 * cp * cd)];
+    };
+  }
+
+  var mapEl = $('map'), svg = $('mapSvg'), marks = $('mapMarks');
+  var cache = {}, cur = null, vb = null, anim = 0, items = [], loadingFor = null;
+  var measure = document.createElement('canvas').getContext('2d');
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function getView(id) {
+    if (cache[id]) return Promise.resolve(cache[id]);
+    return fetch('map/' + id + '.json').then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (j) { j.id = id; j.P = projectFor(j.proj); cache[id] = j; return j; });
+  }
+  function aspect() { var w = mapEl.clientWidth, h = mapEl.clientHeight; return w && h ? w / h : 1.6; }
+  // the smallest box of the map's shape that holds `box`, kept inside the drawn area when it fits
+  function fit(box, v) {
+    var a = aspect(), w = box[2] - box[0], h = box[3] - box[1], cx = (box[0] + box[2]) / 2, cy = (box[1] + box[3]) / 2;
+    if (w / h > a) h = w / a; else w = h * a;
+    var x = cx - w / 2, y = cy - h / 2;
+    if (w <= v.w) x = Math.min(Math.max(x, 0), v.w - w); else x = (v.w - w) / 2;
+    if (h <= v.h) y = Math.min(Math.max(y, 0), v.h - h); else y = (v.h - h) / 2;
+    return { x: x, y: y, w: w, h: h };
+  }
+  function pad(box, f, min) {
+    var w = box[2] - box[0], h = box[3] - box[1], cx = (box[0] + box[2]) / 2, cy = (box[1] + box[3]) / 2;
+    var hw = Math.max(w * (0.5 + f), min / 2), hh = Math.max(h * (0.5 + f), min / 2);
+    return [cx - hw, cy - hh, cx + hw, cy + hh];
+  }
+  function homeBox(v) { return v.id === 'world' ? [0, 0, v.w, v.h] : pad(v.focus, 0.06, 0); }
+  function zoomBox(v, r) {
+    var pts = [v.P(r.lon, r.lat)];
+    (r.spots || []).forEach(function (s) { pts.push(v.P(s[3], s[2])); });
+    var b = [Infinity, Infinity, -Infinity, -Infinity];
+    pts.forEach(function (p) { b[0] = Math.min(b[0], p[0]); b[1] = Math.min(b[1], p[1]); b[2] = Math.max(b[2], p[0]); b[3] = Math.max(b[3], p[1]); });
+    var km = v.proj.scale / 6371;   // units per kilometre near the centre of the view
+    return pad(b, 0.22, 36 * km);
+  }
+
+  function drawGeo(v) {
+    var h = v.sphere ? '<path class="g-sea" d="' + v.sphere + '"/>' : '<rect class="g-sea" x="-5000" y="-5000" width="' + (v.w + 10000) + '" height="' + (v.h + 10000) + '"/>';
+    if (v.belts) h += '<path class="g-belt" d="' + v.belts + '"/>';
+    h += '<path class="g-land" d="' + v.land + '"/>';
+    if (v.lakes) h += '<path class="g-lake" d="' + v.lakes + '"/>';
+    if (v.rivers) h += '<path class="g-river" d="' + v.rivers + '"/>';
+    if (v.borders) h += '<path class="g-border" d="' + v.borders + '"/>';
+    svg.innerHTML = h;
+    mapEl.classList.toggle('world', v.id === 'world');
+  }
+  function inside(v, p) { return p[0] >= 0 && p[0] <= v.w && p[1] >= 0 && p[1] <= v.h && isFinite(p[0]) && isFinite(p[1]); }
+
+  // One overlay item per thing on the map: a region, a village, a town to find the way, a label
+  function buildMarks() {
+    var v = cur, l = L(), world = v.id === 'world';
+    marks.textContent = '';
+    items = [];
+    var add = function (it) {
+      var el = document.createElement(it.button ? 'button' : 'span');
+      el.className = 'mk ' + it.kind + (it.cls ? ' ' + it.cls : '');
+      if (it.button) { el.type = 'button'; el.setAttribute('aria-label', it.aria); }
+      else el.setAttribute('aria-hidden', 'true');
+      if (it.kind !== 'belt' && it.kind !== 'area') { var d = document.createElement('i'); d.className = 'dot'; el.appendChild(d); }
+      if (it.text) { var s = document.createElement('span'); s.className = 'lb'; s.innerHTML = it.html || esc(it.text); el.appendChild(s); it.lb = s; }
+      Object.keys(it.data || {}).forEach(function (k) { el.setAttribute('data-' + k, it.data[k]); });
+      marks.appendChild(el);
+      it.el = el;
+      items.push(it);
+    };
+    var sel = state.region ? REGION[state.region] : null, zoomed = state.zoomed && sel && sel.view === v.id;
+    if (world) {
+      l.belts.forEach(function (t, i) { var p = v.P(-178, i ? -40 : 40); add({ kind: 'belt', x: p[0], y: p[1], text: t, prio: 9, anchor: 'right' }); });
+      // one label per area, where its regions are, that opens that view
+      var areas = ['europe', 'california', 'pnw', 'nyon', 'southam', 'cape', 'oceania', 'china'];
+      var euro = ['europe', 'france', 'italy', 'iberia', 'central'];
+      areas.forEach(function (id) {
+        var ids = id === 'europe' ? D.regions.filter(function (r) { return euro.indexOf(r.view) >= 0; }) : (REGIONS_IN[id] || []).map(function (x) { return REGION[x]; });
+        if (!ids.length) return;
+        var box = [Infinity, Infinity, -Infinity, -Infinity];
+        ids.forEach(function (r) { var p = v.P(r.lon, r.lat); box = [Math.min(box[0], p[0]), Math.min(box[1], p[1]), Math.max(box[2], p[0]), Math.max(box[3], p[1])]; });
+        var name = T(VIEW[id].name);
+        add({ kind: 'area', button: true, aria: name, x: (box[0] + box[2]) / 2, y: (box[1] + box[3]) / 2, box: box, text: name, html: esc(name) + '<b>' + ids.length + '</b>', prio: 3, data: { view: id } });
+      });
+    } else if (!zoomed) {
+      D.cities.forEach(function (c) {
+        var p = v.P(c[3], c[2]);
+        if (inside(v, p)) add({ kind: 'city', x: p[0], y: p[1], text: state.lang === 'zh' ? c[0] : c[1], prio: 6, r: 3 });
+      });
+    }
+    D.regions.forEach(function (r) {
+      var p = v.P(r.lon, r.lat);
+      if (!inside(v, p)) return;
+      var mine = r.view === v.id, isSel = sel && sel.id === r.id;
+      var cls = (world ? 'tiny' : '') + (mine || world ? '' : ' away') + (isSel ? ' sel' : '') + (zoomed && !isSel ? ' dim' : '');
+      add({ kind: 'rg', button: true, cls: cls, aria: T(r.name) + ', ' + T(D.countries[r.country]), x: p[0], y: p[1],
+        text: world ? null : T(r.name), prio: isSel ? 0 : (mine ? 2 : 5), data: { region: r.id }, r: isSel ? 9 : (world ? 5 : 7) });
+    });
+    if (zoomed) {
+      (sel.spots || []).forEach(function (s) {
+        var p = v.P(s[3], s[2]);
+        add({ kind: s[4] ? 'ref' : 'spot', x: p[0], y: p[1], text: state.lang === 'zh' ? s[0] : s[1], prio: s[4] ? 4 : 1, r: s[4] ? 3 : 4 });
+      });
+    }
+    items.sort(function (a, b) { return a.prio - b.prio; });
+  }
+
+  // Put every item where it belongs on screen, then give labels room: each tries the right, left,
+  // above and below of its point in turn, and is hidden (shown on hover) if none is free
+  function placeAll(labels) {
+    var cw = mapEl.clientWidth, ch = mapEl.clientHeight, s = cw / vb.w;
+    items.forEach(function (it) {
+      it.sx = (it.x - vb.x) * s; it.sy = (it.y - vb.y) * s;
+      var out = it.sx < -30 || it.sy < -30 || it.sx > cw + 30 || it.sy > ch + 30;
+      it.el.style.transform = 'translate(' + it.sx.toFixed(1) + 'px,' + it.sy.toFixed(1) + 'px)';
+      it.el.style.display = out ? 'none' : '';
+      it.out = out;
+    });
+    if (labels) placeLabels(cw, ch);
+  }
+  function textWidth(it) {
+    if (it.tw == null) {
+      var cs = getComputedStyle(it.lb);
+      measure.font = cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
+      it.tw = Math.ceil(measure.measureText(it.text).width) + (it.kind === 'area' ? 16 + 22 : 2);
+    }
+    return it.tw;
+  }
+  function placeLabels(cw, ch) {
+    var taken = [];
+    var hit = function (b) {
+      for (var i = 0; i < taken.length; i++) { var t = taken[i]; if (b[0] < t[2] && b[2] > t[0] && b[1] < t[3] && b[3] > t[1]) return true; }
+      return false;
+    };
+    items.forEach(function (it) { if (!it.out && it.r) taken.push([it.sx - it.r, it.sy - it.r, it.sx + it.r, it.sy + it.r]); });
+    items.forEach(function (it) {
+      if (!it.lb || it.out) return;
+      var w = textWidth(it), hgt = it.kind === 'area' ? 24 : (it.kind === 'belt' ? 12 : 18), r = it.r || 0, gap = 4;
+      var cands;
+      if (it.box) {   // an area: above, below, right or left of its whole cluster of dots
+        var s = mapEl.clientWidth / vb.w, bx0 = (it.box[0] - vb.x) * s - 6 - it.sx, bx1 = (it.box[2] - vb.x) * s + 6 - it.sx;
+        var by0 = (it.box[1] - vb.y) * s - 6 - it.sy, by1 = (it.box[3] - vb.y) * s + 6 - it.sy;
+        cands = [[-w / 2, by0 - hgt], [-w / 2, by1], [bx1 - w, by0 - hgt], [bx0, by0 - hgt], [bx1 - w, by1], [bx0, by1], [bx1, -hgt / 2], [bx0 - w, -hgt / 2]];
+      } else if (it.anchor === 'right') cands = [[2, -hgt / 2]];
+      else cands = [[r + gap, -hgt / 2], [-r - gap - w, -hgt / 2], [-w / 2, -r - gap - hgt + 2], [-w / 2, r + gap - 2]];
+      var done = false;
+      for (var i = 0; i < cands.length && !done; i++) {
+        var b = [it.sx + cands[i][0], it.sy + cands[i][1], it.sx + cands[i][0] + w, it.sy + cands[i][1] + hgt];
+        if (b[0] < 2 || b[1] < 2 || b[2] > cw - 2 || b[3] > ch - 2) continue;
+        if (hit(b)) continue;
+        taken.push(b);
+        it.lb.style.left = cands[i][0] + 'px'; it.lb.style.top = cands[i][1] + 'px';
+        it.lb.classList.remove('off');
+        done = true;
+      }
+      if (!done) {   // hidden, but shown to the right on hover or focus
+        it.lb.style.left = (r + gap) + 'px'; it.lb.style.top = (-hgt / 2) + 'px';
+        it.lb.classList.add('off');
+      }
+    });
+  }
+
+  function setViewBox(b) { vb = b; svg.setAttribute('viewBox', b.x.toFixed(2) + ' ' + b.y.toFixed(2) + ' ' + b.w.toFixed(2) + ' ' + b.h.toFixed(2)); }
+  function animateTo(target) {
+    cancelAnimationFrame(anim);
+    if (reduceMotion || !vb) { setViewBox(target); placeAll(true); return; }
+    var from = vb, t0 = performance.now(), dur = 520;
+    // zoom in log space so the motion feels even at every scale
+    var lw0 = Math.log(from.w), lw1 = Math.log(target.w);
+    var cx0 = from.x + from.w / 2, cy0 = from.y + from.h / 2, cx1 = target.x + target.w / 2, cy1 = target.y + target.h / 2;
+    mapEl.classList.add('moving');
+    var step = function (now) {
+      var t = Math.min(1, (now - t0) / dur), e = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      var w = Math.exp(lw0 + (lw1 - lw0) * e), h = w * target.h / target.w;
+      var cx = cx0 + (cx1 - cx0) * e, cy = cy0 + (cy1 - cy0) * e;
+      setViewBox({ x: cx - w / 2, y: cy - h / 2, w: w, h: h });
+      placeAll(false);
+      if (t < 1) anim = requestAnimationFrame(step);
+      else { setViewBox(target); placeAll(true); mapEl.classList.remove('moving'); }
+    };
+    anim = requestAnimationFrame(step);
+  }
+  function targetBox() {
+    var sel = state.region ? REGION[state.region] : null;
+    if (state.zoomed && sel && sel.view === cur.id) return fit(zoomBox(cur, sel), cur);
+    return fit(homeBox(cur), cur);
+  }
+
+  function showView(id, then) {
+    var l = L();
+    loadingFor = id;
+    mapEl.classList.add('fading');
+    var msg = $('mapMsg');
+    var slow = setTimeout(function () { if (loadingFor === id) { msg.textContent = l.loading; msg.hidden = false; } }, 250);
+    getView(id).then(function (v) {
+      if (loadingFor !== id) return;
+      clearTimeout(slow); msg.hidden = true;
+      cur = v;
+      drawGeo(v);
+      buildMarks();
+      setViewBox(targetBox());
+      placeAll(true);
+      requestAnimationFrame(function () { mapEl.classList.remove('fading'); });
+      renderMapChrome();
+      if (then) then();
+    }).catch(function () {
+      clearTimeout(slow);
+      msg.textContent = L().failed; msg.hidden = false;
+    });
+  }
+  function setView(id, opts) {
+    opts = opts || {};
+    if (!VIEW[id]) return;
+    state.view = id;
+    if (!opts.keepRegion) { state.region = null; state.zoomed = false; }
+    renderViewChips(); renderRegionList(); renderRegionCard();
+    if (!opts.quiet) setHash(id === 'world' ? '' : 'map=' + id);
+    showView(id, opts.then);
+  }
+  function selectRegion(id, opts) {
+    opts = opts || {};
+    var r = REGION[id]; if (!r) return;
+    state.region = id;
+    state.zoomed = !!(r.spots && r.spots.length);
+    setHash('region=' + id);
+    if (!cur || cur.id !== r.view || state.view !== r.view) { setView(r.view, { keepRegion: true, quiet: true }); }
+    else {
+      renderRegionList(); renderRegionCard();
+      buildMarks();
+      placeAll(false);
+      animateTo(targetBox());
+      renderMapChrome();
+    }
+    if (opts.scroll) scrollToEl($('regions'));
+  }
+  function zoomOut() {
+    state.zoomed = false;
+    buildMarks(); placeAll(false);
+    animateTo(targetBox());
+    renderMapChrome();
+  }
+  function renderMapChrome() {
+    var sel = state.region ? REGION[state.region] : null;
+    var zoomed = state.zoomed && sel && cur && sel.view === cur.id;
+    $('mapBar').hidden = !zoomed;
+    if (zoomed) $('mapBack').textContent = L().back(T(VIEW[cur.id].name));
+  }
+
+  function renderRegionsTop() {
+    var l = L();
+    $('regionsH').textContent = l.regionsH;
+    $('regionsO').textContent = l.regionsO; $('regionsO').lang = state.lang === 'zh' ? 'en' : 'zh-CN';
+    $('regionsIntro').textContent = l.regionsIntro(D.regions.length);
+    $('mapNote').textContent = l.mapNote;
+  }
+  function renderViewChips() {
+    var h = '';
+    D.views.forEach(function (v) {
+      var n = v.id === 'world' ? D.regions.length : (REGIONS_IN[v.id] || []).length;
+      h += '<button type="button" class="chip" aria-pressed="' + (state.view === v.id) + '" data-view="' + v.id + '">' + esc(T(v.name)) + '<span class="ct">' + n + '</span></button>';
+    });
+    $('viewChips').innerHTML = h;
+    $('viewChips').setAttribute('aria-label', state.lang === 'zh' ? '地图范围' : 'Map views');
+  }
+  function renderRegionList() {
+    var l = L(), h = '';
+    if (state.view === 'world') {
+      h = '<span class="label">' + esc(l.areas) + '</span><div class="chips">';
+      D.views.forEach(function (v) { if (v.id !== 'world') h += '<button type="button" class="chip small" data-view="' + v.id + '">' + esc(T(v.name)) + '<span class="ct">' + (REGIONS_IN[v.id] || []).length + '</span></button>'; });
+      h += '</div>';
+    } else {
+      h = '<span class="label">' + esc(l.inView) + '</span><div class="chips">';
+      (REGIONS_IN[state.view] || []).forEach(function (id) {
+        h += '<button type="button" class="chip small" aria-pressed="' + (state.region === id) + '" data-goregion="' + id + '" data-here="1">' + esc(T(REGION[id].name)) + '</button>';
+      });
+      h += '</div>';
+      if (state.view === 'europe') {   // the overview shows every European dot, so offer the views that hold them
+        h += '<span class="label">' + esc(l.restOfEurope) + '</span><div class="chips">';
+        ['france', 'italy', 'iberia', 'central'].forEach(function (id) { h += '<button type="button" class="chip small" data-view="' + id + '">' + esc(T(VIEW[id].name)) + '<span class="ct">' + (REGIONS_IN[id] || []).length + '</span></button>'; });
+        h += '</div>';
+      }
+    }
+    $('rList').innerHTML = h;
+  }
+  function renderRegionCard() {
+    var l = L(), r = state.region ? REGION[state.region] : null, el = $('rCard');
+    if (!r) { el.innerHTML = '<p class="hint">' + esc(l.hint) + '</p>'; return; }
+    var h = '<div class="rhead"><h3>' + esc(T(r.name)) + '</h3><span class="other"' + otherAttr() + '>' + esc(O(r.name)) + '</span></div>';
+    h += '<p class="rmeta">' + esc(T(D.countries[r.country])) + ' · ' + esc(l.climate) + esc(l.colon) + esc(T(r.climate)) + '</p>';
+    h += '<p class="rtext">' + esc(T(r.text)) + '</p><dl class="rfacts">';
+    var st = REGION_STYLES[r.id] || [];
+    if (st.length) h += '<dt class="label">' + esc(l.stylesF) + '</dt><dd class="chips">' + st.map(styleChip).join('') + '</dd>';
+    h += '<dt class="label">' + esc(l.grapesF) + '</dt><dd class="chips">' + r.grapes.map(grapeChip).join('') + '</dd>';
+    var spots = (r.spots || []).filter(function (s) { return !s[4]; });
+    if (spots.length) h += '<dt class="label">' + esc(l.spotsF) + '</dt><dd class="rspots">' + esc(spots.map(function (s) { return state.lang === 'zh' ? s[0] : s[1]; }).join(l.sep)) + '</dd>';
+    h += '</dl>';
+    el.innerHTML = h;
+  }
+
+  // ---------- chrome, language ----------
+  function renderChrome() {
+    var l = L();
+    var page = $('page');
+    page.className = 'page lang-' + state.lang;
+    document.documentElement.lang = state.lang === 'zh' ? 'zh-CN' : 'en';
+    $('btn-zh').setAttribute('aria-pressed', state.lang === 'zh');
+    $('btn-en').setAttribute('aria-pressed', state.lang === 'en');
+    $('btn-theme').textContent = l.theme;
+    $('eyebrow').textContent = l.eyebrow;
+    $('toc1').textContent = l.toc[0]; $('toc2').textContent = l.toc[1]; $('toc3').textContent = l.toc[2];
+    $('footNote').textContent = l.footNote;
+    document.title = state.lang === 'zh' ? '风土 Terroir · 葡萄酒入门' : '风土 Terroir · a wine primer';
+  }
+  function renderAll() {
+    renderChrome(); renderHero(); renderMake(); renderGrapeTools(); renderGrapes();
+    renderRegionsTop(); renderViewChips(); renderRegionList(); renderRegionCard();
+    if (cur) { buildMarks(); placeAll(true); renderMapChrome(); }
+  }
+  function setLang(lang) {
+    state.lang = lang;
+    try { localStorage.setItem('terroir.lang', lang); } catch (e) {}
+    renderAll();
+  }
+
+  // ---------- events ----------
+  $('btn-zh').addEventListener('click', function () { setLang('zh'); });
+  $('btn-en').addEventListener('click', function () { setLang('en'); });
+
+  // light / dark: follows the system until chosen; the choice is shared with the rest of the site
+  var root = document.documentElement;
+  var mqDark = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  function isDark() { var t = root.getAttribute('data-theme'); return t ? t === 'dark' : !!(mqDark && mqDark.matches); }
+  function showTheme() { $('btn-theme').setAttribute('aria-pressed', isDark() ? 'true' : 'false'); }
+  $('btn-theme').addEventListener('click', function () {
+    var next = isDark() ? 'light' : 'dark', system = mqDark && mqDark.matches ? 'dark' : 'light';
+    // picking what the system already shows clears the choice, so the page follows the system again
+    if (next === system) root.removeAttribute('data-theme'); else root.setAttribute('data-theme', next);
+    try { if (next === system) localStorage.removeItem('wentaoz.theme'); else localStorage.setItem('wentaoz.theme', next); } catch (e) {}
+    showTheme();
+  });
+  if (mqDark && mqDark.addEventListener) mqDark.addEventListener('change', showTheme);
+  showTheme();
+  $('btn-theme').hidden = false;
+
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest ? e.target.closest('button, a') : null;
+    if (!t) return;
+    var d = t.dataset || {};
+    if (d.style) { state.style = d.style; state.variant = 0; renderMake(); setHash('make=' + d.style); var tb = $('tab-' + d.style); if (tb) tb.focus(); return; }
+    if (d.variant != null && t.closest('#stylePanel')) { state.variant = +d.variant; renderStyle(); return; }
+    if (d.gostyle) { state.style = d.gostyle; state.variant = 0; renderMake(); setHash('make=' + d.gostyle); scrollToEl($('styleTabs')); return; }
+    if (d.gc) { state.gc = d.gc; renderGrapeTools(); renderGrapes(); return; }
+    if (d.grape) {
+      var id = d.grape; state.open[id] = !state.open[id];
+      renderGrapes();
+      setHash(state.open[id] ? 'grape=' + id : '');
+      var b = document.querySelector('[data-grape="' + id + '"]'); if (b) b.focus();
+      return;
+    }
+    if (d.gogrape) { openGrape(d.gogrape, true); return; }
+    if (d.goregion) { selectRegion(d.goregion, { scroll: !d.here }); return; }
+    if (d.region) { selectRegion(d.region); return; }   // a dot on the map
+    if (d.view) { setView(d.view); return; }
+  });
+  $('mapBack').addEventListener('click', zoomOut);
+  // arrow keys move between the style tabs
+  $('styleTabs').addEventListener('keydown', function (e) {
+    var ids = STYLE_ORDER, i = ids.indexOf(state.style);
+    var j = e.key === 'ArrowRight' ? i + 1 : e.key === 'ArrowLeft' ? i - 1 : e.key === 'Home' ? 0 : e.key === 'End' ? ids.length - 1 : null;
+    if (j === null) return;
+    e.preventDefault();
+    state.style = ids[(j + ids.length) % ids.length]; state.variant = 0;
+    renderMake(); $('tab-' + state.style).focus();
+  });
+  $('gSort').addEventListener('change', function (e) { state.gsort = e.target.value; renderGrapes(); });
+  $('gSearch').addEventListener('input', function (e) { state.gq = e.target.value; renderGrapes(); });
+  // skin-contact bars: the same words as their labels, on hover and focus
+  var skinTip = function (e) {
+    var b = e.target.closest && e.target.closest('.bar[data-skin]'); if (!b) return;
+    var nm = L().skin[b.getAttribute('data-skin')], r = b.getBoundingClientRect();
+    showTip(L().skinTip(nm[0], nm[1]), r.left + r.width / 2, r.top);
+  };
+  $('skinRows').addEventListener('pointerover', skinTip);
+  $('skinRows').addEventListener('focusin', skinTip);
+  $('skinRows').addEventListener('pointerout', hideTip);
+  $('skinRows').addEventListener('focusout', hideTip);
+  window.addEventListener('scroll', hideTip, { passive: true });
+
+  // the map follows its frame's size
+  var refit = function () { if (!cur) return; cancelAnimationFrame(anim); mapEl.classList.remove('moving'); setViewBox(targetBox()); placeAll(true); };
+  if ('ResizeObserver' in window) new ResizeObserver(refit).observe(mapEl); else window.addEventListener('resize', refit);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { items.forEach(function (it) { it.tw = null; }); if (cur) placeAll(true); });
+
+  // the part in view is marked in the contents bar
+  if ('IntersectionObserver' in window) {
+    var links = [].slice.call(document.querySelectorAll('#toc a'));
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        links.forEach(function (a) { a.classList.toggle('on', a.getAttribute('href') === '#' + en.target.id); });
+      });
+    }, { rootMargin: '-45% 0px -50% 0px' });
+    ['make', 'grapes', 'regions'].forEach(function (id) { io.observe($(id)); });
+  }
+
+  // ---------- boot: an address can open a style, a grape, a map view or a region ----------
+  function fromHash() {
+    var m = (location.hash || '').match(/^#(make|grape|map|region)=([a-z0-9-]+)$/);
+    if (!m) return false;
+    var key = m[1], id = m[2];
+    if (key === 'make' && STYLE[id]) { state.style = id; renderMake(); scrollToEl($('make')); return true; }
+    if (key === 'grape' && GRAPE[id]) { openGrape(id, true); return true; }
+    if (key === 'map' && VIEW[id]) { setView(id, { quiet: true }); scrollToEl($('regions')); return 'map'; }
+    if (key === 'region' && REGION[id]) { selectRegion(id, { scroll: true }); return 'map'; }
+    return false;
+  }
+  renderAll();
+  var routed = fromHash();
+  if (routed !== 'map') setView('world', { quiet: true });
+  window.addEventListener('hashchange', fromHash);
+})();
+</script>
+<!-- GoatCounter: counts visits without cookies; the totals feed the visitor map on the homepage -->
+<script data-goatcounter="https://wentaoz.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>
