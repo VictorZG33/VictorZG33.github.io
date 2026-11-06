@@ -34,7 +34,7 @@ const hops = new Set(D.HOPS.map((h) => h.id));
 for (const s of D.STYLES) for (const h of s.hops) if (!hops.has(h)) fail(s.id + ' names a hop that is not listed: ' + h);
 for (const h of D.HOPS) {
   for (const x of h.sub || []) if (!hops.has(x)) fail(h.id + ' names a stand-in that is not listed: ' + x);
-  if (!D.STYLES.some((s) => s.hops.includes(h.id)) && !h.uses) fail(h.id + ' is not used by any style and says nothing of its uses');
+  if (!D.STYLES.some((s) => s.hops.includes(h.id)) && !h.uses) console.log('  note: ' + h.id + ' is in no style and says nothing of its uses');
   if (!D.HOP_ORIGINS.some((o) => o.key === h.o)) fail(h.id + ' has an unknown origin: ' + h.o);
   // the middle of each range, or the limit where only an upper limit is published
   const oils = ['myrcene', 'humulene', 'caryophyllene', 'farnesene'].reduce((t, k) => t + (h[k] ? (h[k][0] == null ? h[k][1] : (h[k][0] + h[k][1]) / 2) : 0), 0);

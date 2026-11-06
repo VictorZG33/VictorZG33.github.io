@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="原麦汁 Original Gravity: a field guide to beer styles and hops by Wentao Zhang. How 28 styles are brewed, from the malt and the mash to the hops, the yeast and the conditioning, each in a glass whose colour is computed from its SRM; and 22 hops with their acids, oils and aromas. In Chinese and English.">
+<meta name="description" content="原麦汁 Original Gravity: a field guide to beer styles and hops by Wentao Zhang. How 28 styles are brewed, from the malt and the mash to the hops, the yeast and the conditioning, each in a glass whose colour is computed from its SRM; and 50 hops, New Zealand’s and Australia’s newest among them, with their acids, oils and aromas. In Chinese and English.">
 <meta property="og:title" content="原麦汁 Original Gravity">
-<meta property="og:description" content="原麦汁 Original Gravity: a field guide to beer styles and hops by Wentao Zhang. How 28 styles are brewed, each in a glass whose colour is computed from its SRM, and 22 hops with their acids, oils and aromas.">
+<meta property="og:description" content="原麦汁 Original Gravity: a field guide to beer styles and hops by Wentao Zhang. How 28 styles are brewed, each in a glass whose colour is computed from its SRM, and 50 hops with their acids, oils and aromas.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://wentaoz.com/beer/">
 <meta property="og:site_name" content="Wentao Zhang">
@@ -1171,16 +1171,16 @@ footer .sig { font-family: var(--font-latin); font-style: italic; font-size: 15p
     var unmapped = D.HOPS.filter(function (h) { return !(h.alpha && h.oil) && visibleHop(h); });
     hmapGeom = scatter({
       svg: $('hmap-svg'), items: mapped, selected: state.hop, visible: visibleHop,
-      x: function (v) { return v / 20; }, xTicks: [0, 5, 10, 15, 20], xTitle: Tx.hmapX,
+      x: function (v) { return v / 22; }, xTicks: [0, 5, 10, 15, 20], xTitle: Tx.hmapX,
       y0: 0, y1: 5, yTicks: [0, 1, 2, 3, 4, 5], yTitle: Tx.hmapY,
       px: function (h) { return val(h.alpha); }, py: function (h) { return val(h.oil); },
       range: function (h) { return [lo(h.alpha), h.alpha[1], lo(h.oil), h.oil[1]]; },
       label: function (h) { return t(h.n); },
-      zones: [[0.6, 0.18, Tx.zones[0]], [19.6, 0.18, Tx.zones[1], 'end'], [19.6, 4.7, Tx.zones[2], 'end']]
+      zones: [[0.6, 0.18, Tx.zones[0]], [21.6, 0.18, Tx.zones[1], 'end'], [21.6, 4.7, Tx.zones[2], 'end']]
     });
     $('hmap-svg').setAttribute('aria-label', Tx.hmapAria(mapped.length));
     $('hmap-tip').hidden = true;
-    $('hmap-note').textContent = Tx.hmapNote + (unmapped.length ? ' ' + Tx.notOnMap(unmapped.map(function (h) { return t(h.n); }).join(state.lang === 'zh' ? '、' : ', ')) : '');
+    $('hmap-note').textContent = Tx.hmapNote + (unmapped.length ? (state.lang === 'zh' ? '' : ' ') + Tx.notOnMap(unmapped.map(function (h) { return t(h.n); }).join(state.lang === 'zh' ? '、' : ', ')) : '');
   }
 
   /* ---------- hops ---------- */
