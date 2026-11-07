@@ -1,6 +1,7 @@
 // Draws the appellations onto the map of 风土 Terroir (terroir/index.html): the official boundaries
 // of France's appellations, Burgundy down to every named climat, and the American Viticultural
-// Areas, written to terroir/map/appellations/, one file per area.
+// Areas, written to terroir/map/appellations/, one file per area; and for Napa (DETAIL), its
+// vineyards one by one with its wineries, roads and streams, from the data fetch-vineyards.py gets.
 //
 //   npm ci                       once, in this folder
 //   node --max-old-space-size=8192 build-appellations.mjs     about ten minutes
@@ -202,6 +203,22 @@ const AVA_AREAS = {
   'finger-lakes': { view: 'nyon', roots: ['Finger Lakes'] },
 };
 const FRANCE_VIEW = 'france';
+
+/* ---- Vineyards one by one, with the wineries, roads and streams among them ---- */
+// From fetch-vineyards.py: the vineyards are OpenStreetMap's (landuse=vineyard, ODbL), as are the
+// roads and the streams; the wineries are Wikidata's (CC0) and Overture's places (CDLA Permissive
+// 2.0). The page draws an area's file only closer than `near` metres per pixel, over its AVAs.
+const DETAIL = {
+  napa: {
+    id: 'napa-vineyards', view: 'california', ava: 'Napa Valley', near: 160,   // m/px: Napa's own view, on a phone too
+    // Napa's airport industrial parks: bottlers, brand offices and custom-crush cellars, not estates
+    exclude: [[-122.31, 38.15, -122.24, 38.27]],
+    // Wikidata has no position for it, and Overture files the winery at Oakville as a restaurant
+    // ("Robert Mondavi Wineries, Napa Valley") and its "winery" records at offices in Napa
+    fix: [{ name: 'Robert Mondavi Winery', at: [-122.4097, 38.4415] }],
+  },
+};
+const WINERY_NEAR_VINES = 200;   // m: a winery further than this from any vineyard is a tasting room in town, or an office
 // AREAS=burgundy,napa node build-appellations.mjs builds only those areas (the index keeps the others)
 const ONLY = process.env.AREAS ? new Set(process.env.AREAS.split(',')) : null;
 
@@ -394,6 +411,158 @@ async function writeArea(area, view, feats) {
   return { id: area, view, box: out.box, n: shapes.length };
 }
 
+/* ---- vineyard maps (DETAIL) ---- */
+async function latestOverture() {
+  const dir = path.join(CACHE, 'overture');
+  if (!(await exists(dir))) return null;
+  const rel = (await readdir(dir)).sort().pop();
+  return rel ? path.join(dir, rel) : null;
+}
+// planar tests in degrees, close enough at a valley's scale
+function inRing(r, x, y) {
+  let c = false;
+  for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
+    const [xi, yi] = r[i], [xj, yj] = r[j];
+    if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c;
+  }
+  return c;
+}
+function inGeom(g, x, y) {
+  const polys = g.type === 'Polygon' ? [g.coordinates] : g.coordinates;
+  return polys.some((poly) => inRing(poly[0], x, y) && !poly.slice(1).some((h) => inRing(h, x, y)));
+}
+function geomBox(g) {
+  const b = [Infinity, Infinity, -Infinity, -Infinity];
+  const polys = g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : [[g.coordinates]];
+  for (const poly of polys) for (const ring of poly) for (const [x, y] of ring) { b[0] = Math.min(b[0], x); b[1] = Math.min(b[1], y); b[2] = Math.max(b[2], x); b[3] = Math.max(b[3], y); }
+  return b;
+}
+// metres from a point to a polygon's edges (0 inside), on a local flat projection
+function distToGeom(g, x, y) {
+  if (inGeom(g, x, y)) return 0;
+  const kx = 111320 * Math.cos((y * Math.PI) / 180), ky = 110540;
+  let best = Infinity;
+  const polys = g.type === 'Polygon' ? [g.coordinates] : g.coordinates;
+  for (const poly of polys) for (const r of poly) for (let i = 1; i < r.length; i++) {
+    const ax = (r[i - 1][0] - x) * kx, ay = (r[i - 1][1] - y) * ky, bx = (r[i][0] - x) * kx, by = (r[i][1] - y) * ky;
+    const dx = bx - ax, dy = by - ay, L = dx * dx + dy * dy;
+    const t = L ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / L)) : 0;
+    best = Math.min(best, Math.hypot(ax + t * dx, ay + t * dy));
+  }
+  return best;
+}
+// open paths for lines, in the same relative integer units as encode()
+function encodeLines(lines, ox, oy, s) {
+  let d = '';
+  for (const line of lines) {
+    const q = [];
+    for (const [x, y] of line) { const p = [Math.round((x - ox) / s), Math.round((y - oy) / s)]; if (!q.length || p[0] !== q[q.length - 1][0] || p[1] !== q[q.length - 1][1]) q.push(p); }
+    if (q.length < 2) continue;
+    d += 'M' + q[0][0] + (q[0][1] < 0 ? '' : ' ') + q[0][1] + 'l';
+    let first = true;
+    for (let i = 1; i < q.length; i++) for (const v of [q[i][0] - q[i - 1][0], q[i][1] - q[i - 1][1]]) { d += (first || v < 0 ? '' : ' ') + v; first = false; }
+  }
+  return d;
+}
+async function clipTo(fc, clip, extra) {
+  const out = await mapshaper.applyCommands(`-i data.json clip.json combine-files -clip target=data source=clip ${extra} -o out.json format=geojson precision=0.0000001 target=data`,
+    { 'data.json': fc, 'clip.json': clip });
+  return JSON.parse(out['out.json']).features.filter((f) => f.geometry);
+}
+async function buildDetail(key, cfg, avas) {
+  const dir = await latestOverture();
+  if (!dir || !(await exists(path.join(dir, key + '-vineyards.geojson')))) { console.log(`${cfg.id}: no Overture data, run fetch-vineyards.py`); return null; }
+  const read = async (layer) => JSON.parse(await readFile(path.join(dir, `${key}-${layer}.geojson`), 'utf8'));
+  const within = (f) => String(f.properties.within || '').split('|').map((x) => x.trim());
+  const outer = avas.find((f) => f.properties.name === cfg.ava);
+  const fc = (features) => ({ type: 'FeatureCollection', features });
+  const clip = fc([{ type: 'Feature', geometry: outer.geometry, properties: {} }]);
+  // each place goes to the smallest AVA it lies in
+  const nested = avas.filter((f) => within(f).includes(cfg.ava)).map((f) => {
+    const b = geomBox(f.geometry);
+    return { name: f.properties.name, g: f.geometry, size: (b[2] - b[0]) * (b[3] - b[1]) };
+  }).sort((a, b) => a.size - b.size);
+  const names = [cfg.ava, ...nested.map((n) => n.name)];
+  const avaOf = (x, y) => { const n = nested.find((m) => inGeom(m.g, x, y)); return n ? names.indexOf(n.name) : 0; };
+
+  const vines = await clipTo(await read('vineyards'), clip, '-simplify interval=3m keep-shapes -each "ha=this.area/10000, lx=this.innerX, ly=this.innerY" -filter "ha >= 0.05"');
+  const roads = await clipTo(await read('roads'), clip, '-simplify interval=8m keep-shapes');
+  const water = await read('water');
+  const streams = await clipTo(fc(water.features.filter((f) => /LineString/.test(f.geometry.type))), clip, '-simplify interval=6m keep-shapes');
+  const lakes = await clipTo(fc(water.features.filter((f) => /Polygon/.test(f.geometry.type))), clip, '-simplify interval=10m keep-shapes -filter "this.area > 20000"');
+
+  // wineries: Wikidata's, where it places them; then Overture's where nothing contradicts them: in the
+  // AVA and by its vines, outside the industrial parks, once each (the same name within 400 m, or any
+  // two within 25 m), and not a name Wikidata has, nor one Overture puts in two places a kilometre apart
+  // (a brand with an office as well as an estate, which it places as readily at either)
+  const vineBoxes = vines.map((v) => ({ g: v.geometry, b: geomBox(v.geometry) }));
+  const pad = WINERY_NEAR_VINES / 100000;
+  const nearVines = (x, y) => vineBoxes.some((v) => x > v.b[0] - pad * 1.3 && x < v.b[2] + pad * 1.3 && y > v.b[1] - pad && y < v.b[3] + pad && distToGeom(v.g, x, y) <= WINERY_NEAR_VINES);
+  const norm = (n) => n.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/\b(the|winery|wines?|vineyards?|estates?|cellars?|family|wine company|co|caves?|napa valley|napa)\b/g, '').replace(/[^a-z0-9]/g, '');
+  const metres = (a, b) => Math.hypot((a[0] - b[0]) * 111320 * Math.cos((a[1] * Math.PI) / 180), (a[1] - b[1]) * 110540);
+  const kept = [];
+  for (const f of (await read('wikidata')).features) {
+    const c = f.geometry.coordinates, n = norm(f.properties.name);
+    if (!inGeom(outer.geometry, c[0], c[1]) || kept.some((k) => k.n === n && metres(k.c, c) < 400)) continue;
+    kept.push({ name: f.properties.name.trim(), c, n, wd: true });
+  }
+  const fromWikidata = kept.length, wdNames = new Set(kept.map((k) => k.n));
+  const candidates = (await read('wineries')).features.filter((f) => f.geometry.type === 'Point').sort((a, b) => b.properties.confidence - a.properties.confidence);
+  const placesOf = {};
+  for (const f of candidates) (placesOf[norm(f.properties.name)] = placesOf[norm(f.properties.name)] || []).push(f.geometry.coordinates);
+  const twoPlaces = (n) => placesOf[n].some((a) => placesOf[n].some((b) => metres(a, b) > 1000));
+  const excluded = (c) => (cfg.exclude || []).some((b) => c[0] > b[0] && c[0] < b[2] && c[1] > b[1] && c[1] < b[3]);
+  let away = 0, doubtful = 0;
+  for (const f of candidates) {
+    const c = f.geometry.coordinates, n = norm(f.properties.name);
+    if (!inGeom(outer.geometry, c[0], c[1])) continue;
+    if (excluded(c) || !n || wdNames.has(n) || twoPlaces(n)) { doubtful++; continue; }
+    if (!nearVines(c[0], c[1])) { away++; continue; }
+    if (kept.some((k) => { const d = metres(k.c, c); return d < 25 || (k.wd && d < 150) || (d < 400 && k.n === n); })) continue;
+    kept.push({ name: f.properties.name.trim(), c, n });
+  }
+  for (const fx of cfg.fix || []) {
+    const n = norm(fx.name);
+    for (let i = kept.length - 1; i >= 0; i--) if (kept[i].n === n) kept.splice(i, 1);
+    kept.push({ name: fx.name, c: fx.at, n });
+  }
+
+  const { proj, unitsPerMetre: s } = await viewProjection(cfg.view);
+  const P = (c) => proj(c);
+  const ringsOf = (g) => (g.type === 'Polygon' ? [g.coordinates] : g.coordinates).flatMap((poly) => poly.map((ring) => ring.map(P)));
+  const linesOf = (g) => (g.type === 'LineString' ? [g.coordinates] : g.coordinates).map((line) => line.map(P));
+  const ob = geomBox(outer.geometry), o0 = P([ob[0], ob[3]]), o1 = P([ob[2], ob[1]]);   // north-west and south-east corners
+  const ox = Math.min(o0[0], o1[0]), oy = Math.min(o0[1], o1[1]);
+  const box = [ox, oy, Math.max(o0[0], o1[0]), Math.max(o0[1], o1[1])];
+  const r4 = (v) => +v.toFixed(4);
+  const named = vines.filter((v) => v.properties.name).length;
+  const out = {
+    view: cfg.view, origin: [r4(ox), r4(oy)], unit: +s.toPrecision(6), box: box.map(r4), near: cfg.near,
+    credit: 'Vineyards, roads and streams © OpenStreetMap contributors (ODbL), via Overture Maps; wineries: Wikidata (CC0) and Overture Maps Foundation places (CDLA Permissive 2.0)',
+    avas: names,
+    // [AVA (index into avas), hectares, path] and, for a named vineyard, [..., name, label x, label y]
+    vines: vines.map((v) => {
+      const p = v.properties, row = [avaOf(p.lx, p.ly), +p.ha.toFixed(p.ha < 10 ? 2 : 1), encode(ringsOf(v.geometry), ox, oy, s)];
+      if (p.name) { const l = P([p.lx, p.ly]); row.push(p.name.trim(), r4(l[0]), r4(l[1])); }
+      return row;
+    }).filter((v) => v[2]),
+    lines: [
+      ['road1', roads.filter((f) => /^(motorway|trunk|primary)$/.test(f.properties.class))],
+      ['road2', roads.filter((f) => /^(secondary|tertiary)$/.test(f.properties.class))],
+      ['river', streams.filter((f) => f.properties.subtype === 'river')],
+      ['stream', streams.filter((f) => f.properties.subtype !== 'river')],
+    ].map(([k, fs]) => [k, encodeLines(fs.flatMap((f) => linesOf(f.geometry)), ox, oy, s)]),
+    lakes: encode(lakes.flatMap((f) => ringsOf(f.geometry)), ox, oy, s),
+    // [name, AVA, x, y]
+    wineries: kept.map((w) => { const p = P(w.c); return [w.name, avaOf(w.c[0], w.c[1]), r4(p[0]), r4(p[1])]; }),
+  };
+  const json = JSON.stringify(out);
+  await writeFile(path.join(OUT, cfg.id + '.json'), json + '\n');
+  console.log(`${cfg.id.padEnd(14)} ${(json.length / 1024).toFixed(0).padStart(5)} KB  ${out.vines.length} vineyards (${named} named), ${kept.length} wineries (${fromWikidata} from Wikidata; of Overture's, ${doubtful} doubtful and ${away} away from vines left out), ${roads.length} road and ${streams.length} stream pieces`);
+  return { id: cfg.id, view: cfg.view, box: out.box, n: out.vines.length, near: cfg.near };
+}
+
 /* ---- main ---- */
 await mkdir(OUT, { recursive: true });
 const indexFile = path.join(OUT, 'index.json');
@@ -439,6 +608,13 @@ for (const [area, cfg] of Object.entries(AVA_AREAS)) {
   for (const [tier, list] of Object.entries(byTier)) if (list.length) feats.push(...(await shapeTier(list, null, shapeFor(area, +tier))));
   await labelPoints(feats);
   index.push(await writeArea(area, cfg.view, feats));
+}
+
+// Vineyards one by one
+for (const [key, cfg] of Object.entries(DETAIL)) {
+  if (ONLY && !ONLY.has(cfg.id)) continue;
+  const entry = await buildDetail(key, cfg, avas);
+  if (entry) index.push(entry);
 }
 
 index.sort((a, b) => (a.id < b.id ? -1 : 1));

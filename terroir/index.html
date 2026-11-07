@@ -47,6 +47,9 @@
      in dark mode the other way, the higher tiers brighter. Checked as ordinal ramps against --land
      (the dataviz validator: lightness monotone, steps of at least 0.06, the end nearest the land at 2:1) */
   --ap1: #CD909A; --ap2: #C16F7C; --ap3: #B14E5E; --ap4: #993042; --ap5: #781C2F;
+  /* Napa's vineyards over its AVAs: a wash of ink, so each keeps its AVA's colour, 0.12-0.15 darker
+     in OKLab lightness (lighter in dark mode); roads cut through in cream; wineries are ink dots */
+  --vine: rgba(35, 26, 28, 0.38); --road: rgba(255, 252, 247, 0.92); --wy: #231A1C;
   /* the colour of each style of wine; checked as a set for colour-blind and normal-vision separation */
   --w-white: #C9A227; --w-rose: #E8829F; --w-red: #96203F; --w-amber: #C06212;
   --font-cjk: "Noto Serif SC", "Songti SC", "STSong", "Source Han Serif SC", "SimSun", serif;
@@ -62,6 +65,7 @@
     --river: #46606F; --border-line: #5F5563; --belt: rgba(224, 102, 122, 0.08);
     --dot: #E0667A; --spot: #D9D1CB; --city: #9A9094; --halo: rgba(22, 19, 26, 0.9);
     --ap1: #7C4A53; --ap2: #A35764; --ap3: #C66876; --ap4: #E47F8B; --ap5: #F99DA5;
+    --vine: rgba(255, 246, 240, 0.36); --road: rgba(22, 19, 26, 0.85); --wy: #ECE6DF;
     --w-white: #B0902C; --w-rose: #D07090; --w-red: #A52F47; --w-amber: #CC7026;
     color-scheme: dark;
   }
@@ -73,6 +77,7 @@
   --river: #46606F; --border-line: #5F5563; --belt: rgba(224, 102, 122, 0.08);
   --dot: #E0667A; --spot: #D9D1CB; --city: #9A9094; --halo: rgba(22, 19, 26, 0.9);
   --ap1: #7C4A53; --ap2: #A35764; --ap3: #C66876; --ap4: #E47F8B; --ap5: #F99DA5;
+  --vine: rgba(255, 246, 240, 0.36); --road: rgba(22, 19, 26, 0.85); --wy: #ECE6DF;
   --w-white: #B0902C; --w-rose: #D07090; --w-red: #A52F47; --w-amber: #CC7026;
   color-scheme: dark;
 }
@@ -314,6 +319,16 @@ a { color: inherit; text-decoration: underline; text-decoration-color: var(--acc
 .g-ap .t3, .sw.t3 { fill: var(--ap3); background: var(--ap3); }
 .g-ap .t4, .sw.t4 { fill: var(--ap4); background: var(--ap4); }
 .g-ap .t5, .sw.t5 { fill: var(--ap5); background: var(--ap5); }
+.g-ap .vine { fill: var(--vine); stroke-width: 0.6px; }
+.g-ap .lakes { fill: var(--lake); stroke: var(--river); stroke-width: 0.6px; pointer-events: none; }
+.g-ap .ln { fill: none; pointer-events: none; stroke-linecap: round; }
+.g-ap .ln-road1 { stroke: var(--road); stroke-width: 1.8px; }
+.g-ap .ln-road2 { stroke: var(--road); stroke-width: 1px; }
+.g-ap .ln-river { stroke: var(--river); stroke-width: 2px; }
+.g-ap .ln-stream { stroke: var(--river); stroke-width: 1px; }
+.g-ap .ap-outline { pointer-events: none; }
+.g-ap .ap-outline path { fill: none; stroke: var(--fg); stroke-opacity: 0.5; stroke-width: 1px; }
+.g-ap .ap-outline .o2 { stroke-opacity: 0.6; stroke-width: 1.6px; }
 .ap-hl { pointer-events: none; }
 .ap-hl path { fill: none; stroke: var(--fg); stroke-width: 2px; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
 .marks { position: absolute; inset: 0; transition: opacity 0.18s ease; pointer-events: none; }
@@ -353,6 +368,11 @@ button.mk.area:focus-visible .lb { box-shadow: 0 0 0 2px var(--accent); }
 .mk.ap .lb { font-size: 11.5px; font-weight: 500; line-height: 16px; }
 .mk.ap.t1 .lb, .mk.ap.t2 .lb, .mk.ap.t3 .lb { font-size: 12.5px; font-weight: 600; line-height: 18px; }
 .mk.ap.t5 .lb { font-weight: 700; }
+.mk.ap.t6 .lb { font-weight: 600; font-style: italic; }   /* a named vineyard */
+.marks .mk.wy { pointer-events: auto; }   /* a winery: its name shows on hover when there is no room */
+.mk.wy .dot { left: -5px; top: -5px; width: 10px; height: 10px; }
+.mk.wy .dot::before { width: 6px; height: 6px; margin: -3px 0 0 -3px; background: var(--wy); box-shadow: 0 0 0 1.5px var(--halo); }
+.mk.wy .lb { font-weight: 500; font-size: 11.5px; }
 .mk.belt .lb { font: 500 10.5px/1 var(--font-mono); color: var(--muted); letter-spacing: 0.06em; }
 button.mk.area .lb { pointer-events: auto; font-size: 13px; font-weight: 600; padding: 3px 8px; line-height: 18px; border-radius: 999px; background: var(--halo); text-shadow: none; box-shadow: 0 0 0 1px var(--rule-strong); }
 button.mk.area .lb b { font: 500 10.5px/1 var(--font-mono); color: var(--muted); margin-left: 5px; }
@@ -376,6 +396,10 @@ button.mk.area:hover .lb { box-shadow: 0 0 0 1px var(--fg); }
 }
 .maplegend .lg-h { font: 500 10.5px/1.4 var(--font-mono); color: var(--muted); letter-spacing: 0.04em; }
 .maplegend .sw { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.maplegend .sw.vine { background: linear-gradient(var(--vine), var(--vine)), var(--ap3); }
+.maplegend .sw.wy { width: 7px; height: 7px; margin: 0 8px 0 2px; border-radius: 50%; vertical-align: 1px; background: var(--wy); box-shadow: 0 0 0 1.5px var(--halo); }
+.maplegend .lg-src { font-size: 10.5px; line-height: 1.35; color: var(--muted); max-width: 17em; }
+.maplegend a { pointer-events: auto; color: inherit; }
 .maphint {
   position: absolute; left: 50%; top: 50%; z-index: 7; transform: translate(-50%, -50%); max-width: calc(100% - 40px); margin: 0;
   padding: 8px 14px; border-radius: 999px; background: var(--fg); color: var(--bg); font-size: 13.5px; text-align: center;
@@ -384,7 +408,7 @@ button.mk.area:hover .lb { box-shadow: 0 0 0 1px var(--fg); }
 .maphint.on { opacity: 0.92; }
 @media (max-width: 640px) {   /* a phone's map is square: the legend runs along its foot */
   .maplegend { left: 8px; bottom: 8px; display: flex; flex-wrap: wrap; gap: 2px 10px; padding: 5px 8px; font-size: 11px; line-height: 15px; max-width: calc(100% - 16px); }
-  .maplegend .lg-h { flex-basis: 100%; }
+  .maplegend .lg-h, .maplegend .lg-src { flex-basis: 100%; max-width: none; }
   .maplegend .sw { width: 9px; height: 9px; margin-right: 4px; vertical-align: 0; }
 }
 .mapnote { margin-top: 10px; font-size: 13px; color: var(--muted); max-width: 62em; }
@@ -593,24 +617,26 @@ footer p { max-width: 52em; }
       lvl: ['低', '中低', '中', '中高', '高'],
       origin: '原产', notes: '常见香气', pair: '配餐', inRegions: '主要产区', aka: '又名',
       regionsH: '产区', regionsO: 'Regions',
-      regionsIntro: function (n) { return n + ' 个产区。点地图上的点，或下面的名字，地图会放大到它的村庄和子产区。法国和美国的产区还能接着放大，看官方划定的产区边界，勃艮第一直细到一块块葡萄园。世界上大多数葡萄园都在南北纬 30° 到 50° 之间（地图上的浅色带）：离赤道更近太热，离两极更近太冷，例外往往靠海拔，比如阿根廷的萨尔塔和云南的香格里拉。'; },
+      regionsIntro: function (n) { return n + ' 个产区。点地图上的点，或下面的名字，地图会放大到它的村庄和子产区。法国和美国的产区还能接着放大，看官方划定的产区边界，勃艮第一直细到一块块葡萄园，纳帕谷能看到每一块葡萄园和酒庄。世界上大多数葡萄园都在南北纬 30° 到 50° 之间（地图上的浅色带）：离赤道更近太热，离两极更近太冷，例外往往靠海拔，比如阿根廷的萨尔塔和云南的香格里拉。'; },
       back: function (v) { return '‹ ' + v; },
       belts: ['北纬 30°–50°', '南纬 30°–50°'],
       inView: '这一带的产区', areas: '按地区看', restOfEurope: '欧洲其他产区，按国家看',
       hint: '在地图上点一个产区，或从上面的名字里选一个。',
       climate: '气候', grapesF: '主要品种', spotsF: '村庄与子产区', stylesF: '风格',
-      mapNote: '底图：Natural Earth，只画了各方都承认的陆地国界。法国的产区边界来自 INAO（法国国家原产地与质量研究院，Licence Ouverte 开放许可），美国的 AVA 来自 UC Davis 的 AVA Project（CC0）。用 + 和 −、双指，或按住 Ctrl（Mac 上是 ⌘）滚动来缩放，拖动来移动。',
+      mapNote: '底图：Natural Earth，只画了各方都承认的陆地国界。法国的产区边界来自 INAO（法国国家原产地与质量研究院，Licence Ouverte 开放许可），美国的 AVA 来自 UC Davis 的 AVA Project（CC0）；纳帕谷的葡萄园、道路和河流来自 OpenStreetMap（ODbL），酒庄来自 Wikidata（CC0）和 Overture Maps（CDLA Permissive 2.0）。用 + 和 −、双指，或按住 Ctrl（Mac 上是 ⌘）滚动来缩放，拖动来移动。',
       apTiers: { 1: '大区级', 2: '地区级', 3: '村庄级', 4: '一级园', 5: '特级园' },
       apTiersUS: { 2: 'AVA', 3: '其中的子产区' },
       apLegend: '法定产区等级', apLegendUS: '美国葡萄种植区 AVA', apLoading: '正在加载产区边界…',
       apArea: function (ha) { return '划定范围 ' + ha + ' 公顷'; }, apAreaUS: function (ha) { return '面积 ' + ha + ' 公顷'; },
       apUmbrella: '这些一级园，INAO 没有逐块划出边界',
+      vineyard: '葡萄园', winery: '酒庄',
+      detailCredit: '葡萄园、道路与河流 © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> 贡献者；酒庄来自 Wikidata 和 Overture Maps',
       hintWheel: function (mac) { return '按住 ' + (mac ? '⌘' : 'Ctrl') + ' 再滚动，可以缩放地图'; },
       hintTouch: '用两根手指移动和缩放地图',
       zoomIn: '放大', zoomOut: '缩小', mapLabel: '产区地图',
       loading: '地图加载中…', failed: '地图没能加载，请检查网络后刷新。',
       count2: function (n) { return n + ' 个'; },
-      footNote: '风土是我做的一份葡萄酒入门。地图底图来自 Natural Earth（公有领域），村镇位置核对自 OpenStreetMap；法国的产区边界来自 INAO 的《葡萄酒 AOC 地块划定》（Licence Ouverte），美国的 AVA 来自 UC Davis AVA Project（CC0）。葡萄酒每个年份都在变，这里写的是大致、典型的样子。',
+      footNote: '风土是我做的一份葡萄酒入门。地图底图来自 Natural Earth（公有领域），村镇位置核对自 OpenStreetMap；法国的产区边界来自 INAO 的《葡萄酒 AOC 地块划定》（Licence Ouverte），美国的 AVA 来自 UC Davis AVA Project（CC0），纳帕谷的葡萄园、道路和河流来自 OpenStreetMap 贡献者（ODbL），酒庄来自 Wikidata（CC0）和 Overture Maps Foundation（CDLA Permissive 2.0）。葡萄酒每个年份都在变，这里写的是大致、典型的样子。',
       theme: '深色',
       sep: '、', colon: '：'
     },
@@ -655,24 +681,26 @@ footer p { max-width: 52em; }
       lvl: ['low', 'medium−', 'medium', 'medium+', 'high'],
       origin: 'From', notes: 'Typical notes', pair: 'With food', inRegions: 'Main regions', aka: 'Also',
       regionsH: 'Regions', regionsO: '产区',
-      regionsIntro: function (n) { return n + ' regions. Pick a dot on the map, or a name below, and the map zooms in to its villages and sub-regions. In France and the United States you can keep zooming, to the official appellation boundaries, in Burgundy down to single vineyards. Most of the world’s vineyards lie between 30° and 50° north and south (the pale bands on the map): nearer the equator is too hot, nearer the poles too cold, and the exceptions usually make it up with altitude, as Salta in Argentina and Shangri-La in Yunnan do.'; },
+      regionsIntro: function (n) { return n + ' regions. Pick a dot on the map, or a name below, and the map zooms in to its villages and sub-regions. In France and the United States you can keep zooming, to the official appellation boundaries, in Burgundy down to single vineyards, and in Napa to every vineyard and winery. Most of the world’s vineyards lie between 30° and 50° north and south (the pale bands on the map): nearer the equator is too hot, nearer the poles too cold, and the exceptions usually make it up with altitude, as Salta in Argentina and Shangri-La in Yunnan do.'; },
       back: function (v) { return '‹ ' + v; },
       belts: ['30°–50° N', '30°–50° S'],
       inView: 'Regions here', areas: 'By area', restOfEurope: 'The rest of Europe, by country',
       hint: 'Pick a region on the map, or one of the names above.',
       climate: 'Climate', grapesF: 'Main grapes', spotsF: 'Villages and sub-regions', stylesF: 'Styles',
-      mapNote: 'Base map: Natural Earth; only land borders that every side recognises are drawn. French appellation boundaries are from INAO, France’s institute of origin and quality (Licence Ouverte); the American Viticultural Areas from the UC Davis AVA Project (CC0). Zoom with + and −, two fingers, or Ctrl (⌘ on a Mac) and scroll; drag to move.',
+      mapNote: 'Base map: Natural Earth; only land borders that every side recognises are drawn. French appellation boundaries are from INAO, France’s institute of origin and quality (Licence Ouverte); the American Viticultural Areas from the UC Davis AVA Project (CC0); Napa’s vineyards, roads and streams from OpenStreetMap (ODbL), its wineries from Wikidata (CC0) and Overture Maps (CDLA Permissive 2.0). Zoom with + and −, two fingers, or Ctrl (⌘ on a Mac) and scroll; drag to move.',
       apTiers: { 1: 'Regional', 2: 'Sub-regional', 3: 'Village', 4: 'Premier cru', 5: 'Grand cru' },
       apTiersUS: { 2: 'AVA', 3: 'AVA within it' },
       apLegend: 'Appellation level', apLegendUS: 'American Viticultural Areas', apLoading: 'Loading the appellations…',
       apArea: function (ha) { return ha + ' ha delimited'; }, apAreaUS: function (ha) { return ha + ' ha'; },
       apUmbrella: 'premier cru land INAO does not map climat by climat',
+      vineyard: 'Vineyard', winery: 'Winery',
+      detailCredit: 'Vineyards, roads and streams © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors; wineries from Wikidata and Overture Maps',
       hintWheel: function (mac) { return 'Hold ' + (mac ? '⌘' : 'Ctrl') + ' and scroll to zoom the map'; },
       hintTouch: 'Use two fingers to move and zoom the map',
       zoomIn: 'Zoom in', zoomOut: 'Zoom out', mapLabel: 'Map of the regions',
       loading: 'Loading the map…', failed: 'The map did not load. Check the connection and reload.',
       count2: function (n) { return String(n); },
-      footNote: 'Terroir is a wine primer I made. The base map is from Natural Earth (public domain) and the places on it were checked against OpenStreetMap; the French appellation boundaries are INAO’s parcel-by-parcel delimitation of the wine AOCs (Licence Ouverte), and the American Viticultural Areas are from the UC Davis AVA Project (CC0). Wine changes with every vintage; this is the typical picture.',
+      footNote: 'Terroir is a wine primer I made. The base map is from Natural Earth (public domain) and the places on it were checked against OpenStreetMap; the French appellation boundaries are INAO’s parcel-by-parcel delimitation of the wine AOCs (Licence Ouverte), and the American Viticultural Areas are from the UC Davis AVA Project (CC0); Napa’s vineyards, roads and streams are © OpenStreetMap contributors (ODbL), and its wineries are from Wikidata (CC0) and the Overture Maps Foundation (CDLA Permissive 2.0). Wine changes with every vintage; this is the typical picture.',
       theme: 'Dark',
       sep: ', ', colon: ': '
     }
@@ -949,7 +977,7 @@ footer p { max-width: 52em; }
   function drawGeo(v) {
     var h = v.sphere ? '<path class="g-sea" d="' + v.sphere + '"/>' : '<rect class="g-sea" x="-5000" y="-5000" width="' + (v.w + 10000) + '" height="' + (v.h + 10000) + '"/>';
     if (v.belts) h += '<path class="g-belt" d="' + v.belts + '"/>';
-    h += '<path class="g-land" d="' + v.land + '"/><g class="g-ap"></g>';   // appellations go on the land
+    h += '<path class="g-land" d="' + v.land + '"/><g class="g-ap"><g class="ap-base"></g><g class="ap-top"></g></g>';   // appellations go on the land, vineyard maps over them
     if (v.lakes) h += '<path class="g-lake" d="' + v.lakes + '"/>';
     if (v.rivers) h += '<path class="g-river" d="' + v.rivers + '"/>';
     if (v.borders) h += '<path class="g-border" d="' + v.borders + '"/>';
@@ -1043,6 +1071,13 @@ footer p { max-width: 52em; }
       return false;
     };
     items.forEach(function (it) { if (!it.out && it.r) taken.push([it.sx - it.r, it.sy - it.r, it.sx + it.r, it.sy + it.r]); });
+    // and none under the map's own controls: the way back, the zoom buttons, the legend
+    var mr = mapEl.getBoundingClientRect();
+    [$('mapBar'), mapEl.querySelector('.mapzoom'), $('mapLegend')].forEach(function (el) {
+      if (!el || el.hidden) return;
+      var r = el.getBoundingClientRect();
+      taken.push([r.left - mr.left - 3, r.top - mr.top - 3, r.right - mr.left + 3, r.bottom - mr.top + 3]);
+    });
     items.forEach(function (it) {
       if (!it.lb || it.out) return;
       var w = textWidth(it), hgt = it.kind === 'area' ? 24 : it.kind === 'belt' ? 12 : it.kind === 'ap' && it.tier > 3 ? 16 : 18, r = it.r || 0, gap = 4;
@@ -1251,6 +1286,7 @@ footer p { max-width: 52em; }
   // an area of this view that is large on the map, a third of it one way or the other, and well in
   // it, not just reaching into a corner (Burgundy's northern vineyards reach the edge of Champagne)
   function apWanted(a) {
+    if (a.near && vb.w / mapEl.clientWidth * 6371000 / cur.proj.scale > a.near) return false;   // a vineyard map: only close up
     var b = a.box, ix = Math.min(b[2], vb.x + vb.w) - Math.max(b[0], vb.x), iy = Math.min(b[3], vb.y + vb.h) - Math.max(b[1], vb.y);
     if (a.view !== cur.id || ix <= 0 || iy <= 0 || (b[2] - b[0] < vb.w / 3 && b[3] - b[1] < vb.h / 3)) return false;
     return ix * iy > vb.w * vb.h * 0.08 || ix * iy > (b[2] - b[0]) * (b[3] - b[1]) * 0.3;
@@ -1263,14 +1299,22 @@ footer p { max-width: 52em; }
   function apUpdate() {
     if (!cur || !vb) return;
     if (!AP.index) { apIndex().then(function (list) { if (list.length && cur) { apUpdate(); placeAll(true); } }); return; }
-    var layer = svg.querySelector('.g-ap'), shown = [];
+    var shown = [];
     AP.index.forEach(function (a) {
       var A = AP.areas[a.id], want = apWanted(a);
       if (!A || (A.failed && Date.now() - A.failed > 15000)) { if (want) apFetch(a); return; }
       if (!A.g) return;
+      var layer = svg.querySelector(A.detail ? '.ap-top' : '.ap-base');
       if (want && A.g.parentNode !== layer) layer.appendChild(A.g);
       A.g.style.display = want ? '' : 'none';
       if (want) shown.push(a.id);
+    });
+    // over a vineyard map, the boundaries of its AVAs, drawn from the AVAs' own file
+    Object.keys(AP.areas).forEach(function (id) {
+      var A = AP.areas[id], on = A.detail && shown.indexOf(id) >= 0, o = on ? apOutline(A) : A.outline;
+      if (!o) return;
+      if (on && o.parentNode !== A.g.parentNode) A.g.parentNode.appendChild(o);
+      o.style.display = on ? '' : 'none';
     });
     var key = shown.join(',');
     if (key !== AP.shown) { AP.shown = key; buildMarks(); renderLegend(); }
@@ -1284,7 +1328,13 @@ footer p { max-width: 52em; }
         var g = document.createElementNS(NS, 'g'), h = '', regional = 0;
         g.setAttribute('transform', 'translate(' + d.origin[0] + ' ' + d.origin[1] + ') scale(' + d.unit + ')');
         g.setAttribute('data-a', a.id);
-        d.shapes = d.shapes.map(function (x) {   // the columns written by tools/build-appellations.mjs
+        if (d.vines) {   // a vineyard map: its lakes, the vineyards, then the roads and streams across them
+          A.detail = true; d.shapes = [];
+          if (d.lakes) h += '<path class="lakes" d="' + d.lakes + '"/>';
+          d.vines.forEach(function (v, i) { h += '<path class="vine" data-v="' + i + '" d="' + v[2] + '"/>'; });
+          d.lines.forEach(function (ln) { if (ln[1]) h += '<path class="ln ln-' + ln[0] + '" d="' + ln[1] + '"/>'; });
+        }
+        else d.shapes = d.shapes.map(function (x) {   // the columns written by tools/build-appellations.mjs
           return { name: x[0], tier: x[1], parent: x[2], ha: x[3], vha: x[4], lx: x[5], ly: x[6], x0: x[7], y0: x[8], x1: x[9], y1: x[10], d: x[11] };
         });
         d.shapes.forEach(function (sh, i) { h += '<path class="t' + sh.tier + '" data-i="' + i + '" d="' + sh.d + '"/>'; if (sh.tier === 1) regional++; });
@@ -1295,17 +1345,60 @@ footer p { max-width: 52em; }
       .catch(function () { A.failed = Date.now(); })   // tried again a little later
       .then(function () { AP.pending--; if (cur && !A.failed) { apUpdate(); placeAll(true); } renderLegend(); });
   }
+  function apOutline(A) {
+    if (A.outline) return A.outline;
+    var names = {}, src = null;
+    A.data.avas.forEach(function (n) { names[n] = 1; });
+    Object.keys(AP.areas).forEach(function (id) {
+      var B = AP.areas[id];
+      if (B.data && B.g && !B.detail && B.view === A.view && B.data.shapes.some(function (sh) { return names[sh.name]; })) src = B;
+    });
+    if (!src) return null;   // the AVAs are not loaded yet: the next update draws them
+    var g = document.createElementNS(NS, 'g'), h = '';
+    g.setAttribute('class', 'ap-outline'); g.setAttribute('transform', src.g.getAttribute('transform'));
+    src.data.shapes.forEach(function (sh) { if (names[sh.name]) h += '<path class="o' + sh.tier + '" d="' + sh.d + '"/>'; });
+    g.innerHTML = h;
+    return (A.outline = g);
+  }
   function apClearLabels() { Object.keys(apEls).forEach(function (k) { apEls[k].el.remove(); }); apEls = {}; apItems = []; }
   function apWidth(text, tier) {
     if (!apFamily) apFamily = getComputedStyle(mapEl).fontFamily;
-    measure.font = (tier <= 3 ? '600 12.5px ' : tier === 5 ? '700 11.5px ' : '500 11.5px ') + apFamily;
+    measure.font = (tier <= 3 ? '600 12.5px ' : tier === 5 ? '700 11.5px ' : tier === 6 ? 'italic 600 11.5px ' : '500 11.5px ') + apFamily;
     return Math.ceil(measure.measureText(text).width) + 2;
   }
   // a name for each appellation big enough on screen to hold one; placeLabels keeps those that fit
   function apLabels() {
     var cw = mapEl.clientWidth, ch = mapEl.clientHeight, s = cw / vb.w, keep = {}, list = [];
+    var label = function (key, kind, t, x, y, text, w, base) {   // one label, made once and kept while it fits
+      var it = apEls[key];
+      if (it && it.text !== text) { it.el.remove(); it = null; }
+      if (!it) {
+        var el = document.createElement('span'), lb = document.createElement('span');
+        el.className = 'mk ' + kind + (kind === 'ap' ? ' t' + t : '');
+        if (kind === 'wy') { var dot = document.createElement('i'); dot.className = 'dot'; el.appendChild(dot); }
+        lb.className = 'lb'; lb.textContent = text; el.appendChild(lb);
+        apMarks.appendChild(el);
+        it = apEls[key] = { kind: kind, tier: t, x: x, y: y, text: text, el: el, lb: lb, tw: w, base: base, r: kind === 'wy' ? 3 : 0 };
+      }
+      keep[key] = 1; list.push(it);
+    };
+    var mpp = 6371000 / cur.proj.scale / s;
     if (AP.shown) AP.shown.split(',').forEach(function (id) {
       var A = AP.areas[id], k = A.data.unit * s, perHa = k * k * 10000;   // px² in a hectare
+      if (A.detail) {   // a vineyard map: the vineyards that have names, and the wineries once close enough
+        A.data.vines.forEach(function (v, i) {
+          if (!v[3]) return;
+          var x = (v[4] - vb.x) * s, y = (v[5] - vb.y) * s;
+          if (x < 0 || y < 0 || x > cw || y > ch) return;
+          var w = apWidth(v[3], 6);
+          if (v[1] * perHa >= w * 40) label(id + ':v' + i, 'ap', 6, v[4], v[5], v[3], w, 1.35);
+        });
+        if (mpp < WINERY_MPP) A.data.wineries.forEach(function (wy, i) {
+          var x = (wy[2] - vb.x) * s, y = (wy[3] - vb.y) * s;
+          if (x > -10 && y > -10 && x < cw + 10 && y < ch + 10) label(id + ':w' + i, 'wy', 0, wy[2], wy[3], wy[0], null, 1.6);
+        });
+        return;
+      }
       A.data.shapes.forEach(function (sh, i) {
         var t = sh.tier;
         if (t === 1 && !A.multi) return;   // a region's one regional appellation is the region itself
@@ -1316,15 +1409,7 @@ footer p { max-width: 52em; }
         if (bw > cw * 2.5 || bh > ch * 2.5) return;   // seen from this close, the whole background, its name lost on its climats
         var text = apName(sh.name), w = apWidth(text, t);
         if (bw < w * 0.9 || area < w * 40) return;
-        var key = id + ':' + i, it = apEls[key];
-        if (it && it.text !== text) { it.el.remove(); it = null; }
-        if (!it) {
-          var el = document.createElement('span'), lb = document.createElement('span');
-          el.className = 'mk ap t' + t; lb.className = 'lb'; lb.textContent = text; el.appendChild(lb);
-          apMarks.appendChild(el);
-          it = apEls[key] = { kind: 'ap', tier: t, x: sh.lx, y: sh.ly, text: text, el: el, lb: lb, tw: w, base: [0, 1, 1.1, 1.2, 1.4, 1.3][t] };
-        }
-        keep[key] = 1; list.push(it);
+        label(id + ':' + i, 'ap', t, sh.lx, sh.ly, text, w, [0, 1, 1.1, 1.2, 1.4, 1.3][t]);
       });
     });
     Object.keys(apEls).forEach(function (k) { if (!keep[k]) { apEls[k].el.remove(); delete apEls[k]; } });
@@ -1342,14 +1427,19 @@ footer p { max-width: 52em; }
       if (AP.pending) el.innerHTML = '<span class="lg-h">' + esc(l.apLoading) + '</span>';
       return;
     }
-    var tiers = {}, us = true;
-    ids.forEach(function (id) { var A = AP.areas[id]; if (!A.us) us = false; A.data.shapes.forEach(function (sh) { tiers[sh.tier] = 1; }); });
+    var tiers = {}, us = true, detail = false;
+    ids.forEach(function (id) { var A = AP.areas[id]; if (!A.us) us = false; if (A.detail) detail = true; A.data.shapes.forEach(function (sh) { tiers[sh.tier] = 1; }); });
     var names = us ? l.apTiersUS : l.apTiers, h = '<span class="lg-h">' + esc(us ? l.apLegendUS : l.apLegend) + '</span>';
     (us ? [2, 3] : [5, 4, 3, 2, 1]).forEach(function (t) { if (tiers[t]) h += '<span><i class="sw t' + t + '"></i>' + esc(names[t]) + '</span>'; });
+    if (detail) h += '<span><i class="sw vine"></i>' + esc(l.vineyard) + '</span><span><i class="sw wy"></i>' + esc(l.winery) + '</span><span class="lg-src">' + l.detailCredit + '</span>';
     el.innerHTML = h; el.hidden = false;
   }
   function fmtHa(ha) {
     return ha < 10 ? String(+ha.toFixed(ha < 1 ? 2 : 1)) : Math.round(ha).toLocaleString(state.lang === 'zh' ? 'zh-CN' : 'en-GB');
+  }
+  function vineTip(A, v) {
+    var l = L(), where = apName(A.data.avas[v[0]]) + ' · ' + l.apAreaUS(fmtHa(v[1]));
+    return '<b>' + esc(v[3] || l.vineyard) + '</b><br>' + esc(v[3] ? l.vineyard + ' · ' + where : where);
   }
   function apTip(A, sh) {
     var l = L(), name = sh.name, shown = apName(name), parent = sh.parent.replace(/ grand cru$/i, '');
@@ -1364,8 +1454,9 @@ footer p { max-width: 52em; }
   // the appellation under the pointer: outlined, and named in the tooltip
   function apHover(t, e) {
     if (!t) { if (apHot) { apHot = null; if (apHlG) apHlG.style.display = 'none'; hideTip(); } return; }
-    var g = t.parentNode, A = AP.areas[g.getAttribute('data-a')], sh = A && A.data && A.data.shapes[+t.getAttribute('data-i')];
-    if (!sh) return;
+    var g = t.parentNode, A = AP.areas[g.getAttribute('data-a')], vi = t.getAttribute('data-v');
+    var vine = A && A.data && vi != null ? A.data.vines[+vi] : null, sh = A && A.data && vi == null ? A.data.shapes[+t.getAttribute('data-i')] : null;
+    if (!sh && !vine) return;
     if (t !== apHot) {
       apHot = t;
       if (!apHlG || apHlG.parentNode !== svg) {
@@ -1375,7 +1466,7 @@ footer p { max-width: 52em; }
       apHlG.setAttribute('transform', g.getAttribute('transform'));
       apHlG.firstChild.setAttribute('d', t.getAttribute('d'));
       apHlG.style.display = '';
-      apTipHtml = apTip(A, sh);
+      apTipHtml = vine ? vineTip(A, vine) : apTip(A, sh);
     }
     showTip(apTipHtml, e.clientX, e.clientY - 8);
   }
@@ -1383,6 +1474,7 @@ footer p { max-width: 52em; }
   // ---------- moving the map: drag, the wheel with Ctrl or ⌘, two fingers, + and −, double-click, keys ----------
   var MIN_MPP = 1.2;         // the closest zoom, in metres per pixel: the climats are drawn to 2 m
   var MIN_MPP_PLAIN = 40;    // in views without appellations, where Natural Earth goes no finer
+  var WINERY_MPP = 20;       // wineries show closer than this
   var drag = null, pinch = null, gest = null, suppressUntil = 0, settleTimer = 0, hintTimer = 0, hintAt = 0, lastPointer = 'mouse';
   var isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform || '');
   function zoomLimits() {

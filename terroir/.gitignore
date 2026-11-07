@@ -1,3 +1,4 @@
 # The Natural Earth layers the map is drawn from, downloaded by tools/build-map.mjs
 tools/.cache/
 tools/node_modules/
+tools/.venv/
