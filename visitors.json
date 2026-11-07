@@ -1,12 +1,12 @@
 {
- "updated": "2026-11-05",
+ "updated": "2026-11-07",
  "since": "2026-10-23",
- "total": 60,
+ "total": 72,
  "countries": [
   {
    "code": "US",
    "name": "United States",
-   "count": 51,
+   "count": 63,
    "lat": 38,
    "lon": -97
   },
