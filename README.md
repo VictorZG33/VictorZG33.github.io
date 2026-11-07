@@ -56,13 +56,15 @@ The coloured boundaries on Terroir's zoomed-in maps of France and the United Sta
 
 Run it again after redrawing a view the areas sit on (France, California, Oregon & Washington, New York & Ontario), or to take in a new release of either dataset, after deleting its folder in `.cache`. Which appellations are drawn, and at what tier, is set by the tables at the top of the script (`GRANDS_CRUS`, `BORDEAUX`, `LOIRE` and the rest), and how finely each tier is drawn by `SHAPES`. The Chinese names on the map are `appellationsZh` in `terroir/data.js`; an appellation without one, a climat above all, keeps its own name.
 
-Closer in, Napa has a map of its own: its 4,700 vineyards drawn one by one over the AVAs, which are outlined on top, with 460 wineries and the roads, the Napa River, its creeks and lakes. The page loads it closer than 160 metres per pixel, as soon as Napa is picked. The vineyards, roads and water are OpenStreetMap's, through the [Overture Maps](https://overturemaps.org) release on Amazon S3. The wineries come first from Wikidata, then from Overture's places, which put a winery at its owner's office as readily as at its estate. So a place is kept only when nothing contradicts it:
+Closer in, Napa has a map of its own: its 4,600 vineyards drawn one by one over the AVAs, which are outlined on top, with 430 wineries and the roads, the Napa River, its creeks and lakes. The page loads it closer than 160 metres per pixel, as soon as Napa is picked. The vineyards, roads and water are OpenStreetMap's, through the [Overture Maps](https://overturemaps.org) release on Amazon S3. The wineries come first from Wikidata, then from Overture's places, which put a winery at its owner's office as readily as at its estate. So a place is kept only when nothing contradicts it:
 - it lies within 200 m of a vineyard;
 - it lies outside Napa's airport industrial parks;
 - Wikidata doesn't have the same name;
-- Overture doesn't put that name in two places a kilometre apart.
+- Overture doesn't put that name in two places a kilometre apart;
+- it doesn't come from BrightQuery, a business registry, which gives where a company is registered;
+- its name isn't an office's, a restaurant's or a town tasting room's.
 
-`fix` in the script places Robert Mondavi, for which neither source gives the estate. To rebuild it:
+In the script, `fix` places Robert Mondavi, for which neither source gives the estate, and `former` drops Inglenook's names from before 2011. To rebuild it:
 
 1. Once, in `terroir/tools`, run `python3 -m venv .venv && .venv/bin/pip install duckdb==1.4.1`.
 2. Run `.venv/bin/python fetch-vineyards.py`, which reads only the parts of the Overture release that cover Napa, about a minute, and asks Wikidata for its wineries, into `terroir/tools/.cache/overture`.

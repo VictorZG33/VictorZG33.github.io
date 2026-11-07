@@ -216,8 +216,13 @@ const DETAIL = {
     // Wikidata has no position for it, and Overture files the winery at Oakville as a restaurant
     // ("Robert Mondavi Wineries, Napa Valley") and its "winery" records at offices in Napa
     fix: [{ name: 'Robert Mondavi Winery', at: [-122.4097, 38.4415] }],
+    // the same estate under the names it had before it took back Inglenook's, in 2011
+    former: ['Rubicon Estate Winery', 'Niebaum Coppola Estate Winery'],
   },
 };
+// Places that are not an estate: an office, a registered company, a restaurant, a tasting room in town
+// ("& Tasting Room" is an estate's own)
+const NOT_AN_ESTATE = /\b(office|inc|llc)\.?$|(^|[^&]) tasting room$|kitchen|restaurant|\bdiy\b/i;
 const WINERY_NEAR_VINES = 200;   // m: a winery further than this from any vineyard is a tasting room in town, or an office
 // AREAS=burgundy,napa node build-appellations.mjs builds only those areas (the index keeps the others)
 const ONLY = process.env.AREAS ? new Set(process.env.AREAS.split(',')) : null;
@@ -485,7 +490,8 @@ async function buildDetail(key, cfg, avas) {
   const names = [cfg.ava, ...nested.map((n) => n.name)];
   const avaOf = (x, y) => { const n = nested.find((m) => inGeom(m.g, x, y)); return n ? names.indexOf(n.name) : 0; };
 
-  const vines = await clipTo(await read('vineyards'), clip, '-simplify interval=3m keep-shapes -each "ha=this.area/10000, lx=this.innerX, ly=this.innerY" -filter "ha >= 0.05"');
+  // -clean: some vineyards are mapped twice, and two washes of ink would darken them
+  const vines = await clipTo(await read('vineyards'), clip, '-clean -simplify interval=3m keep-shapes -each "ha=this.area/10000, lx=this.innerX, ly=this.innerY" -filter "ha >= 0.05"');
   const roads = await clipTo(await read('roads'), clip, '-simplify interval=8m keep-shapes');
   const water = await read('water');
   const streams = await clipTo(fc(water.features.filter((f) => /LineString/.test(f.geometry.type))), clip, '-simplify interval=6m keep-shapes');
@@ -504,7 +510,7 @@ async function buildDetail(key, cfg, avas) {
   const kept = [];
   for (const f of (await read('wikidata')).features) {
     const c = f.geometry.coordinates, n = norm(f.properties.name);
-    if (!inGeom(outer.geometry, c[0], c[1]) || kept.some((k) => k.n === n && metres(k.c, c) < 400)) continue;
+    if (!inGeom(outer.geometry, c[0], c[1]) || (cfg.former || []).includes(f.properties.name.trim()) || kept.some((k) => k.n === n && metres(k.c, c) < 400)) continue;
     kept.push({ name: f.properties.name.trim(), c, n, wd: true });
   }
   const fromWikidata = kept.length, wdNames = new Set(kept.map((k) => k.n));
@@ -517,7 +523,9 @@ async function buildDetail(key, cfg, avas) {
   for (const f of candidates) {
     const c = f.geometry.coordinates, n = norm(f.properties.name);
     if (!inGeom(outer.geometry, c[0], c[1])) continue;
-    if (excluded(c) || !n || wdNames.has(n) || twoPlaces(n)) { doubtful++; continue; }
+    // BrightQuery's records are a business registry's: where a company is registered, often an office
+    const name = f.properties.name.trim();
+    if (excluded(c) || !n || wdNames.has(n) || twoPlaces(n) || f.properties.dataset === 'BrightQuery' || NOT_AN_ESTATE.test(name) || (cfg.former || []).includes(name)) { doubtful++; continue; }
     if (!nearVines(c[0], c[1])) { away++; continue; }
     if (kept.some((k) => { const d = metres(k.c, c); return d < 25 || (k.wd && d < 150) || (d < 400 && k.n === n); })) continue;
     kept.push({ name: f.properties.name.trim(), c, n });
