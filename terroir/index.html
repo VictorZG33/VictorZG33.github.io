@@ -390,6 +390,48 @@ button.mk.area:hover .lb { box-shadow: 0 0 0 1px var(--fg); }
 .mapzoom button:hover:not(:disabled) { background: var(--accent-soft); }
 .mapzoom button:disabled { color: var(--rule-strong); cursor: default; }
 .mapzoom button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.map canvas.sat { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+.mapsat {
+  position: absolute; right: 10px; top: 90px; z-index: 6; appearance: none; padding: 5px 10px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--rule-strong); background: var(--surface); color: var(--fg); font-size: 12.5px; font-weight: 500; line-height: 1.3;
+}
+.mapsat[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.mapsat:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mapattr {
+  position: absolute; right: 8px; bottom: 6px; z-index: 5; margin: 0; padding: 1px 6px; border-radius: 4px; pointer-events: none;
+  background: rgba(12, 10, 14, 0.55); color: #F1ECE6; font-size: 10.5px; line-height: 1.5;
+}
+/* over satellite imagery: the appellations as tints on the same garnet ramp, with fine white
+   boundaries. A spot lies under every tier that includes it, regional to grand cru, so the tints
+   stack: these are set for what shows, about 4, 12, 25, 50 and 65 percent, regional faint to grand
+   cru strong, and the legend's swatches show those. AVAs are outlines, a nested one faintly tinted,
+   and Napa's vineyards outlines too, their vines being in the photo. Names are white on a dark halo.
+   The imagery is the same in light and dark mode, and so is all of this */
+.map.sat { --sat-ground: #59603F; }
+.map.sat .g-lake, .map.sat .g-river, .map.sat .g-ap .ln, .map.sat .g-ap .lakes { display: none; }
+.map.sat .g-border { stroke: rgba(255, 255, 255, 0.5); }
+.map.sat .g-ap path { stroke: rgba(255, 255, 255, 0.62); stroke-width: 0.8px; }
+.map.sat .g-ap .t1 { fill: #CD909A; fill-opacity: 0.04; }
+.map.sat .g-ap .t2 { fill: #C16F7C; fill-opacity: 0.08; }
+.map.sat .g-ap .t3 { fill: #B14E5E; fill-opacity: 0.16; }
+.map.sat .g-ap .t4 { fill: #993042; fill-opacity: 0.38; }
+.map.sat .g-ap .t5 { fill: #781C2F; fill-opacity: 0.55; }
+.map.sat .g-ap .ap-us .t2 { fill-opacity: 0; stroke: rgba(255, 255, 255, 0.85); stroke-width: 1.4px; }
+.map.sat .g-ap .ap-us .t3 { fill-opacity: 0.12; stroke: rgba(255, 255, 255, 0.85); stroke-width: 1px; }
+.map.sat .g-ap .vine { fill: rgba(255, 255, 255, 0.05); stroke: rgba(255, 255, 255, 0.78); stroke-width: 0.8px; }
+.map.sat .g-ap .ap-outline path { stroke: #FFF; stroke-opacity: 0.9; }
+.map.sat .ap-hl path { stroke: #FFF; }
+.map.sat .marks { --fg: #FFF; --halo: rgba(14, 12, 16, 0.82); --spot: #FFF; --city: #ECE6DF; --dot: #E0667A; --wy: #FFF; }
+.map.sat .maplegend .sw { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7); }
+.map.sat .maplegend .sw.t1 { background: linear-gradient(rgba(205, 144, 154, 0.04), rgba(205, 144, 154, 0.04)), var(--sat-ground); }
+.map.sat .maplegend .sw.t2 { background: linear-gradient(rgba(193, 111, 124, 0.12), rgba(193, 111, 124, 0.12)), var(--sat-ground); }
+.map.sat .maplegend .sw.t3 { background: linear-gradient(rgba(177, 78, 94, 0.25), rgba(177, 78, 94, 0.25)), var(--sat-ground); }
+.map.sat .maplegend .sw.t4 { background: linear-gradient(rgba(153, 48, 66, 0.5), rgba(153, 48, 66, 0.5)), var(--sat-ground); }
+.map.sat .maplegend .sw.t5 { background: linear-gradient(rgba(120, 28, 47, 0.65), rgba(120, 28, 47, 0.65)), var(--sat-ground); }
+.map.sat .maplegend.us .sw.t2 { background: var(--sat-ground); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.85); }
+.map.sat .maplegend.us .sw.t3 { background: linear-gradient(rgba(177, 78, 94, 0.12), rgba(177, 78, 94, 0.12)), var(--sat-ground); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.85); }
+.map.sat .maplegend .sw.vine { background: var(--sat-ground); box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.85); }
+.map.sat .maplegend .sw.wy { background: #FFF; box-shadow: 0 0 0 1.5px rgba(14, 12, 16, 0.82); }
 .maplegend {
   position: absolute; left: 10px; bottom: 10px; z-index: 5; display: grid; gap: 3px; padding: 7px 10px 8px; max-width: calc(100% - 20px);
   background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; font-size: 12px; line-height: 16px; pointer-events: none;
@@ -519,11 +561,15 @@ footer p { max-width: 52em; }
       <div class="mapwrap">
         <div class="map world" id="map" role="region" tabindex="0">
           <svg class="geo" id="mapSvg" aria-hidden="true" preserveAspectRatio="xMidYMid meet"></svg>
+          <canvas class="sat" id="mapSat" aria-hidden="true"></canvas>
+          <svg class="geo" id="apSvg" aria-hidden="true" preserveAspectRatio="xMidYMid meet"></svg>
           <div class="marks" id="apMarks" aria-hidden="true"></div>
           <div class="marks" id="mapMarks"></div>
           <div class="mapbar" id="mapBar" hidden><button type="button" id="mapBack"></button></div>
           <div class="mapzoom"><button type="button" id="zoomIn">+</button><button type="button" id="zoomOut">−</button></div>
+          <button type="button" class="mapsat" id="satBtn" hidden></button>
           <div class="maplegend" id="mapLegend" hidden></div>
+          <p class="mapattr" id="satAttr" hidden></p>
           <p class="maphint" id="mapHint" aria-hidden="true"></p>
           <p class="mapmsg" id="mapMsg" hidden></p>
         </div>
@@ -623,7 +669,7 @@ footer p { max-width: 52em; }
       inView: '这一带的产区', areas: '按地区看', restOfEurope: '欧洲其他产区，按国家看',
       hint: '在地图上点一个产区，或从上面的名字里选一个。',
       climate: '气候', grapesF: '主要品种', spotsF: '村庄与子产区', stylesF: '风格',
-      mapNote: '底图：Natural Earth，只画了各方都承认的陆地国界。法国的产区边界来自 INAO（法国国家原产地与质量研究院，Licence Ouverte 开放许可），美国的 AVA 来自 UC Davis 的 AVA Project（CC0）；纳帕谷的葡萄园、道路和河流来自 OpenStreetMap（ODbL），酒庄来自 Wikidata（CC0）和 Overture Maps（CDLA Permissive 2.0）。用 + 和 −、双指，或按住 Ctrl（Mac 上是 ⌘）滚动来缩放，拖动来移动。',
+      mapNote: '底图：Natural Earth，只画了各方都承认的陆地国界。法国的产区边界来自 INAO（法国国家原产地与质量研究院，Licence Ouverte 开放许可），美国的 AVA 来自 UC Davis 的 AVA Project（CC0）；纳帕谷的葡萄园、道路和河流来自 OpenStreetMap（ODbL），酒庄来自 Wikidata（CC0）和 Overture Maps（CDLA Permissive 2.0）；放大后的卫星影像来自 Esri（Maxar、Earthstar Geographics）。用 + 和 −、双指，或按住 Ctrl（Mac 上是 ⌘）滚动来缩放，拖动来移动。',
       apTiers: { 1: '大区级', 2: '地区级', 3: '村庄级', 4: '一级园', 5: '特级园' },
       apTiersUS: { 2: 'AVA', 3: '其中的子产区' },
       apLegend: '法定产区等级', apLegendUS: '美国葡萄种植区 AVA', apLoading: '正在加载产区边界…',
@@ -634,9 +680,10 @@ footer p { max-width: 52em; }
       hintWheel: function (mac) { return '按住 ' + (mac ? '⌘' : 'Ctrl') + ' 再滚动，可以缩放地图'; },
       hintTouch: '用两根手指移动和缩放地图',
       zoomIn: '放大', zoomOut: '缩小', mapLabel: '产区地图',
+      satellite: '卫星图', satTitle: '卫星影像：放大后显示', satCredit: '卫星影像 © Esri、Maxar、Earthstar Geographics',
       loading: '地图加载中…', failed: '地图没能加载，请检查网络后刷新。',
       count2: function (n) { return n + ' 个'; },
-      footNote: '风土是我做的一份葡萄酒入门。地图底图来自 Natural Earth（公有领域），村镇位置核对自 OpenStreetMap；法国的产区边界来自 INAO 的《葡萄酒 AOC 地块划定》（Licence Ouverte），美国的 AVA 来自 UC Davis AVA Project（CC0），纳帕谷的葡萄园、道路和河流来自 OpenStreetMap 贡献者（ODbL），酒庄来自 Wikidata（CC0）和 Overture Maps Foundation（CDLA Permissive 2.0）。葡萄酒每个年份都在变，这里写的是大致、典型的样子。',
+      footNote: '风土是我做的一份葡萄酒入门。地图底图来自 Natural Earth（公有领域），村镇位置核对自 OpenStreetMap；法国的产区边界来自 INAO 的《葡萄酒 AOC 地块划定》（Licence Ouverte），美国的 AVA 来自 UC Davis AVA Project（CC0），纳帕谷的葡萄园、道路和河流来自 OpenStreetMap 贡献者（ODbL），酒庄来自 Wikidata（CC0）和 Overture Maps Foundation（CDLA Permissive 2.0）；放大后的卫星影像来自 Esri World Imagery（Maxar、Earthstar Geographics）。葡萄酒每个年份都在变，这里写的是大致、典型的样子。',
       theme: '深色',
       sep: '、', colon: '：'
     },
@@ -687,7 +734,7 @@ footer p { max-width: 52em; }
       inView: 'Regions here', areas: 'By area', restOfEurope: 'The rest of Europe, by country',
       hint: 'Pick a region on the map, or one of the names above.',
       climate: 'Climate', grapesF: 'Main grapes', spotsF: 'Villages and sub-regions', stylesF: 'Styles',
-      mapNote: 'Base map: Natural Earth; only land borders that every side recognises are drawn. French appellation boundaries are from INAO, France’s institute of origin and quality (Licence Ouverte); the American Viticultural Areas from the UC Davis AVA Project (CC0); Napa’s vineyards, roads and streams from OpenStreetMap (ODbL), its wineries from Wikidata (CC0) and Overture Maps (CDLA Permissive 2.0). Zoom with + and −, two fingers, or Ctrl (⌘ on a Mac) and scroll; drag to move.',
+      mapNote: 'Base map: Natural Earth; only land borders that every side recognises are drawn. French appellation boundaries are from INAO, France’s institute of origin and quality (Licence Ouverte); the American Viticultural Areas from the UC Davis AVA Project (CC0); Napa’s vineyards, roads and streams from OpenStreetMap (ODbL), its wineries from Wikidata (CC0) and Overture Maps (CDLA Permissive 2.0); the satellite imagery close up is Esri’s (Maxar, Earthstar Geographics). Zoom with + and −, two fingers, or Ctrl (⌘ on a Mac) and scroll; drag to move.',
       apTiers: { 1: 'Regional', 2: 'Sub-regional', 3: 'Village', 4: 'Premier cru', 5: 'Grand cru' },
       apTiersUS: { 2: 'AVA', 3: 'AVA within it' },
       apLegend: 'Appellation level', apLegendUS: 'American Viticultural Areas', apLoading: 'Loading the appellations…',
@@ -698,9 +745,10 @@ footer p { max-width: 52em; }
       hintWheel: function (mac) { return 'Hold ' + (mac ? '⌘' : 'Ctrl') + ' and scroll to zoom the map'; },
       hintTouch: 'Use two fingers to move and zoom the map',
       zoomIn: 'Zoom in', zoomOut: 'Zoom out', mapLabel: 'Map of the regions',
+      satellite: 'Satellite', satTitle: 'Satellite imagery, shown once zoomed in', satCredit: 'Imagery © Esri, Maxar, Earthstar Geographics',
       loading: 'Loading the map…', failed: 'The map did not load. Check the connection and reload.',
       count2: function (n) { return String(n); },
-      footNote: 'Terroir is a wine primer I made. The base map is from Natural Earth (public domain) and the places on it were checked against OpenStreetMap; the French appellation boundaries are INAO’s parcel-by-parcel delimitation of the wine AOCs (Licence Ouverte), and the American Viticultural Areas are from the UC Davis AVA Project (CC0); Napa’s vineyards, roads and streams are © OpenStreetMap contributors (ODbL), and its wineries are from Wikidata (CC0) and the Overture Maps Foundation (CDLA Permissive 2.0). Wine changes with every vintage; this is the typical picture.',
+      footNote: 'Terroir is a wine primer I made. The base map is from Natural Earth (public domain) and the places on it were checked against OpenStreetMap; the French appellation boundaries are INAO’s parcel-by-parcel delimitation of the wine AOCs (Licence Ouverte), and the American Viticultural Areas are from the UC Davis AVA Project (CC0); Napa’s vineyards, roads and streams are © OpenStreetMap contributors (ODbL), and its wineries are from Wikidata (CC0) and the Overture Maps Foundation (CDLA Permissive 2.0); the satellite imagery close up is Esri World Imagery (Maxar, Earthstar Geographics). Wine changes with every vintage; this is the typical picture.',
       theme: 'Dark',
       sep: ', ', colon: ': '
     }
@@ -936,7 +984,18 @@ footer p { max-width: 52em; }
     };
   }
 
-  var mapEl = $('map'), svg = $('mapSvg'), marks = $('mapMarks'), apMarks = $('apMarks');
+  // and back, for the azimuthal views: view units to [lon, lat] (Snyder 1987, 24-16 to 24-18)
+  function unprojectFor(p) {
+    var l0 = p.center[0] * R, s0 = Math.sin(p.center[1] * R), c0 = Math.cos(p.center[1] * R);
+    return function (X, Y) {
+      var x = (X - p.translate[0]) / p.scale, y = (p.translate[1] - Y) / p.scale, rho = Math.sqrt(x * x + y * y);
+      if (rho < 1e-12) return [p.center[0], p.center[1]];
+      var c = 2 * Math.asin(Math.min(1, rho / 2)), sc = Math.sin(c), cc = Math.cos(c);
+      return [(l0 + Math.atan2(x * sc, rho * c0 * cc - y * s0 * sc)) / R, Math.asin(cc * s0 + y * sc * c0 / rho) / R];
+    };
+  }
+
+  var mapEl = $('map'), svg = $('mapSvg'), apSvg = $('apSvg'), marks = $('mapMarks'), apMarks = $('apMarks');
   var cache = {}, cur = null, vb = null, anim = 0, animTarget = null, items = [], baseItems = [], loadingFor = null;
   var free = null;   // where the reader has moved the map to: its centre and units per pixel
   var measure = document.createElement('canvas').getContext('2d');
@@ -945,7 +1004,7 @@ footer p { max-width: 52em; }
   function getView(id) {
     if (cache[id]) return Promise.resolve(cache[id]);
     return fetch('map/' + id + '.json').then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(function (j) { j.id = id; j.P = projectFor(j.proj); cache[id] = j; return j; });
+      .then(function (j) { j.id = id; j.P = projectFor(j.proj); j.U = j.proj.type === 'laea' ? unprojectFor(j.proj) : null; cache[id] = j; return j; });
   }
   function aspect() { var w = mapEl.clientWidth, h = mapEl.clientHeight; return w && h ? w / h : 1.6; }
   // the smallest box of the map's shape that holds `box`, kept inside the drawn area when it fits
@@ -977,11 +1036,15 @@ footer p { max-width: 52em; }
   function drawGeo(v) {
     var h = v.sphere ? '<path class="g-sea" d="' + v.sphere + '"/>' : '<rect class="g-sea" x="-5000" y="-5000" width="' + (v.w + 10000) + '" height="' + (v.h + 10000) + '"/>';
     if (v.belts) h += '<path class="g-belt" d="' + v.belts + '"/>';
-    h += '<path class="g-land" d="' + v.land + '"/><g class="g-ap"><g class="ap-base"></g><g class="ap-top"></g></g>';   // appellations go on the land, vineyard maps over them
+    h += '<path class="g-land" d="' + v.land + '"/>';
+    svg.innerHTML = h;
+    // over the satellite imagery (a canvas between the two): the appellations, vineyard maps over them,
+    // then the lakes, rivers and borders
+    h = '<g class="g-ap"><g class="ap-base"></g><g class="ap-top"></g></g>';
     if (v.lakes) h += '<path class="g-lake" d="' + v.lakes + '"/>';
     if (v.rivers) h += '<path class="g-river" d="' + v.rivers + '"/>';
     if (v.borders) h += '<path class="g-border" d="' + v.borders + '"/>';
-    svg.innerHTML = h;
+    apSvg.innerHTML = h;
     mapEl.classList.toggle('world', v.id === 'world');
   }
   function inside(v, p) { return p[0] >= 0 && p[0] <= v.w && p[1] >= 0 && p[1] <= v.h && isFinite(p[0]) && isFinite(p[1]); }
@@ -1106,11 +1169,17 @@ footer p { max-width: 52em; }
     });
   }
 
-  function setViewBox(b) { vb = b; svg.setAttribute('viewBox', b.x.toFixed(2) + ' ' + b.y.toFixed(2) + ' ' + b.w.toFixed(2) + ' ' + b.h.toFixed(2)); }
+  function setViewBox(b) {
+    vb = b;
+    var v = b.x.toFixed(2) + ' ' + b.y.toFixed(2) + ' ' + b.w.toFixed(2) + ' ' + b.h.toFixed(2);
+    svg.setAttribute('viewBox', v); apSvg.setAttribute('viewBox', v);
+    if (cur) satDraw();
+  }
   function animateTo(target, ms) {
     cancelAnimationFrame(anim);
     if (reduceMotion || !vb) { animTarget = null; setViewBox(target); settled(); return; }
     animTarget = target;
+    satRequest(target);   // the imagery where the map is going, while it gets there
     var from = vb, t0 = performance.now(), dur = ms || 520;
     // zoom in log space so the motion feels even at every scale
     var lw0 = Math.log(from.w), lw1 = Math.log(target.w);
@@ -1198,6 +1267,9 @@ footer p { max-width: 52em; }
     if (cur && (zoomed || free)) $('mapBack').textContent = l.back(T(VIEW[cur.id].name));
     ['zoomIn', 'zoomOut'].forEach(function (id) { $(id).setAttribute('aria-label', l[id]); $(id).title = l[id]; });
     mapEl.setAttribute('aria-label', l.mapLabel);
+    var sb = $('satBtn');
+    sb.hidden = !cur || !cur.U;
+    sb.textContent = l.satellite; sb.title = l.satTitle; sb.setAttribute('aria-pressed', satOn ? 'true' : 'false');
     renderZoomButtons();
   }
 
@@ -1304,7 +1376,7 @@ footer p { max-width: 52em; }
       var A = AP.areas[a.id], want = apWanted(a);
       if (!A || (A.failed && Date.now() - A.failed > 15000)) { if (want) apFetch(a); return; }
       if (!A.g) return;
-      var layer = svg.querySelector(A.detail ? '.ap-top' : '.ap-base');
+      var layer = apSvg.querySelector(A.detail ? '.ap-top' : '.ap-base');
       if (want && A.g.parentNode !== layer) layer.appendChild(A.g);
       A.g.style.display = want ? '' : 'none';
       if (want) shown.push(a.id);
@@ -1328,6 +1400,7 @@ footer p { max-width: 52em; }
         var g = document.createElementNS(NS, 'g'), h = '', regional = 0;
         g.setAttribute('transform', 'translate(' + d.origin[0] + ' ' + d.origin[1] + ') scale(' + d.unit + ')');
         g.setAttribute('data-a', a.id);
+        g.setAttribute('class', A.us ? 'ap-us' : 'ap-fr');
         if (d.vines) {   // a vineyard map: its lakes, the vineyards, then the roads and streams across them
           A.detail = true; d.shapes = [];
           if (d.lakes) h += '<path class="lakes" d="' + d.lakes + '"/>';
@@ -1421,6 +1494,14 @@ footer p { max-width: 52em; }
     mergeItems();
   }
   function renderLegend() {
+    legendBody();
+    // the imagery's credit: in the legend when there is one, else on its own in the corner
+    var l = L(), el = $('mapLegend'), at = $('satAttr');
+    if (satShown && !el.hidden) el.insertAdjacentHTML('beforeend', '<span class="lg-src">' + esc(l.satCredit) + '</span>');
+    at.textContent = l.satCredit;
+    at.hidden = !(satShown && el.hidden);
+  }
+  function legendBody() {
     var el = $('mapLegend'), l = L(), ids = AP.shown ? AP.shown.split(',') : [];
     if (!ids.length) {
       el.hidden = !AP.pending;
@@ -1431,6 +1512,7 @@ footer p { max-width: 52em; }
     ids.forEach(function (id) { var A = AP.areas[id]; if (!A.us) us = false; if (A.detail) detail = true; A.data.shapes.forEach(function (sh) { tiers[sh.tier] = 1; }); });
     var names = us ? l.apTiersUS : l.apTiers, h = '<span class="lg-h">' + esc(us ? l.apLegendUS : l.apLegend) + '</span>';
     (us ? [2, 3] : [5, 4, 3, 2, 1]).forEach(function (t) { if (tiers[t]) h += '<span><i class="sw t' + t + '"></i>' + esc(names[t]) + '</span>'; });
+    el.classList.toggle('us', us);
     if (detail) h += '<span><i class="sw vine"></i>' + esc(l.vineyard) + '</span><span><i class="sw wy"></i>' + esc(l.winery) + '</span><span class="lg-src">' + l.detailCredit + '</span>';
     el.innerHTML = h; el.hidden = false;
   }
@@ -1459,9 +1541,9 @@ footer p { max-width: 52em; }
     if (!sh && !vine) return;
     if (t !== apHot) {
       apHot = t;
-      if (!apHlG || apHlG.parentNode !== svg) {
+      if (!apHlG || apHlG.parentNode !== apSvg) {
         apHlG = document.createElementNS(NS, 'g'); apHlG.setAttribute('class', 'ap-hl');
-        apHlG.appendChild(document.createElementNS(NS, 'path')); svg.appendChild(apHlG);
+        apHlG.appendChild(document.createElementNS(NS, 'path')); apSvg.appendChild(apHlG);
       }
       apHlG.setAttribute('transform', g.getAttribute('transform'));
       apHlG.firstChild.setAttribute('d', t.getAttribute('d'));
@@ -1511,7 +1593,7 @@ footer p { max-width: 52em; }
   }
   function settleSoon() { clearTimeout(settleTimer); settleTimer = setTimeout(settled, 160); }
   // the map has stopped: fetch and show the appellations in view, name them, place every label
-  function settled() { clearTimeout(settleTimer); if (!cur || !vb) return; apUpdate(); placeAll(true); renderZoomButtons(); }
+  function settled() { clearTimeout(settleTimer); if (!cur || !vb) return; apUpdate(); placeAll(true); renderZoomButtons(); satRequest(vb); }
   function renderZoomButtons() {
     if (!cur || !vb) return;
     var lim = zoomLimits(), u = vb.w / (mapEl.clientWidth || 1);
@@ -1527,6 +1609,92 @@ footer p { max-width: 52em; }
     clearTimeout(hintTimer); hintTimer = setTimeout(hideHint, 1600);
   }
   function hideHint() { clearTimeout(hintTimer); $('mapHint').classList.remove('on'); }
+
+  // ---------- satellite imagery: Esri World Imagery, as on Fall Line ----------
+  // Under the appellations once the map is close, on the canvas between the two SVGs, with the flat map
+  // beneath it while tiles load. The tiles are Web Mercator: each is drawn with the affine map its
+  // corners take into this view's projection, which from tile zoom 8 on is true to about a pixel; each
+  // is drawn half a pixel large all round, so no seam shows between them.
+  var SAT_URL = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/';
+  var SAT_MIN_Z = 8, SAT_MAX_Z = 18, SAT_CACHE = 400;
+  var satCanvas = $('mapSat'), satCtx = satCanvas.getContext('2d'), satTiles = new Map(), satRaf = 0, satShown = false, satUse = 0;
+  var satOn = true;
+  try { satOn = localStorage.getItem('terroir.sat') !== '0'; } catch (e) {}
+  function t2lon(x, z) { return x / Math.pow(2, z) * 360 - 180; }
+  function t2lat(y, z) { return Math.atan(Math.sinh(Math.PI * (1 - 2 * y / Math.pow(2, z)))) / R; }
+  // the tile zoom whose pixels match the screen's for box b, or -1 for no imagery there
+  function satZoom(b) {
+    if (!satOn || !cur || !cur.U || !b) return -1;
+    var c = cur.U(b.x + b.w / 2, b.y + b.h / 2), mpp = b.w / (mapEl.clientWidth || 1) * 6371000 / cur.proj.scale;
+    var z = Math.round(Math.log(156543.03 * Math.cos(c[1] * R) * Math.min(window.devicePixelRatio || 1, 2) / mpp) / Math.LN2);
+    return z < SAT_MIN_Z ? -1 : Math.min(z, SAT_MAX_Z);
+  }
+  function satRange(b, z) {   // [z, x, y] of the tiles that cover box b
+    var n = Math.pow(2, z), x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    [[0, 0], [0.5, 0], [1, 0], [1, 0.5], [1, 1], [0.5, 1], [0, 1], [0, 0.5]].forEach(function (f) {
+      var ll = cur.U(b.x + b.w * f[0], b.y + b.h * f[1]), r = ll[1] * R;
+      var tx = (ll[0] + 180) / 360 * n, ty = (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * n;
+      x0 = Math.min(x0, tx); x1 = Math.max(x1, tx); y0 = Math.min(y0, ty); y1 = Math.max(y1, ty);
+    });
+    var out = [];
+    for (var y = Math.max(0, Math.floor(y0)); y <= Math.min(n - 1, Math.floor(y1)); y++)
+      for (var x = Math.floor(x0); x <= Math.floor(x1); x++) out.push([z, ((x % n) + n) % n, y]);
+    return out.length > 300 ? [] : out;
+  }
+  function satFetch(t) {
+    var k = t[0] + '/' + t[1] + '/' + t[2], T = satTiles.get(k);
+    if (T) { T.used = ++satUse; return; }
+    T = { img: new Image(), ok: false, used: ++satUse };
+    T.img.decoding = 'async';
+    T.img.onload = function () { T.ok = true; satSoon(); };
+    T.img.src = SAT_URL + t[0] + '/' + t[2] + '/' + t[1];
+    satTiles.set(k, T);
+  }
+  // fetch what box b needs, and forget the tiles least lately wanted
+  function satRequest(b) {
+    var z = satZoom(b);
+    if (z < 0) return;
+    satRange(b, z).forEach(satFetch);
+    if (satTiles.size > SAT_CACHE) {
+      var all = Array.from(satTiles.entries()).sort(function (a, c) { return a[1].used - c[1].used; });
+      for (var i = 0; i < all.length - SAT_CACHE; i++) satTiles.delete(all[i][0]);
+    }
+  }
+  function satSoon() { if (!satRaf) satRaf = requestAnimationFrame(satDraw); }
+  function satDraw() {
+    satRaf = 0;
+    var z = satZoom(vb), on = z >= 0, cw = mapEl.clientWidth, ch = mapEl.clientHeight, dpr = window.devicePixelRatio || 1;
+    if (on !== satShown) { satShown = on; mapEl.classList.toggle('sat', on); renderLegend(); }
+    var W = Math.round(cw * dpr), H = Math.round(ch * dpr), ctx = satCtx;
+    if (satCanvas.width !== W || satCanvas.height !== H) { satCanvas.width = W; satCanvas.height = H; }
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    if (!on) return;
+    var k = cw / vb.w * dpr;
+    satRange(vb, z).forEach(function (t) {
+      var x = t[1], y = t[2], lonA = t2lon(x, z), latA = t2lat(y, z);
+      var p = cur.P(lonA, latA), q = cur.P(t2lon(x + 1, z), latA), r = cur.P(lonA, t2lat(y + 1, z));
+      ctx.setTransform((q[0] - p[0]) / 256 * k, (q[1] - p[1]) / 256 * k, (r[0] - p[0]) / 256 * k, (r[1] - p[1]) / 256 * k, (p[0] - vb.x) * k, (p[1] - vb.y) * k);
+      satPaint(ctx, z, x, y);
+    });
+  }
+  // a tile; while it loads, the part of a coarser one that covers it, or the finer ones that do
+  function satPaint(ctx, z, x, y) {
+    var T = satTiles.get(z + '/' + x + '/' + y);
+    if (T && T.ok) { ctx.drawImage(T.img, -0.5, -0.5, 257, 257); return; }
+    for (var j = 1; j <= 6 && z - j >= 0; j++) {
+      var A = satTiles.get((z - j) + '/' + (x >> j) + '/' + (y >> j));
+      if (A && A.ok) {
+        var s = 256 / (1 << j);
+        ctx.drawImage(A.img, (x - ((x >> j) << j)) * s, (y - ((y >> j) << j)) * s, s, s, -0.5, -0.5, 257, 257);
+        return;
+      }
+    }
+    for (var i = 0; i < 4; i++) {
+      var C = satTiles.get((z + 1) + '/' + (2 * x + (i & 1)) + '/' + (2 * y + (i >> 1)));
+      if (C && C.ok) ctx.drawImage(C.img, (i & 1) * 128 - 0.25, (i >> 1) * 128 - 0.25, 128.5, 128.5);
+    }
+  }
 
   // ---------- chrome, language ----------
   function renderChrome() {
@@ -1595,6 +1763,11 @@ footer p { max-width: 52em; }
   });
   $('mapBack').addEventListener('click', zoomOut);
   $('zoomIn').addEventListener('click', function () { zoomBy(2, null, null, true); });
+  $('satBtn').addEventListener('click', function () {
+    satOn = !satOn;
+    try { localStorage.setItem('terroir.sat', satOn ? '1' : '0'); } catch (e) {}
+    satRequest(vb); satDraw(); renderMapChrome();
+  });
   $('zoomOut').addEventListener('click', function () { zoomBy(0.5, null, null, true); });
   // a mouse or pen drags the map; on a touch screen one finger scrolls the page and two move the map
   mapEl.addEventListener('pointerdown', function (e) {
@@ -1678,12 +1851,12 @@ footer p { max-width: 52em; }
     e.preventDefault();
   });
   // the appellations: hover with a mouse, tap on a touch screen
-  svg.addEventListener('pointermove', function (e) {
+  apSvg.addEventListener('pointermove', function (e) {
     if (e.pointerType === 'touch' || (drag && drag.moved) || pinch) return;
     apHover(e.target.closest ? e.target.closest('.g-ap path') : null, e);
   });
-  svg.addEventListener('pointerleave', function () { apHover(null); });
-  svg.addEventListener('click', function (e) { if (lastPointer === 'touch') apHover(e.target.closest ? e.target.closest('.g-ap path') : null, e); });
+  apSvg.addEventListener('pointerleave', function () { apHover(null); });
+  apSvg.addEventListener('click', function (e) { if (lastPointer === 'touch') apHover(e.target.closest ? e.target.closest('.g-ap path') : null, e); });
   // arrow keys move between the style tabs
   $('styleTabs').addEventListener('keydown', function (e) {
     var ids = STYLE_ORDER, i = ids.indexOf(state.style);
