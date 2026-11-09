@@ -395,6 +395,7 @@ button.mk.area:hover .lb { box-shadow: 0 0 0 1px var(--fg); }
   position: absolute; right: 10px; top: 90px; z-index: 6; appearance: none; padding: 5px 10px; border-radius: 999px; cursor: pointer;
   border: 1px solid var(--rule-strong); background: var(--surface); color: var(--fg); font-size: 12.5px; font-weight: 500; line-height: 1.3;
 }
+#vinBtn { top: 124px; }
 .mapsat[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
 .mapsat:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .mapattr {
@@ -439,6 +440,8 @@ button.mk.area:hover .lb { box-shadow: 0 0 0 1px var(--fg); }
 .maplegend .lg-h { font: 500 10.5px/1.4 var(--font-mono); color: var(--muted); letter-spacing: 0.04em; }
 .maplegend .sw { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
 .maplegend .sw.vine { background: linear-gradient(var(--vine), var(--vine)), var(--ap3); }
+.maplegend .sw.vin { background: linear-gradient(135deg, #E2001A 0 25%, #FCC400 25% 50%, #009EE0 50% 75%, #75B433 75%); }
+.map.vin .g-ap .vine.cov { pointer-events: none; }   /* under Vinous's maps: the pointer finds the AVA */
 .maplegend .sw.wy { width: 7px; height: 7px; margin: 0 8px 0 2px; border-radius: 50%; vertical-align: 1px; background: var(--wy); box-shadow: 0 0 0 1.5px var(--halo); }
 .maplegend .lg-src { font-size: 10.5px; line-height: 1.35; color: var(--muted); max-width: 17em; }
 .maplegend a { pointer-events: auto; color: inherit; }
@@ -448,10 +451,14 @@ button.mk.area:hover .lb { box-shadow: 0 0 0 1px var(--fg); }
   pointer-events: none; opacity: 0; transition: opacity 0.2s ease;
 }
 .maphint.on { opacity: 0.92; }
-@media (max-width: 640px) {   /* a phone's map is square: the legend runs along its foot */
+.mapcredit { display: none; }
+@media (max-width: 640px) {   /* a phone's map is square: the legend runs along its foot, its sources just under the map */
   .maplegend { left: 8px; bottom: 8px; display: flex; flex-wrap: wrap; gap: 2px 10px; padding: 5px 8px; font-size: 11px; line-height: 15px; max-width: calc(100% - 16px); }
-  .maplegend .lg-h, .maplegend .lg-src { flex-basis: 100%; max-width: none; }
+  .maplegend .lg-h { flex-basis: 100%; max-width: none; }
+  .maplegend .lg-src { display: none; }
   .maplegend .sw { width: 9px; height: 9px; margin-right: 4px; vertical-align: 0; }
+  .mapcredit:not([hidden]) { display: block; margin: 6px 2px 0; font-size: 11px; line-height: 1.45; color: var(--muted); }
+  .mapcredit a { color: inherit; }
 }
 .mapnote { margin-top: 10px; font-size: 13px; color: var(--muted); max-width: 62em; }
 .rlist { margin-top: 18px; }
@@ -563,16 +570,19 @@ footer p { max-width: 52em; }
           <svg class="geo" id="mapSvg" aria-hidden="true" preserveAspectRatio="xMidYMid meet"></svg>
           <canvas class="sat" id="mapSat" aria-hidden="true"></canvas>
           <svg class="geo" id="apSvg" aria-hidden="true" preserveAspectRatio="xMidYMid meet"></svg>
+          <canvas class="sat" id="mapVin" aria-hidden="true"></canvas>
           <div class="marks" id="apMarks" aria-hidden="true"></div>
           <div class="marks" id="mapMarks"></div>
           <div class="mapbar" id="mapBar" hidden><button type="button" id="mapBack"></button></div>
           <div class="mapzoom"><button type="button" id="zoomIn">+</button><button type="button" id="zoomOut">−</button></div>
           <button type="button" class="mapsat" id="satBtn" hidden></button>
+          <button type="button" class="mapsat" id="vinBtn" hidden></button>
           <div class="maplegend" id="mapLegend" hidden></div>
           <p class="mapattr" id="satAttr" hidden></p>
           <p class="maphint" id="mapHint" aria-hidden="true"></p>
           <p class="mapmsg" id="mapMsg" hidden></p>
         </div>
+        <p class="mapcredit" id="mapCredit" hidden></p>
       </div>
       <p class="mapnote" id="mapNote"></p>
       <div class="rlist" id="rList"></div>
@@ -669,7 +679,7 @@ footer p { max-width: 52em; }
       inView: '这一带的产区', areas: '按地区看', restOfEurope: '欧洲其他产区，按国家看',
       hint: '在地图上点一个产区，或从上面的名字里选一个。',
       climate: '气候', grapesF: '主要品种', spotsF: '村庄与子产区', stylesF: '风格',
-      mapNote: '底图：Natural Earth，只画了各方都承认的陆地国界。法国的产区边界来自 INAO（法国国家原产地与质量研究院，Licence Ouverte 开放许可），美国的 AVA 来自 UC Davis 的 AVA Project（CC0）；纳帕谷的葡萄园、道路和河流来自 OpenStreetMap（ODbL），酒庄来自 Wikidata（CC0）和 Overture Maps（CDLA Permissive 2.0）；放大后的卫星影像来自 Esri（Maxar、Earthstar Geographics）。用 + 和 −、双指，或按住 Ctrl（Mac 上是 ⌘）滚动来缩放，拖动来移动。',
+      mapNote: '底图：Natural Earth，只画了各方都承认的陆地国界。法国的产区边界来自 INAO（法国国家原产地与质量研究院，Licence Ouverte 开放许可），美国的 AVA 来自 UC Davis 的 AVA Project（CC0）；纳帕谷的葡萄园、道路和河流来自 OpenStreetMap（ODbL），酒庄来自 Wikidata（CC0）和 Overture Maps（CDLA Permissive 2.0）；放大后的卫星影像来自 Esri（Maxar、Earthstar Geographics）。纳帕谷的葡萄园图来自 Vinous 的《The Vineyards of Napa Valley》（Antonio Galloni 与 Alessandro Masnaghetti 著，© 2016–2023 Vinous Media LLC），经授权使用，仅供个人学习交流，禁止任何形式的商业用途。用 + 和 −、双指，或按住 Ctrl（Mac 上是 ⌘）滚动来缩放，拖动来移动。',
       apTiers: { 1: '大区级', 2: '地区级', 3: '村庄级', 4: '一级园', 5: '特级园' },
       apTiersUS: { 2: 'AVA', 3: '其中的子产区' },
       apLegend: '法定产区等级', apLegendUS: '美国葡萄种植区 AVA', apLoading: '正在加载产区边界…',
@@ -681,9 +691,13 @@ footer p { max-width: 52em; }
       hintTouch: '用两根手指移动和缩放地图',
       zoomIn: '放大', zoomOut: '缩小', mapLabel: '产区地图',
       satellite: '卫星图', satTitle: '卫星影像：放大后显示', satCredit: '卫星影像 © Esri、Maxar、Earthstar Geographics',
+      vinous: 'Vinous 葡萄园图', vinTitle: 'Vinous《The Vineyards of Napa Valley》里的葡萄园图，经授权使用，仅供个人学习交流',
+      vinLegend: 'Vinous 葡萄园图',
+      vinCredit: '葡萄园图 © 2016–2023 <a href="https://vinous.com/" target="_blank" rel="noopener">Vinous Media LLC</a>《The Vineyards of Napa Valley》，经授权使用；仅供个人学习交流，禁止任何形式的商业用途',
+      vinAttr: '葡萄园图 © 2016–2023 Vinous Media LLC，经授权使用；仅供个人学习交流，禁止任何形式的商业用途',
       loading: '地图加载中…', failed: '地图没能加载，请检查网络后刷新。',
       count2: function (n) { return n + ' 个'; },
-      footNote: '风土是我做的一份葡萄酒入门。地图底图来自 Natural Earth（公有领域），村镇位置核对自 OpenStreetMap；法国的产区边界来自 INAO 的《葡萄酒 AOC 地块划定》（Licence Ouverte），美国的 AVA 来自 UC Davis AVA Project（CC0），纳帕谷的葡萄园、道路和河流来自 OpenStreetMap 贡献者（ODbL），酒庄来自 Wikidata（CC0）和 Overture Maps Foundation（CDLA Permissive 2.0）；放大后的卫星影像来自 Esri World Imagery（Maxar、Earthstar Geographics）。葡萄酒每个年份都在变，这里写的是大致、典型的样子。',
+      footNote: '风土是我做的一份葡萄酒入门。地图底图来自 Natural Earth（公有领域），村镇位置核对自 OpenStreetMap；法国的产区边界来自 INAO 的《葡萄酒 AOC 地块划定》（Licence Ouverte），美国的 AVA 来自 UC Davis AVA Project（CC0），纳帕谷的葡萄园、道路和河流来自 OpenStreetMap 贡献者（ODbL），酒庄来自 Wikidata（CC0）和 Overture Maps Foundation（CDLA Permissive 2.0）；放大后的卫星影像来自 Esri World Imagery（Maxar、Earthstar Geographics）。纳帕谷的葡萄园图来自 Vinous Media LLC 的《The Vineyards of Napa Valley》（Antonio Galloni 与 Alessandro Masnaghetti 著，© 2016–2023），经授权使用，仅供个人学习交流，禁止任何形式的商业用途。葡萄酒每个年份都在变，这里写的是大致、典型的样子。',
       theme: '深色',
       sep: '、', colon: '：'
     },
@@ -734,7 +748,7 @@ footer p { max-width: 52em; }
       inView: 'Regions here', areas: 'By area', restOfEurope: 'The rest of Europe, by country',
       hint: 'Pick a region on the map, or one of the names above.',
       climate: 'Climate', grapesF: 'Main grapes', spotsF: 'Villages and sub-regions', stylesF: 'Styles',
-      mapNote: 'Base map: Natural Earth; only land borders that every side recognises are drawn. French appellation boundaries are from INAO, France’s institute of origin and quality (Licence Ouverte); the American Viticultural Areas from the UC Davis AVA Project (CC0); Napa’s vineyards, roads and streams from OpenStreetMap (ODbL), its wineries from Wikidata (CC0) and Overture Maps (CDLA Permissive 2.0); the satellite imagery close up is Esri’s (Maxar, Earthstar Geographics). Zoom with + and −, two fingers, or Ctrl (⌘ on a Mac) and scroll; drag to move.',
+      mapNote: 'Base map: Natural Earth; only land borders that every side recognises are drawn. French appellation boundaries are from INAO, France’s institute of origin and quality (Licence Ouverte); the American Viticultural Areas from the UC Davis AVA Project (CC0); Napa’s vineyards, roads and streams from OpenStreetMap (ODbL), its wineries from Wikidata (CC0) and Overture Maps (CDLA Permissive 2.0); the satellite imagery close up is Esri’s (Maxar, Earthstar Geographics). The vineyard maps of Napa Valley are Vinous’s, from The Vineyards of Napa Valley by Antonio Galloni with Alessandro Masnaghetti (© 2016–2023 Vinous Media LLC), used with permission, for personal study and exchange only; no commercial use of any kind. Zoom with + and −, two fingers, or Ctrl (⌘ on a Mac) and scroll; drag to move.',
       apTiers: { 1: 'Regional', 2: 'Sub-regional', 3: 'Village', 4: 'Premier cru', 5: 'Grand cru' },
       apTiersUS: { 2: 'AVA', 3: 'AVA within it' },
       apLegend: 'Appellation level', apLegendUS: 'American Viticultural Areas', apLoading: 'Loading the appellations…',
@@ -746,9 +760,13 @@ footer p { max-width: 52em; }
       hintTouch: 'Use two fingers to move and zoom the map',
       zoomIn: 'Zoom in', zoomOut: 'Zoom out', mapLabel: 'Map of the regions',
       satellite: 'Satellite', satTitle: 'Satellite imagery, shown once zoomed in', satCredit: 'Imagery © Esri, Maxar, Earthstar Geographics',
+      vinous: 'Vinous maps', vinTitle: 'The vineyard maps of Vinous’s The Vineyards of Napa Valley, used with permission, for personal study and exchange only',
+      vinLegend: 'Vinous’s vineyard maps',
+      vinCredit: 'Vineyard maps © 2016–2023 <a href="https://vinous.com/" target="_blank" rel="noopener">Vinous Media LLC</a>, The Vineyards of Napa Valley, used with permission; for personal study and exchange only, no commercial use of any kind',
+      vinAttr: 'Vineyard maps © 2016–2023 Vinous Media LLC, used with permission; for personal study and exchange only, no commercial use of any kind',
       loading: 'Loading the map…', failed: 'The map did not load. Check the connection and reload.',
       count2: function (n) { return String(n); },
-      footNote: 'Terroir is a wine primer I made. The base map is from Natural Earth (public domain) and the places on it were checked against OpenStreetMap; the French appellation boundaries are INAO’s parcel-by-parcel delimitation of the wine AOCs (Licence Ouverte), and the American Viticultural Areas are from the UC Davis AVA Project (CC0); Napa’s vineyards, roads and streams are © OpenStreetMap contributors (ODbL), and its wineries are from Wikidata (CC0) and the Overture Maps Foundation (CDLA Permissive 2.0); the satellite imagery close up is Esri World Imagery (Maxar, Earthstar Geographics). Wine changes with every vintage; this is the typical picture.',
+      footNote: 'Terroir is a wine primer I made. The base map is from Natural Earth (public domain) and the places on it were checked against OpenStreetMap; the French appellation boundaries are INAO’s parcel-by-parcel delimitation of the wine AOCs (Licence Ouverte), and the American Viticultural Areas are from the UC Davis AVA Project (CC0); Napa’s vineyards, roads and streams are © OpenStreetMap contributors (ODbL), and its wineries are from Wikidata (CC0) and the Overture Maps Foundation (CDLA Permissive 2.0); the satellite imagery close up is Esri World Imagery (Maxar, Earthstar Geographics). The vineyard maps of Napa Valley are from Vinous Media LLC’s The Vineyards of Napa Valley by Antonio Galloni with Alessandro Masnaghetti (© 2016–2023), used with permission, for personal study and exchange only; no commercial use of any kind. Wine changes with every vintage; this is the typical picture.',
       theme: 'Dark',
       sep: ', ', colon: ': '
     }
@@ -1270,6 +1288,9 @@ footer p { max-width: 52em; }
     var sb = $('satBtn');
     sb.hidden = !cur || !cur.U;
     sb.textContent = l.satellite; sb.title = l.satTitle; sb.setAttribute('aria-pressed', satOn ? 'true' : 'false');
+    var vn = $('vinBtn');
+    vn.hidden = !VIN.near;
+    vn.textContent = l.vinous; vn.title = l.vinTitle; vn.setAttribute('aria-pressed', VIN.on ? 'true' : 'false');
     renderZoomButtons();
   }
 
@@ -1414,6 +1435,7 @@ footer p { max-width: 52em; }
         g.innerHTML = h;
         g.style.display = 'none';
         A.data = d; A.g = g; A.multi = regional > 1;
+        vinMark(A);
       })
       .catch(function () { A.failed = Date.now(); })   // tried again a little later
       .then(function () { AP.pending--; if (cur && !A.failed) { apUpdate(); placeAll(true); } renderLegend(); });
@@ -1460,13 +1482,14 @@ footer p { max-width: 52em; }
       var A = AP.areas[id], k = A.data.unit * s, perHa = k * k * 10000;   // px² in a hectare
       if (A.detail) {   // a vineyard map: the vineyards that have names, and the wineries once close enough
         A.data.vines.forEach(function (v, i) {
-          if (!v[3]) return;
+          if (!v[3] || (VIN.shown && v.cov)) return;
           var x = (v[4] - vb.x) * s, y = (v[5] - vb.y) * s;
           if (x < 0 || y < 0 || x > cw || y > ch) return;
           var w = apWidth(v[3], 6);
           if (v[1] * perHa >= w * 40) label(id + ':v' + i, 'ap', 6, v[4], v[5], v[3], w, 1.35);
         });
         if (mpp < WINERY_MPP) A.data.wineries.forEach(function (wy, i) {
+          if (VIN.shown && wy.cov) return;
           var x = (wy[2] - vb.x) * s, y = (wy[3] - vb.y) * s;
           if (x > -10 && y > -10 && x < cw + 10 && y < ch + 10) label(id + ':w' + i, 'wy', 0, wy[2], wy[3], wy[0], null, 1.6);
         });
@@ -1495,11 +1518,17 @@ footer p { max-width: 52em; }
   }
   function renderLegend() {
     legendBody();
-    // the imagery's credit: in the legend when there is one, else on its own in the corner
-    var l = L(), el = $('mapLegend'), at = $('satAttr');
-    if (satShown && !el.hidden) el.insertAdjacentHTML('beforeend', '<span class="lg-src">' + esc(l.satCredit) + '</span>');
-    at.textContent = l.satCredit;
-    at.hidden = !(satShown && el.hidden);
+    // Vinous's maps and the imagery, with their credits: in the legend when there is one, else in the corner
+    var l = L(), el = $('mapLegend'), at = $('satAttr'), vin = !!(VIN && VIN.shown), h = '';
+    if (vin) h += '<span class="lg-src">' + l.vinCredit + '</span>';
+    if (satShown) h += '<span class="lg-src">' + esc(l.satCredit) + '</span>';
+    if (!el.hidden) el.insertAdjacentHTML('beforeend', h);
+    at.textContent = (vin ? l.vinAttr : '') + (vin && satShown ? ' · ' : '') + (satShown ? l.satCredit : '');
+    at.hidden = !((vin || satShown) && el.hidden);
+    // a phone shows the legend's sources under the map instead, where they cover none of it
+    var src = Array.prototype.map.call(el.querySelectorAll('.lg-src'), function (x) { return x.innerHTML; }), mc = $('mapCredit');
+    mc.innerHTML = src.join(' · ');
+    mc.hidden = el.hidden || !src.length;
   }
   function legendBody() {
     var el = $('mapLegend'), l = L(), ids = AP.shown ? AP.shown.split(',') : [];
@@ -1513,7 +1542,9 @@ footer p { max-width: 52em; }
     var names = us ? l.apTiersUS : l.apTiers, h = '<span class="lg-h">' + esc(us ? l.apLegendUS : l.apLegend) + '</span>';
     (us ? [2, 3] : [5, 4, 3, 2, 1]).forEach(function (t) { if (tiers[t]) h += '<span><i class="sw t' + t + '"></i>' + esc(names[t]) + '</span>'; });
     el.classList.toggle('us', us);
-    if (detail) h += '<span><i class="sw vine"></i>' + esc(l.vineyard) + '</span><span><i class="sw wy"></i>' + esc(l.winery) + '</span><span class="lg-src">' + l.detailCredit + '</span>';
+    if (detail) h += '<span><i class="sw vine"></i>' + esc(l.vineyard) + '</span><span><i class="sw wy"></i>' + esc(l.winery) + '</span>';
+    if (VIN && VIN.shown) h += '<span><i class="sw vin"></i>' + esc(l.vinLegend) + '</span>';
+    if (detail) h += '<span class="lg-src">' + l.detailCredit + '</span>';
     el.innerHTML = h; el.hidden = false;
   }
   function fmtHa(ha) {
@@ -1622,11 +1653,15 @@ footer p { max-width: 52em; }
   try { satOn = localStorage.getItem('terroir.sat') !== '0'; } catch (e) {}
   function t2lon(x, z) { return x / Math.pow(2, z) * 360 - 180; }
   function t2lat(y, z) { return Math.atan(Math.sinh(Math.PI * (1 - 2 * y / Math.pow(2, z)))) / R; }
-  // the tile zoom whose pixels match the screen's for box b, or -1 for no imagery there
+  // the tile zoom whose pixels match the screen's for box b, unrounded
+  function tileZoom(b) {
+    var c = cur.U(b.x + b.w / 2, b.y + b.h / 2), mpp = b.w / (mapEl.clientWidth || 1) * 6371000 / cur.proj.scale;
+    return Math.log(156543.03 * Math.cos(c[1] * R) * Math.min(window.devicePixelRatio || 1, 2) / mpp) / Math.LN2;
+  }
+  // the imagery's zoom for box b, or -1 for no imagery there
   function satZoom(b) {
     if (!satOn || !cur || !cur.U || !b) return -1;
-    var c = cur.U(b.x + b.w / 2, b.y + b.h / 2), mpp = b.w / (mapEl.clientWidth || 1) * 6371000 / cur.proj.scale;
-    var z = Math.round(Math.log(156543.03 * Math.cos(c[1] * R) * Math.min(window.devicePixelRatio || 1, 2) / mpp) / Math.LN2);
+    var z = Math.round(tileZoom(b));
     return z < SAT_MIN_Z ? -1 : Math.min(z, SAT_MAX_Z);
   }
   function satRange(b, z) {   // [z, x, y] of the tiles that cover box b
@@ -1652,6 +1687,7 @@ footer p { max-width: 52em; }
   }
   // fetch what box b needs, and forget the tiles least lately wanted
   function satRequest(b) {
+    vinRequest(b);
     var z = satZoom(b);
     if (z < 0) return;
     satRange(b, z).forEach(satFetch);
@@ -1669,14 +1705,14 @@ footer p { max-width: 52em; }
     if (satCanvas.width !== W || satCanvas.height !== H) { satCanvas.width = W; satCanvas.height = H; }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, W, H);
-    if (!on) return;
-    var k = cw / vb.w * dpr;
-    satRange(vb, z).forEach(function (t) {
-      var x = t[1], y = t[2], lonA = t2lon(x, z), latA = t2lat(y, z);
-      var p = cur.P(lonA, latA), q = cur.P(t2lon(x + 1, z), latA), r = cur.P(lonA, t2lat(y + 1, z));
-      ctx.setTransform((q[0] - p[0]) / 256 * k, (q[1] - p[1]) / 256 * k, (r[0] - p[0]) / 256 * k, (r[1] - p[1]) / 256 * k, (p[0] - vb.x) * k, (p[1] - vb.y) * k);
-      satPaint(ctx, z, x, y);
-    });
+    if (on) satRange(vb, z).forEach(function (t) { tileTransform(ctx, t, cw / vb.w * dpr); satPaint(ctx, z, t[1], t[2]); });
+    vinDraw(cw, ch, dpr);
+  }
+  // a tile's pixels onto the view: the affine map its corners take into it, at k device pixels a unit
+  function tileTransform(ctx, t, k) {
+    var z = t[0], x = t[1], y = t[2], lonA = t2lon(x, z), latA = t2lat(y, z);
+    var p = cur.P(lonA, latA), q = cur.P(t2lon(x + 1, z), latA), r = cur.P(lonA, t2lat(y + 1, z));
+    ctx.setTransform((q[0] - p[0]) / 256 * k, (q[1] - p[1]) / 256 * k, (r[0] - p[0]) / 256 * k, (r[1] - p[1]) / 256 * k, (p[0] - vb.x) * k, (p[1] - vb.y) * k);
   }
   // a tile; while it loads, the part of a coarser one that covers it, or the finer ones that do
   function satPaint(ctx, z, x, y) {
@@ -1692,6 +1728,120 @@ footer p { max-width: 52em; }
     }
     for (var i = 0; i < 4; i++) {
       var C = satTiles.get((z + 1) + '/' + (2 * x + (i & 1)) + '/' + (2 * y + (i >> 1)));
+      if (C && C.ok) ctx.drawImage(C.img, (i & 1) * 128 - 0.25, (i >> 1) * 128 - 0.25, 128.5, 128.5);
+    }
+  }
+
+  // ---------- Vinous's maps of Napa's vineyards ----------
+  // The Vineyards of Napa Valley, by Antonio Galloni with Alessandro Masnaghetti, © 2016–2023 Vinous
+  // Media LLC, used with permission, for personal study and exchange only; no commercial use of any
+  // kind. tools/build-vinous.py lays the eight maps on the ground as Web Mercator tiles with alpha,
+  // drawn as the imagery is, on a canvas over the appellations (their tints, and the open data's
+  // vineyards beneath, would muddy the maps) and under the names. map/vinous/index.json lists the
+  // tiles, and outlines what they cover: there the open data's vineyard and winery names give way.
+  var VIN_URL = 'map/vinous/', VIN_VIEW = 'california', VIN_MPP = 160, VIN_CACHE = 300;
+  var VIN_BOX = [438.3, 88.5, 462.1, 123.4];   // index.json's box, to know before it comes when it is wanted
+  var vinCanvas = $('mapVin'), vinCtx = vinCanvas.getContext('2d');
+  var VIN = { on: true, req: null, failed: 0, index: null, has: null, cover: null, tiles: new Map(), use: 0, shown: false, near: false };
+  try { VIN.on = localStorage.getItem('terroir.vinous') !== '0'; } catch (e) {}
+  // Napa, close enough for its vineyards
+  function vinNear(b) {
+    if (!cur || cur.id !== VIN_VIEW || !cur.U || !b) return false;
+    if (b.x > VIN_BOX[2] || b.x + b.w < VIN_BOX[0] || b.y > VIN_BOX[3] || b.y + b.h < VIN_BOX[1]) return false;
+    return b.w / (mapEl.clientWidth || 1) * 6371000 / cur.proj.scale <= VIN_MPP;
+  }
+  // the zoom of the tiles for box b, a little finer than the screen's so that the names stay sharp,
+  // or -1 for none
+  function vinZoom(b) {
+    if (!VIN.on || !VIN.index || !vinNear(b)) return -1;
+    return Math.max(VIN.index.zoom[0], Math.min(Math.ceil(tileZoom(b) - 0.3), VIN.index.zoom[1]));
+  }
+  function vinLoad() {
+    VIN.req = fetch(VIN_URL + 'index.json').then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function (j) {
+        VIN.has = {};
+        Object.keys(j.tiles).forEach(function (z) {
+          var has = VIN.has[z] = {};
+          j.tiles[z].forEach(function (row) { for (var x = row[1]; x <= row[2]; x++) has[x + '/' + row[0]] = 1; });
+        });
+        try { VIN.cover = new Path2D(j.cover); } catch (e) { VIN.cover = null; }
+        VIN.index = j;
+        Object.keys(AP.areas).forEach(function (id) { vinMark(AP.areas[id]); });
+        if (cur && vb) { vinRequest(vb); satSoon(); }
+      })
+      .catch(function () { VIN.req = null; VIN.failed = Date.now(); });   // tried again a little later
+  }
+  function vinCovers(x, y) { return !!VIN.cover && measure.isPointInPath(VIN.cover, x, y, 'evenodd'); }
+  // which of a vineyard map's vineyards and wineries lie under Vinous's maps
+  function vinMark(A) {
+    if (!VIN.cover || !A || !A.detail || !A.data || A.vinMarked) return;
+    A.vinMarked = true;
+    var d = A.data, els = A.g.querySelectorAll('.vine');
+    d.vines.forEach(function (v, i) {
+      var x = v[4], y = v[5];
+      if (x == null) {   // no name, so no label point: where its outline starts
+        var m = /^M\s*(-?[\d.]+)[\s,]*(-?[\d.]+)/.exec(v[2]);
+        if (!m) return;
+        x = d.origin[0] + m[1] * d.unit; y = d.origin[1] + m[2] * d.unit;
+      }
+      v.cov = vinCovers(x, y);
+      if (v.cov && els[i]) els[i].classList.add('cov');
+    });
+    d.wineries.forEach(function (w) { w.cov = vinCovers(w[2], w[3]); });
+  }
+  function vinFetch(t) {
+    var k = t[0] + '/' + t[1] + '/' + t[2], T = VIN.tiles.get(k);
+    if (T) { T.used = ++VIN.use; return; }
+    T = { img: new Image(), ok: false, used: ++VIN.use };
+    T.img.decoding = 'async';
+    T.img.onload = function () { T.ok = true; satSoon(); };
+    T.img.src = VIN_URL + k + '.webp';
+    VIN.tiles.set(k, T);
+  }
+  function vinRequest(b) {
+    if (!VIN.on || !vinNear(b)) return;
+    if (!VIN.index) { if (!VIN.req && Date.now() - VIN.failed > 15000) vinLoad(); return; }
+    var z = vinZoom(b), has = VIN.has[z];
+    satRange(b, z).forEach(function (t) { if (has[t[1] + '/' + t[2]]) vinFetch(t); });
+    if (VIN.tiles.size > VIN_CACHE) {
+      var all = Array.from(VIN.tiles.entries()).sort(function (a, c) { return a[1].used - c[1].used; });
+      for (var i = 0; i < all.length - VIN_CACHE; i++) VIN.tiles.delete(all[i][0]);
+    }
+  }
+  function vinDraw(cw, ch, dpr) {
+    var near = vinNear(vb), z = vinZoom(vb), on = z >= 0, ctx = vinCtx;
+    var W = Math.round(cw * dpr), H = Math.round(ch * dpr);
+    if (vinCanvas.width !== W || vinCanvas.height !== H) { vinCanvas.width = W; vinCanvas.height = H; }
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    if (near !== VIN.near) { VIN.near = near; renderMapChrome(); }
+    if (on !== VIN.shown) {   // the names under the maps give way, or come back; the credit with them
+      VIN.shown = on; mapEl.classList.toggle('vin', on); renderLegend();
+      if (AP.shown) { apLabels(); placeAll(true); }
+    }
+    if (!on) return;
+    var k = cw / vb.w * dpr, has = VIN.has[z];
+    ctx.imageSmoothingQuality = 'high';
+    satRange(vb, z).forEach(function (t) {
+      if (!has[t[1] + '/' + t[2]]) return;
+      tileTransform(ctx, t, k);
+      vinPaint(ctx, z, t[1], t[2]);
+    });
+  }
+  // a tile; while it loads, the part of a coarser one that covers it, or the finer ones that do
+  function vinPaint(ctx, z, x, y) {
+    var T = VIN.tiles.get(z + '/' + x + '/' + y);
+    if (T && T.ok) { ctx.drawImage(T.img, -0.5, -0.5, 257, 257); return; }
+    for (var j = 1; z - j >= VIN.index.zoom[0]; j++) {
+      var A = VIN.tiles.get((z - j) + '/' + (x >> j) + '/' + (y >> j));
+      if (A && A.ok) {
+        var s = 256 / (1 << j);
+        ctx.drawImage(A.img, (x - ((x >> j) << j)) * s, (y - ((y >> j) << j)) * s, s, s, -0.5, -0.5, 257, 257);
+        return;
+      }
+    }
+    for (var i = 0; i < 4; i++) {
+      var C = VIN.tiles.get((z + 1) + '/' + (2 * x + (i & 1)) + '/' + (2 * y + (i >> 1)));
       if (C && C.ok) ctx.drawImage(C.img, (i & 1) * 128 - 0.25, (i >> 1) * 128 - 0.25, 128.5, 128.5);
     }
   }
@@ -1767,6 +1917,11 @@ footer p { max-width: 52em; }
     satOn = !satOn;
     try { localStorage.setItem('terroir.sat', satOn ? '1' : '0'); } catch (e) {}
     satRequest(vb); satDraw(); renderMapChrome();
+  });
+  $('vinBtn').addEventListener('click', function () {
+    VIN.on = !VIN.on;
+    try { localStorage.setItem('terroir.vinous', VIN.on ? '1' : '0'); } catch (e) {}
+    vinRequest(vb); satDraw(); renderMapChrome();
   });
   $('zoomOut').addEventListener('click', function () { zoomBy(0.5, null, null, true); });
   // a mouse or pen drags the map; on a touch screen one finger scrolls the page and two move the map
