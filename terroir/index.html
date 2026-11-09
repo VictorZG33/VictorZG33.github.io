@@ -460,6 +460,11 @@ button.mk.area:hover .lb { box-shadow: 0 0 0 1px var(--fg); }
 .map .g-ap .vp.cx { fill: var(--vine); fill-opacity: 0.5; stroke: var(--land-edge); stroke-dasharray: 3 2; }
 .map.sat .g-ap .vp.cx { fill: #FFF; fill-opacity: 0.08; stroke: rgba(255, 255, 255, 0.8); }
 .map.vin .g-ap .vine.cov { display: none; }
+/* on the flat map, with no photograph to see through to, the AVAs' tints fade under the vineyards,
+   their outlines staying, and the vineyards' own colours come up */
+.map.vin:not(.sat) .g-ap .ap-us .t2, .map.vin:not(.sat) .g-ap .ap-us .t3 { fill-opacity: 0.2; }
+.map.vin:not(.sat) .g-ap .vp { fill-opacity: 0.5; }
+.map.vin:not(.sat) .maplegend.us .sw.t2, .map.vin:not(.sat) .maplegend.us .sw.t3 { opacity: 0.35; }
 .maplegend .sw.wy { width: 7px; height: 7px; margin: 0 8px 0 2px; border-radius: 50%; vertical-align: 1px; background: var(--wy); box-shadow: 0 0 0 1.5px var(--halo); }
 .maplegend .lg-src { font-size: 10.5px; line-height: 1.35; color: var(--muted); max-width: 17em; }
 .maplegend a { pointer-events: auto; color: inherit; }

@@ -77,11 +77,11 @@ In the script, `fix` places Robert Mondavi, for which neither source gives the e
 Over Napa, Terroir's map shows the vineyards as Vinous maps them: each parcel's outline and the name it carries, from the eight maps of Vinous's *The Vineyards of Napa Valley*, by Antonio Galloni with Alessandro Masnaghetti. The eight are Howell Mountain, St. Helena & Conn Valley, Rutherford, Pritchard Hill, Oakville, Yountville, Stags Leap and Coombsville, © 2016–2023 Vinous Media LLC. **They are used with Vinous's written permission, for personal study and exchange only; no commercial use of any kind is allowed.** `terroir/map/vinous/vineyards.json` is not open data and nothing in this repository licenses it; `terroir/map/vinous/NOTICE.md` says so in full, and the page credits Vinous with the same terms wherever the vineyards show.
 
 Nothing of the maps' look is kept. The page draws the parcels itself:
-- half clear, over the satellite imagery or the flat map, outlined in their own colour;
+- half clear over the satellite imagery, outlined in their own colour; on the flat map the AVAs' tints fade beneath them;
 - one colour an owner (the name before ' - ', as Vinous writes 'Owner - Vineyard'), from an eight-colour palette checked for colour-blind separation, so that neighbouring owners differ;
 - names on the parcels they were set on, once a parcel is large enough on screen, and in a tooltip with the AVA, the area and the source.
 
-Parcels Vinous draws as vineyards but leaves unnamed are only outlined. Where the maps reach, the open data's vineyards and their names give way. A button on the map, *Vinous vineyards*, hides them; the page keeps the choice in `localStorage` under `terroir.vinous`. There are about 3,900 parcels under about 770 names, 520 kB.
+Parcels Vinous draws as vineyards but leaves unnamed are only outlined. Where the maps reach, the open data's vineyards and their names give way. A button on the map, *Vinous vineyards*, hides them; the page keeps the choice in `localStorage` under `terroir.vinous`. There are about 3,800 parcels under about 840 names, a tenth of them unnamed, 400 kB.
 
 How they were found:
 
