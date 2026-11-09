@@ -36,7 +36,7 @@ rotation and shift, from the map's SVG units to the California view's. Then, for
 Then, where maps overlap, a parcel is kept from the map that shows there: the map of its own AVA
 (the UC Davis boundary) first, Pritchard Hill over all of its own ground, else the map whose AVA is
 nearest. Each owner (the name before ' - ') gets a colour from the page's palette so that
-neighbouring owners differ, and the parcels
+neighbouring owners differ and each colour covers about as much as the others, and the parcels
 are written in the California view's units as relative paths in metres, with the outline of what
 the maps cover, where the page's open-data vineyards give way.
 """
@@ -634,14 +634,16 @@ def owner_of(name):   # Vinous writes 'Owner - Vineyard'
     return name.split(' - ')[0].strip()
 
 
-def palette(groups, adjacent):
-    """A colour for each owner, from COLOURS, so that owners next to each other differ (greedy, the
-    owners with most neighbours first)."""
-    colour = {}
+def palette(groups, adjacent, ground):
+    """A colour for each owner, from COLOURS, so that owners next to each other differ and each colour
+    covers about as much of the map as the others: greedy, the owners with most neighbours first, each
+    taking, of the colours none of its neighbours has, the one with least ground so far."""
+    colour, share = {}, [0.0] * COLOURS
     for g in sorted(groups, key=lambda g: -len(adjacent[g])):
         used = collections.Counter(colour[n] for n in adjacent[g] if n in colour)
-        free = [c for c in range(COLOURS) if c not in used]
-        colour[g] = free[0] if free else min(range(COLOURS), key=lambda c: used[c])
+        free = [c for c in range(COLOURS) if c not in used] or [min(range(COLOURS), key=lambda c: used[c])]
+        colour[g] = min(free, key=lambda c: share[c])
+        share[colour[g]] += ground[g]
     return colour
 
 
@@ -695,7 +697,10 @@ def main():
         for j in tree.query(p['geom'].buffer(40 * UPM)):
             q = parcels[int(j)]['group']
             if q is not None and owner_of(groups[q]) != a: adjacent[a].add(owner_of(groups[q]))
-    colour = palette(sorted(set(owner_of(n) for n in groups.values())), adjacent)
+    ground = collections.Counter()   # each owner's vineyards, in view units squared
+    for p in parcels:
+        if p['group'] is not None: ground[owner_of(groups[p['group']])] += p['geom'].area
+    colour = palette(sorted(set(owner_of(n) for n in groups.values())), adjacent, ground)
     # the AVA each parcel lies in, the smallest that holds it
     whole = gshape(av['Napa Valley']).buffer(0.01)
     napa = [n for n, g in av.items() if n == 'Napa Valley' or gshape(g).buffer(0).within(whole)]
