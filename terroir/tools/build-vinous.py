@@ -27,8 +27,10 @@ rotation and shift, from the map's SVG units to the California view's. Then, for
      Each box's name is read by Tesseract from the box's own glyphs, drawn alone line by line;
      Coombsville's text is live. vinous-names.json corrects what Tesseract misreads.
   3. The parcel under a box, or at the end of its line, is the name's. Vinous gives an owner's
-     parcels one fill, so parcels of that fill within 80 m of it, and of those, are the name's too,
-     each going to the nearest name where two reach it. Parcels in a vineyard pattern that no name
+     parcels one look, so parcels that look the same within 80 m of it, and of those, are the name's
+     too, each going to the nearest name where two reach it. Looking the same is having the same
+     fill, or, for patterns, about the same mean colour as drawn, over the same fill beneath:
+     Coombsville gives each parcel a pattern of its own. Parcels in a vineyard pattern that no name
      reaches are kept, unnamed.
 
 Then, where maps overlap, a parcel is kept from the map that shows there: the map of its own AVA
@@ -523,7 +525,8 @@ def learn(sh, path, pool, fixes={}):
         thick = g.area / max(g.length / 2, 1e-9)   # about the width of a long shape
         return g.area * m * m > 150 and thick * m > 8 and g.length / 2 / thick < 60   # not a line
     cands = [s for s in shapes if candidate(s)]
-    # the same parcel drawn twice, a fill and a pattern over it: the one on top
+    # the same parcel drawn twice, a fill and a pattern over it: the one on top, which keeps the
+    # fill beneath as its base
     tree = STRtree([s['geom'] for s in cands])
     drop = set()
     for i, s in enumerate(cands):
@@ -532,7 +535,9 @@ def learn(sh, path, pool, fixes={}):
             if j <= i or j in drop: continue
             inter = s['geom'].intersection(cands[j]['geom']).area
             if inter > 0.8 * min(s['geom'].area, cands[j]['geom'].area) and abs(s['geom'].area - cands[j]['geom'].area) < 0.25 * max(s['geom'].area, cands[j]['geom'].area):
-                drop.add(i if s['k'] < cands[j]['k'] else j)
+                low, top = (i, j) if s['k'] < cands[j]['k'] else (j, i)
+                drop.add(low)
+                if not cands[low]['fill'].startswith('url('): cands[top]['base'] = cands[low]['fill']
     cands = [s for i, s in enumerate(cands) if i not in drop]
     tree = STRtree([s['geom'] for s in cands])
     def topmost_at(p, box=None):
@@ -542,31 +547,52 @@ def learn(sh, path, pool, fixes={}):
             near = [(cands[int(i)]['geom'].intersection(box.buffer(1.0)).area, cands[int(i)]) for i in tree.query(box.buffer(1.0))]
             near = [x for x in near if x[0] > 0]
             if near: return max(near, key=lambda x: (x[0], x[1]['k']))[1]
-        near = [cands[int(i)] for i in tree.query(p.buffer(3.0))]
-        return min(near, key=lambda s: s['geom'].distance(p)) if near else None
+        reach = box.buffer(12) if box is not None else p.buffer(3.0)   # a box set just beside its parcel
+        near = [cands[int(i)] for i in tree.query(reach)]
+        target = box if box is not None else p
+        near = [s for s in near if s['geom'].distance(target) <= (12 if box is not None else 3)]
+        return min(near, key=lambda s: s['geom'].distance(target)) if near else None
     seeds = []
     for bi, bp in enumerate(bpolys):
         if not names.get(bi): continue
         for p in anchors.get(bi) or [bp.centroid]:
             s = topmost_at(p, None if anchors.get(bi) else bp)
             if s is not None: seeds.append((bi, s))
-    # each name's parcels: its own, and the same fill near it, chained, each to the nearest name
+    # how each patterned parcel looks: its mean colour as drawn. Coombsville gives every parcel a
+    # pattern of its own, so an owner's blocks share a look rather than a fill
+    lo = drawing(sh.cfg, 1)
+    covered = Image.new('1', (lo.shape[1], lo.shape[0]), 0)   # the name boxes, half see-through
+    for bp in bpolys: ImageDraw.Draw(covered).polygon(list(bp.exterior.coords), fill=1)
+    covered = np.asarray(covered, bool)
+    for s in cands:
+        if not s['fill'].startswith('url('): continue
+        x0, y0, x1, y1 = (int(math.floor(v)) for v in s['geom'].bounds)
+        x0, y0 = max(x0, 0), max(y0, 0); x1, y1 = min(x1 + 1, lo.shape[1]), min(y1 + 1, lo.shape[0])
+        if x1 <= x0 or y1 <= y0: continue
+        img = Image.new('1', (x1 - x0, y1 - y0), 0)
+        for poly in getattr(s['geom'], 'geoms', [s['geom']]):
+            ImageDraw.Draw(img).polygon([(x - x0, y - y0) for x, y in poly.exterior.coords], fill=1)
+        px = lo[y0:y1, x0:x1][np.asarray(img, bool) & ~covered[y0:y1, x0:x1]].astype(np.float32)
+        px = px[(px.min(axis=1) < 235) & (px.max(axis=1) > 90)]   # not the paper of a box over it, nor text
+        if len(px) >= 4: s['look'] = px.mean(axis=0)
+    def alike(a, b):
+        if a['fill'] == b['fill']: return True
+        if 'look' not in a or 'look' not in b: return False
+        d = np.linalg.norm(a['look'] - b['look'])
+        return d < 30 if a.get('base') and a.get('base') == b.get('base') else d < 12
+    # each name's parcels: its own, and those alike near it, chained, each to the nearest name
     D = REACH / m
     index = {s['k']: i for i, s in enumerate(cands)}
-    by_fill = collections.defaultdict(list)
-    for i, s in enumerate(cands): by_fill[s['fill']].append(i)
-    ftrees = {f: STRtree([cands[i]['geom'] for i in idx]) for f, idx in by_fill.items()}
     owner, dist, seed_of = {}, {}, {}
     for bi, s0 in seeds:
-        group = by_fill[s0['fill']]
         start = index[s0['k']]
         seen = {start: 0.0}; frontier = [start]
         while frontier:
             nxt = []
             for i in frontier:
-                for j in ftrees[s0['fill']].query(cands[i]['geom'].buffer(D)):
-                    j = group[int(j)]
-                    if j not in seen and cands[j]['geom'].distance(cands[i]['geom']) <= D:
+                for j in tree.query(cands[i]['geom'].buffer(D)):
+                    j = int(j)
+                    if j not in seen and alike(cands[j], s0) and cands[j]['geom'].distance(cands[i]['geom']) <= D:
                         seen[j] = cands[j]['geom'].distance(s0['geom']); nxt.append(j)
             frontier = nxt
         for j, d in seen.items():
