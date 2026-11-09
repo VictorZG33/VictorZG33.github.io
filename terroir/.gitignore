@@ -2,3 +2,4 @@
 tools/.cache/
 tools/node_modules/
 tools/.venv/
+tools/__pycache__/

@@ -1,0 +1,140 @@
+{
+ "//": "Where each of Vinous’s Napa maps lies on the ground: view = s R(rotation) svg + (tx, ty), svg in the SVG’s own units (points), view in the units of terroir/map/california.json, a Lambert azimuthal equal-area projection (proj below, as index.html’s projectFor). Found by georef-vinous.py; read by build-vinous.py. Listed in the order they win where their own AVAs overlap.",
+ "series": "The Vineyards of Napa Valley",
+ "authors": "Antonio Galloni with Alessandro Masnaghetti",
+ "publisher": "Vinous Media LLC",
+ "proj": {
+  "type": "laea",
+  "center": [
+   -121.7,
+   36.65
+  ],
+  "scale": 5508.413,
+  "translate": [
+   500,
+   278.713
+  ]
+ },
+ "maps": [
+  {
+   "id": "howell-mountain",
+   "file": "1 Howell Mountain.svg",
+   "title": "Howell Mountain",
+   "edition": "First Edition",
+   "year": 2016,
+   "ava": "Howell Mountain",
+   "printed": 18400,
+   "scale": 0.005723604841,
+   "rotation": 0.0079404448,
+   "tx": 434.05161562,
+   "ty": 88.16261906,
+   "metres_per_unit": 6.6199,
+   "fit": "OpenStreetMap main roads onto the map’s, per 1.5 km cell, similarity by RANSAC: 7 of 7 cells agree, residual median 2.1 m, max 5.9 m"
+  },
+  {
+   "id": "st-helena",
+   "file": "2 St Helena.svg",
+   "title": "St. Helena & Conn Valley",
+   "edition": "First Edition",
+   "year": 2017,
+   "ava": "St. Helena",
+   "printed": 19000,
+   "scale": 0.005876282616,
+   "rotation": 0.0077572208,
+   "tx": 436.01551739,
+   "ty": 94.11043151,
+   "metres_per_unit": 6.7965,
+   "fit": "OpenStreetMap main roads onto the map’s, per 1.5 km cell, similarity by RANSAC: 11 of 16 cells agree, residual median 2.8 m, max 10.9 m"
+  },
+  {
+   "id": "rutherford",
+   "file": "3 Rutherford.svg",
+   "title": "Rutherford",
+   "edition": "First Edition",
+   "year": 2016,
+   "ava": "Rutherford",
+   "printed": 14400,
+   "scale": 0.004554477829,
+   "rotation": 0.0077262964,
+   "tx": 439.8879639,
+   "ty": 100.20476765,
+   "metres_per_unit": 5.2677,
+   "fit": "OpenStreetMap main roads onto the map’s, per 1.5 km cell, similarity by RANSAC: 10 of 12 cells agree, residual median 1.6 m, max 3.7 m"
+  },
+  {
+   "id": "pritchard-hill",
+   "file": "4 Pritchard Hill.svg",
+   "title": "Pritchard Hill",
+   "edition": "First Edition",
+   "year": 2016,
+   "ava": null,
+   "printed": 13100,
+   "scale": 0.004016300288,
+   "rotation": 0.0085774001,
+   "tx": 446.19834743,
+   "ty": 100.07109284,
+   "metres_per_unit": 4.6452,
+   "fit": "OpenStreetMap main roads onto the map’s, per 1.5 km cell, similarity by RANSAC: 4 of 4 cells agree, residual median 3.9 m, max 4.7 m"
+  },
+  {
+   "id": "oakville",
+   "file": "5 Oakville.svg",
+   "title": "Oakville",
+   "edition": "Second Edition",
+   "year": 2020,
+   "ava": "Oakville",
+   "printed": 14400,
+   "scale": 0.004397095352,
+   "rotation": 0.0068711378,
+   "tx": 442.29232993,
+   "ty": 103.66993789,
+   "metres_per_unit": 5.0857,
+   "fit": "OpenStreetMap main roads onto the map’s, per 1.5 km cell, similarity by RANSAC: 5 of 7 cells agree, residual median 2.4 m, max 5.0 m"
+  },
+  {
+   "id": "yountville",
+   "file": "6 Yountville.svg",
+   "title": "Yountville",
+   "edition": "First Edition",
+   "year": 2016,
+   "ava": "Yountville",
+   "printed": 17900,
+   "scale": 0.005424397118,
+   "rotation": 0.0062196765,
+   "tx": 442.46137425,
+   "ty": 106.04391852,
+   "metres_per_unit": 6.2738,
+   "fit": "OpenStreetMap main roads onto the map’s, per 1.5 km cell, similarity by RANSAC: 10 of 13 cells agree, residual median 5.3 m, max 15.5 m"
+  },
+  {
+   "id": "stags-leap",
+   "file": "7 Stags Leap.svg",
+   "title": "Stags Leap",
+   "edition": "First Edition",
+   "year": 2016,
+   "ava": "Stags Leap District",
+   "printed": 11200,
+   "scale": 0.00344858177,
+   "rotation": 0.0062452411,
+   "tx": 448.47315835,
+   "ty": 107.06039308,
+   "metres_per_unit": 3.9886,
+   "fit": "OpenStreetMap main roads onto the map’s, per 1.5 km cell, similarity by RANSAC: 3 of 4 cells agree, residual median 4.1 m, max 7.2 m"
+  },
+  {
+   "id": "coombsville",
+   "file": "Coombsville_AVA.svg",
+   "title": "Coombsville AVA",
+   "edition": "First Edition",
+   "year": 2023,
+   "ava": "Coombsville",
+   "printed": 18000,
+   "scale": 0.005612302212,
+   "rotation": 0.0059341195,
+   "tx": 451.87746435,
+   "ty": 114.90888949,
+   "metres_per_unit": 6.4912,
+   "fit": "its AVA boundary onto the edge of what the map draws, rotation fixed at the meridian convergence (its roads are too faint to place it)"
+  }
+ ]
+}
