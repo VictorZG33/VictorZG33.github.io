@@ -1,0 +1,23 @@
+{
+ "//": "Names Tesseract misreads on Vinous's maps, each checked by eye against the map: <map id>:<box>, the boxes numbered in the SVG's drawing order (build-vinous.py writes what it reads to .cache/vinous/<map id>.json).",
+ "howell-mountain:12": "Piña - Buckeye",
+ "howell-mountain:103": "Cañon Creek",
+ "st-helena:72": "Alejandro Bulgheroni",
+ "st-helena:148": "Young Inglewood - Dos à dos",
+ "st-helena:152": "Cosniac 2606",
+ "st-helena:171": "H & L",
+ "st-helena:257": "Hall - Cook Cobbledick Ranch",
+ "st-helena:264": "Jolie Sapinière",
+ "st-helena:278": "Rogers - Speedway",
+ "rutherford:2": "Beckstoffer - Georges III",
+ "rutherford:31": "Bosché",
+ "rutherford:39": "Piña - Firehouse",
+ "oakville:14": "Rancho Pequeño",
+ "yountville:27": "Herrick II",
+ "yountville:34": "Kapcsándy - State Lane",
+ "yountville:56": "Herrick I",
+ "yountville:64": "Piña - Wolff",
+ "stags-leap:40": "¿Como No?",
+ "coombsville:25": "Firefly",
+ "coombsville:164": "Coombsville Heights"
+}
