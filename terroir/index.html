@@ -50,8 +50,10 @@
   /* Napa's vineyards over its AVAs: a wash of ink, so each keeps its AVA's colour, 0.12-0.15 darker
      in OKLab lightness (lighter in dark mode); roads cut through in cream; wineries are ink dots */
   --vine: rgba(35, 26, 28, 0.38); --road: rgba(255, 252, 247, 0.92); --wy: #231A1C;
-  /* Vinous's vineyards, a colour an owner: a categorical palette checked for colour-blind separation */
-  --vc0: #2A78D6; --vc1: #EB6834; --vc2: #1BAF7A; --vc3: #EDA100; --vc4: #E87BA4; --vc5: #008300; --vc6: #6250D6; --vc7: #E34948;
+  /* Vinous's vineyards, a colour an owner, muted as the land's own: claret, rosé, terracotta, ochre,
+     olive, sage, slate and plum. Each set (here, dark mode's, and the photograph's, lighter) checked
+     with the dataviz validator, every pair apart for normal and colour-blind vision */
+  --vc0: #914A66; --vc1: #E398BE; --vc2: #BA774E; --vc3: #C7B264; --vc4: #6B6710; --vc5: #319D88; --vc6: #1F6C99; --vc7: #937ABD;
   /* the colour of each style of wine; checked as a set for colour-blind and normal-vision separation */
   --w-white: #C9A227; --w-rose: #E8829F; --w-red: #96203F; --w-amber: #C06212;
   --font-cjk: "Noto Serif SC", "Songti SC", "STSong", "Source Han Serif SC", "SimSun", serif;
@@ -68,7 +70,7 @@
     --dot: #E0667A; --spot: #D9D1CB; --city: #9A9094; --halo: rgba(22, 19, 26, 0.9);
     --ap1: #7C4A53; --ap2: #A35764; --ap3: #C66876; --ap4: #E47F8B; --ap5: #F99DA5;
     --vine: rgba(255, 246, 240, 0.36); --road: rgba(22, 19, 26, 0.85); --wy: #ECE6DF;
-    --vc0: #3987E5; --vc1: #D95926; --vc2: #199E70; --vc3: #C98500; --vc4: #D55181; --vc5: #008300; --vc6: #9085E9; --vc7: #E66767;
+    --vc0: #A65B73; --vc1: #F8AED8; --vc2: #CE8960; --vc3: #D8C879; --vc4: #797F31; --vc5: #4FB6A1; --vc6: #307FAB; --vc7: #A68CD0;
     --w-white: #B0902C; --w-rose: #D07090; --w-red: #A52F47; --w-amber: #CC7026;
     color-scheme: dark;
   }
@@ -81,7 +83,7 @@
   --dot: #E0667A; --spot: #D9D1CB; --city: #9A9094; --halo: rgba(22, 19, 26, 0.9);
   --ap1: #7C4A53; --ap2: #A35764; --ap3: #C66876; --ap4: #E47F8B; --ap5: #F99DA5;
   --vine: rgba(255, 246, 240, 0.36); --road: rgba(22, 19, 26, 0.85); --wy: #ECE6DF;
-  --vc0: #3987E5; --vc1: #D95926; --vc2: #199E70; --vc3: #C98500; --vc4: #D55181; --vc5: #008300; --vc6: #9085E9; --vc7: #E66767;
+  --vc0: #A65B73; --vc1: #F8AED8; --vc2: #CE8960; --vc3: #D8C879; --vc4: #797F31; --vc5: #4FB6A1; --vc6: #307FAB; --vc7: #A68CD0;
   --w-white: #B0902C; --w-rose: #D07090; --w-red: #A52F47; --w-amber: #CC7026;
   color-scheme: dark;
 }
@@ -413,7 +415,7 @@ button.mk.area:hover .lb { box-shadow: 0 0 0 1px var(--fg); }
    cru strong, and the legend's swatches show those. AVAs are outlines, a nested one faintly tinted,
    and Napa's vineyards outlines too, their vines being in the photo. Names are white on a dark halo.
    The imagery is the same in light and dark mode, and so is all of this */
-.map.sat { --sat-ground: #59603F; --vc0: #3987E5; --vc1: #D95926; --vc2: #199E70; --vc3: #C98500; --vc4: #D55181; --vc5: #008300; --vc6: #9085E9; --vc7: #E66767; }
+.map.sat { --sat-ground: #59603F; --vc0: #B56982; --vc1: #FAC5E3; --vc2: #E0996F; --vc3: #EFE998; --vc4: #8B8736; --vc5: #63C6AD; --vc6: #438EBC; --vc7: #B29DE5; }
 .map.sat .g-lake, .map.sat .g-river, .map.sat .g-ap .ln, .map.sat .g-ap .lakes { display: none; }
 .map.sat .g-border { stroke: rgba(255, 255, 255, 0.5); }
 .map.sat .g-ap path { stroke: rgba(255, 255, 255, 0.62); stroke-width: 0.8px; }
@@ -445,26 +447,33 @@ button.mk.area:hover .lb { box-shadow: 0 0 0 1px var(--fg); }
 .maplegend .lg-h { font: 500 10.5px/1.4 var(--font-mono); color: var(--muted); letter-spacing: 0.04em; }
 .maplegend .sw { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
 .maplegend .sw.vine { background: linear-gradient(var(--vine), var(--vine)), var(--ap3); }
-.maplegend .sw.vin { background: linear-gradient(135deg, var(--vc0) 0 25%, var(--vc1) 25% 50%, var(--vc2) 50% 75%, var(--vc3) 75%); }
-/* Vinous's vineyards: half clear over what lies beneath, outlined in their own colour; those it
-   leaves unnamed only outlined. Where its maps reach, the open data's vineyards step aside */
-.map .g-ap .vp { fill-rule: evenodd; fill-opacity: 0.3; stroke-opacity: 0.95; stroke-width: 1px; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
-.map .g-ap .vp.c0 { fill: var(--vc0); stroke: var(--vc0); }
-.map .g-ap .vp.c1 { fill: var(--vc1); stroke: var(--vc1); }
-.map .g-ap .vp.c2 { fill: var(--vc2); stroke: var(--vc2); }
-.map .g-ap .vp.c3 { fill: var(--vc3); stroke: var(--vc3); }
-.map .g-ap .vp.c4 { fill: var(--vc4); stroke: var(--vc4); }
-.map .g-ap .vp.c5 { fill: var(--vc5); stroke: var(--vc5); }
-.map .g-ap .vp.c6 { fill: var(--vc6); stroke: var(--vc6); }
-.map .g-ap .vp.c7 { fill: var(--vc7); stroke: var(--vc7); }
+/* Vinous's vineyards: a muted wash of their owner's colour, half clear, each block parted from the
+   next by a hairline of the paper, or of white over the photograph; those it leaves unnamed a
+   dashed outline. Where its maps reach, the open data's vineyards step aside. The legend's swatch
+   is four of the colours as the map shows them */
+.map .g-ap .vp { fill-rule: evenodd; fill-opacity: 0.55; stroke: var(--land); stroke-width: 0.8px; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.map .g-ap .vp.c0 { fill: var(--vc0); }
+.map .g-ap .vp.c1 { fill: var(--vc1); }
+.map .g-ap .vp.c2 { fill: var(--vc2); }
+.map .g-ap .vp.c3 { fill: var(--vc3); }
+.map .g-ap .vp.c4 { fill: var(--vc4); }
+.map .g-ap .vp.c5 { fill: var(--vc5); }
+.map .g-ap .vp.c6 { fill: var(--vc6); }
+.map .g-ap .vp.c7 { fill: var(--vc7); }
+.map.sat .g-ap .vp { fill-opacity: 0.42; stroke: rgba(255, 255, 255, 0.55); }
 .map .g-ap .vp.cx { fill: var(--vine); fill-opacity: 0.5; stroke: var(--land-edge); stroke-dasharray: 3 2; }
 .map.sat .g-ap .vp.cx { fill: #FFF; fill-opacity: 0.08; stroke: rgba(255, 255, 255, 0.8); }
 .map.vin .g-ap .vine.cov { display: none; }
-/* on the flat map, with no photograph to see through to, the AVAs' tints fade under the vineyards,
-   their outlines staying, and the vineyards' own colours come up */
-.map.vin:not(.sat) .g-ap .ap-us .t2, .map.vin:not(.sat) .g-ap .ap-us .t3 { fill-opacity: 0.2; }
-.map.vin:not(.sat) .g-ap .vp { fill-opacity: 0.5; }
-.map.vin:not(.sat) .maplegend.us .sw.t2, .map.vin:not(.sat) .maplegend.us .sw.t3 { opacity: 0.35; }
+.maplegend .sw.vin { --vg: var(--surface); --va: 55%; background: linear-gradient(135deg, var(--vc0) 0 25%, var(--vc5) 25% 50%, var(--vc3) 50% 75%, var(--vc6) 75%); }
+.map.sat .maplegend .sw.vin { --vg: var(--sat-ground); --va: 42%; }
+@supports (background: color-mix(in srgb, red 50%, blue)) {
+  .maplegend .sw.vin { background: linear-gradient(135deg, color-mix(in srgb, var(--vc0) var(--va), var(--vg)) 0 25%, color-mix(in srgb, var(--vc5) var(--va), var(--vg)) 25% 50%,
+    color-mix(in srgb, var(--vc3) var(--va), var(--vg)) 50% 75%, color-mix(in srgb, var(--vc6) var(--va), var(--vg)) 75%); }
+}
+/* on the flat map, with no photograph to see through to, the AVAs' tints all but fade under the
+   vineyards, their outlines staying, so that the vineyards' colours lie on the paper */
+.map.vin:not(.sat) .g-ap .ap-us .t2, .map.vin:not(.sat) .g-ap .ap-us .t3 { fill-opacity: 0.1; }
+.map.vin:not(.sat) .maplegend.us .sw.t2, .map.vin:not(.sat) .maplegend.us .sw.t3 { opacity: 0.3; }
 .maplegend .sw.wy { width: 7px; height: 7px; margin: 0 8px 0 2px; border-radius: 50%; vertical-align: 1px; background: var(--wy); box-shadow: 0 0 0 1.5px var(--halo); }
 .maplegend .lg-src { font-size: 10.5px; line-height: 1.35; color: var(--muted); max-width: 17em; }
 .maplegend a { pointer-events: auto; color: inherit; }
@@ -1176,9 +1185,9 @@ footer p { max-width: 52em; }
       return false;
     };
     items.forEach(function (it) { if (!it.out && it.r) taken.push([it.sx - it.r, it.sy - it.r, it.sx + it.r, it.sy + it.r]); });
-    // and none under the map's own controls: the way back, the zoom buttons, the legend
+    // and none under the map's own controls: the way back, the zoom buttons, the layers', the legend
     var mr = mapEl.getBoundingClientRect();
-    [$('mapBar'), mapEl.querySelector('.mapzoom'), $('mapLegend')].forEach(function (el) {
+    [$('mapBar'), mapEl.querySelector('.mapzoom'), $('satBtn'), $('vinBtn'), $('mapLegend')].forEach(function (el) {
       if (!el || el.hidden) return;
       var r = el.getBoundingClientRect();
       taken.push([r.left - mr.left - 3, r.top - mr.top - 3, r.right - mr.left + 3, r.bottom - mr.top + 3]);
@@ -1532,14 +1541,20 @@ footer p { max-width: 52em; }
         label(id + ':' + i, 'ap', t, sh.lx, sh.ly, text, w, [0, 1, 1.1, 1.2, 1.4, 1.3][t]);
       });
     });
-    if (VIN.shown) {   // Vinous's names, each on the parcel it was set on, once the parcel can hold it
-      var vd = VIN.data, vk = vd.unit * s, vHa = vk * vk * 10000;
-      vd.parcels.forEach(function (p, i) {
-        if (p.length < 6) return;
-        var x = (p[4] - vb.x) * s, y = (p[5] - vb.y) * s;
-        if (x < 0 || y < 0 || x > cw || y > ch) return;
-        var text = vd.names[p[0]][0], w = apWidth(text, 6);
-        if (p[2] * vHa >= w * 30) label('vin:' + i, 'ap', 6, p[4], p[5], text, w, 1.3);
+    if (VIN.shown) {   // Vinous's names: from afar each owner's, closer in each vineyard's whole name
+      var vk = VIN.data.unit * s, pxHa = vk * vk * 10000;   // px² in a hectare
+      var put = function (key, q) {   // the bigger first, after the AVAs' names
+        var x = (q.x - vb.x) * s, y = (q.y - vb.y) * s;
+        if (x >= 0 && y >= 0 && x <= cw && y <= ch) label(key, 'ap', 6, q.x, q.y, q.text, vinWidth(q.text), 1.45 - 0.015 * Math.log2(1 + q.ha));
+      };
+      VIN.places.forEach(function (pl, i) {
+        var fit = 0;
+        pl.parts.forEach(function (q) {
+          q.fits = q.ha * pxHa >= vinWidth(q.text) * (q.text === pl.text ? VIN_FIT[0] : VIN_FIT[1]);
+          if (q.fits) fit += q.ha;
+        });
+        if (fit >= pl.ha * 0.75) pl.parts.forEach(function (q, j) { if (q.fits) put('vin:' + i + ':' + j, q); });
+        else if (pl.ha * pxHa >= vinWidth(pl.text) * VIN_FIT[0]) put('vin:' + i, pl);
       });
     }
     Object.keys(apEls).forEach(function (k) { if (!keep[k]) { apEls[k].el.remove(); delete apEls[k]; } });
@@ -1778,7 +1793,7 @@ footer p { max-width: 52em; }
   // their names give way (map/vinous/vineyards.json outlines where).
   var VIN_URL = 'map/vinous/vineyards.json', VIN_VIEW = 'california', VIN_MPP = 160;
   var VIN_BOX = [438.3, 88.5, 462.1, 123.4];   // the file's box, to know before it comes when it is wanted
-  var VIN = { on: true, req: null, failed: 0, data: null, g: null, cover: null, shown: false, near: false };
+  var VIN = { on: true, req: null, failed: 0, data: null, g: null, cover: null, shown: false, near: false, places: [], w: {} };
   try { VIN.on = localStorage.getItem('terroir.vinous') !== '0'; } catch (e) {}
   // Napa, close enough for its vineyards
   function vinNear(b) {
@@ -1795,12 +1810,74 @@ footer p { max-width: 52em; }
         d.parcels.forEach(function (p, i) { h += '<path class="vp ' + (p[0] < 0 ? 'cx' : 'c' + d.names[p[0]][1]) + '" data-p="' + i + '" d="' + p[3] + '"/>'; });
         g.innerHTML = h;
         try { VIN.cover = new Path2D(d.cover); } catch (e) { VIN.cover = null; }
-        VIN.data = d; VIN.g = g;
+        VIN.data = d; VIN.g = g; VIN.places = vinPlaces(d);
         Object.keys(AP.areas).forEach(function (id) { vinMark(AP.areas[id]); });
         vinUpdate();
       })
       .catch(function () { VIN.req = null; VIN.failed = Date.now(); });   // tried again a little later
   }
+  // Where Vinous's names go, worked out once. An owner's blocks within VIN_GAP of each other make a
+  // place, named for the owner from afar; within it, the blocks of each of its vineyards, named in
+  // full once there is room. A label sits on a block Vinous set the name on, the one nearest the
+  // middle of its blocks. It shows once its blocks, on screen, cover VIN_FIT times its width in
+  // pixels: the owner's name first, the whole name a little closer in
+  var VIN_GAP = 100, VIN_FIT = [6, 10];   // metres; px of area to a px of a label's width
+  function vinPlaces(d) {
+    var P = d.parcels, box = [], up = [], byOwner = {}, NUM = /-?\d+/g, places = [];
+    var top = function (i) { while (up[i] !== i) i = up[i] = up[up[i]]; return i; };
+    var near = function (a, b) { return a[0] - b[2] <= VIN_GAP && b[0] - a[2] <= VIN_GAP && a[1] - b[3] <= VIN_GAP && b[1] - a[3] <= VIN_GAP; };
+    var owner = function (n) { return n.split(' - ')[0].trim(); };
+    P.forEach(function (p, i) {   // each block's box, in the file's metres
+      var b = [Infinity, Infinity, -Infinity, -Infinity];
+      p[3].split('M').forEach(function (ring) {
+        var k = ring.indexOf('l');
+        if (k < 0) return;
+        var a = ring.slice(0, k).match(NUM), r = ring.slice(k + 1).match(NUM) || [], x = +a[0], y = +a[1];
+        for (var j = -2; j < r.length; j += 2) {
+          if (j >= 0) { x += +r[j]; y += +r[j + 1]; }
+          if (x < b[0]) b[0] = x; if (x > b[2]) b[2] = x; if (y < b[1]) b[1] = y; if (y > b[3]) b[3] = y;
+        }
+      });
+      box.push(b); up.push(i);
+      if (p[0] >= 0) { var o = owner(d.names[p[0]][0]); (byOwner[o] = byOwner[o] || []).push(i); }
+    });
+    // a place's middle, and the named block nearest it
+    var spot = function (list, text) {
+      var ha = 0, cx = 0, cy = 0, best = null, bd = Infinity;
+      list.forEach(function (i) { var b = box[i], a = P[i][2]; ha += a; cx += (b[0] + b[2]) / 2 * a; cy += (b[1] + b[3]) / 2 * a; });
+      cx = d.origin[0] + cx / ha * d.unit; cy = d.origin[1] + cy / ha * d.unit;
+      list.forEach(function (i) {
+        var p = P[i];
+        if (p.length < 6) return;
+        var e = (p[4] - cx) * (p[4] - cx) + (p[5] - cy) * (p[5] - cy);
+        if (e < bd) { bd = e; best = p; }
+      });
+      return best && { text: text, ha: ha, x: best[4], y: best[5] };
+    };
+    Object.keys(byOwner).forEach(function (o) {
+      var list = byOwner[o];
+      list.forEach(function (i, a) { for (var b = 0; b < a; b++) if (near(box[i], box[list[b]])) up[top(i)] = top(list[b]); });
+      var groups = {};
+      list.forEach(function (i) { var t = top(i); (groups[t] = groups[t] || []).push(i); });
+      Object.keys(groups).forEach(function (t) {
+        var g = groups[t], pl = spot(g, o);
+        if (!pl) return;
+        var byName = {}, parts = [];
+        g.forEach(function (i) { (byName[P[i][0]] = byName[P[i][0]] || []).push(i); });
+        Object.keys(byName).forEach(function (n) {   // a vineyard's blocks in this place, split where they lie apart
+          var bl = byName[n], sub = {};
+          bl.forEach(function (i) { up[i] = i; });
+          bl.forEach(function (i, a) { for (var b = 0; b < a; b++) if (near(box[i], box[bl[b]])) up[top(i)] = top(bl[b]); });
+          bl.forEach(function (i) { var r = top(i); (sub[r] = sub[r] || []).push(i); });
+          Object.keys(sub).forEach(function (r) { var q = spot(sub[r], d.names[n][0]); if (q) parts.push(q); });
+        });
+        pl.parts = parts;
+        places.push(pl);
+      });
+    });
+    return places;
+  }
+  function vinWidth(text) { return VIN.w[text] || (VIN.w[text] = apWidth(text, 6)); }
   // the vineyards for this view, shown or not; the button, the legend and the names follow
   function vinUpdate() {
     if (!cur || !vb) return;
@@ -2031,7 +2108,7 @@ footer p { max-width: 52em; }
   // the map follows its frame's size
   var refit = function () { if (!cur) return; cancelAnimationFrame(anim); animTarget = null; mapEl.classList.remove('moving'); setViewBox(targetBox()); settled(); };
   if ('ResizeObserver' in window) new ResizeObserver(refit).observe(mapEl); else window.addEventListener('resize', refit);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { items.forEach(function (it) { it.tw = null; }); if (cur) placeAll(true); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { items.forEach(function (it) { it.tw = null; }); VIN.w = {}; if (cur) placeAll(true); });
 
   // the part in view is marked in the contents bar
   if ('IntersectionObserver' in window) {
