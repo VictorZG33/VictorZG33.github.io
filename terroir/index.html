@@ -384,9 +384,47 @@ button.mk.area:focus-visible .lb { box-shadow: 0 0 0 2px var(--accent); }
 button.mk.area .lb { pointer-events: auto; font-size: 13px; font-weight: 600; padding: 3px 8px; line-height: 18px; border-radius: 999px; background: var(--halo); text-shadow: none; box-shadow: 0 0 0 1px var(--rule-strong); }
 button.mk.area .lb b { font: 500 10.5px/1 var(--font-mono); color: var(--muted); margin-left: 5px; }
 button.mk.area:hover .lb { box-shadow: 0 0 0 1px var(--fg); }
-.mapbar { position: absolute; left: 10px; top: 10px; z-index: 6; display: flex; gap: 6px; }
-.mapbar button { appearance: none; border: 1px solid var(--rule-strong); border-radius: 999px; background: var(--surface); padding: 6px 12px; font-size: 13px; font-weight: 500; cursor: pointer; }
-.mapbar button:hover { border-color: var(--fg); }
+.mapbar { position: absolute; left: 10px; top: 10px; z-index: 7; display: flex; align-items: flex-start; gap: 6px; }
+.mapbar > button { appearance: none; border: 1px solid var(--rule-strong); border-radius: 999px; background: var(--surface); padding: 6px 12px; font-size: 13px; font-weight: 500; cursor: pointer; }
+.mapbar > button:hover { border-color: var(--fg); }
+/* finding an owner or a vineyard on Vinous's maps: a field beside the way back, its suggestions
+   under it, and once one is chosen, how many places and how much land, which brings them back */
+.mapfind { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+.mf-box { display: flex; align-items: center; width: 236px; height: 32px; border: 1px solid var(--rule-strong); border-radius: 999px; background: var(--surface); }
+.mf-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.map .mf-box .mf-ic { position: static; flex: none; width: 14px; height: 14px; margin-left: 11px; fill: none; stroke: var(--muted); stroke-width: 1.6px; stroke-linecap: round; }   /* not the map's own svg */
+.mf-box input { flex: 1; min-width: 0; height: 100%; padding: 0 4px 0 7px; border: 0; background: none; outline: none; font-size: 13px; -webkit-appearance: none; appearance: none; }
+.mf-box input::-webkit-search-cancel-button { display: none; }
+.mf-box input::placeholder { color: var(--muted); opacity: 1; }
+.mf-x { flex: none; appearance: none; width: 26px; height: 26px; margin-right: 3px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--muted); font: 400 17px/1 var(--font-body); cursor: pointer; }
+.mf-x:hover { color: var(--fg); background: var(--accent-soft); }
+.mf-x:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.mf-list {
+  position: absolute; left: 0; top: 37px; width: 300px; max-height: 264px; overflow-y: auto; margin: 0; padding: 4px; list-style: none;
+  background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 10px; box-shadow: 0 8px 24px rgba(20, 14, 18, 0.14);
+}
+.mf-o { display: flex; align-items: baseline; gap: 8px; padding: 5px 8px; border-radius: 6px; font-size: 13px; line-height: 18px; cursor: pointer; }
+.mf-o[aria-selected="true"] { background: var(--accent-soft); }
+.mf-o .mf-sw { flex: none; align-self: center; width: 9px; height: 9px; border-radius: 2px; }
+.mf-o .mf-t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mf-o .mf-t b { font-weight: 650; }
+.mf-o .mf-m { flex: none; font: 500 10.5px/18px var(--font-mono); color: var(--muted); }
+.mf-o.own .mf-t { font-weight: 500; }
+.mf-o.sub { padding-left: 25px; }
+.mf-o.all .mf-t { font-style: italic; }
+.mf-none { padding: 6px 8px; font-size: 12.5px; color: var(--muted); }
+.mf-sum { appearance: none; padding: 2px 10px; border: 1px solid var(--rule); border-radius: 999px; background: var(--surface); color: var(--muted); font: 500 11px/18px var(--font-mono); cursor: pointer; }
+.mf-sum:hover { color: var(--fg); border-color: var(--rule-strong); }
+.mf-sum:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.mf-sw.c0 { background: var(--vc0); } .mf-sw.c1 { background: var(--vc1); } .mf-sw.c2 { background: var(--vc2); } .mf-sw.c3 { background: var(--vc3); }
+.mf-sw.c4 { background: var(--vc4); } .mf-sw.c5 { background: var(--vc5); } .mf-sw.c6 { background: var(--vc6); } .mf-sw.c7 { background: var(--vc7); }
+@media (max-width: 640px) { .mf-box { width: 168px; } }
+/* the scale, measured across the middle of the map, in its lower right corner */
+.mapscale { position: absolute; right: 12px; bottom: 12px; z-index: 5; display: flex; flex-direction: column; align-items: flex-end; pointer-events: none;
+  --sc: var(--fg); filter: drop-shadow(0 0 1px var(--halo)) drop-shadow(0 0 1.5px var(--halo)); }
+.mapscale span { font: 500 10.5px/1.3 var(--font-mono); color: var(--sc); margin-bottom: 1px; }
+.mapscale i { display: block; height: 5px; border: 1.5px solid var(--sc); border-top: 0; }
+.map.sat .mapscale { --sc: #FFF; --halo: rgba(14, 12, 16, 0.82); }
 .mapmsg { position: absolute; inset: 0; display: grid; place-items: center; font-size: 14px; color: var(--muted); }
 .mapzoom {
   position: absolute; right: 10px; top: 10px; z-index: 6; display: flex; flex-direction: column;
@@ -463,6 +501,23 @@ button.mk.area:hover .lb { box-shadow: 0 0 0 1px var(--fg); }
 .map.sat .g-ap .vp { fill-opacity: 0.42; stroke: rgba(255, 255, 255, 0.55); }
 .map .g-ap .vp.cx { fill: var(--vine); fill-opacity: 0.5; stroke: var(--land-edge); stroke-dasharray: 3 2; }
 .map.sat .g-ap .vp.cx { fill: #FFF; fill-opacity: 0.08; stroke: rgba(255, 255, 255, 0.8); }
+/* what a search finds: the other vineyards fade, these come up, outlined in ink on a casing of the
+   paper, or in white on a dark one over the photograph */
+.map .g-ap .ap-vin.find .vp { fill-opacity: 0.2; stroke-opacity: 0.4; }
+.map .g-ap .ap-vin.find .vp.hit { fill-opacity: 0.85; stroke-opacity: 1; }
+.map.sat .g-ap .ap-vin.find .vp { fill-opacity: 0.12; stroke-opacity: 0.3; }
+.map.sat .g-ap .ap-vin.find .vp.hit { fill-opacity: 0.6; stroke-opacity: 1; }
+.map.finding .g-ap .vine { opacity: 0.35; }
+/* each place found: a ring, its name beside it */
+.mk.hit .dot { left: -7px; top: -7px; width: 14px; height: 14px; }
+.mk.hit .dot::before { width: 10px; height: 10px; margin: -5px 0 0 -5px; background: transparent; box-shadow: inset 0 0 0 2.5px var(--dot), 0 0 0 1.5px var(--halo); }
+.mk.hit .lb { font-size: 11.5px; font-weight: 600; font-style: italic; }
+.map .g-ap .vin-hl { pointer-events: none; }
+.map .g-ap .vin-hl path { fill: none; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.map .g-ap .vin-hl .vh-c { stroke: var(--land); stroke-width: 4px; }
+.map .g-ap .vin-hl .vh-l { stroke: var(--fg); stroke-width: 1.8px; }
+.map.sat .g-ap .vin-hl .vh-c { stroke: rgba(14, 12, 16, 0.55); stroke-width: 4px; }
+.map.sat .g-ap .vin-hl .vh-l { stroke: #FFF; stroke-width: 1.8px; }
 .map.vin .g-ap .vine.cov { display: none; }
 .maplegend .sw.vin { --vg: var(--surface); --va: 55%; background: linear-gradient(135deg, var(--vc0) 0 25%, var(--vc5) 25% 50%, var(--vc3) 50% 75%, var(--vc6) 75%); }
 .map.sat .maplegend .sw.vin { --vg: var(--sat-ground); --va: 42%; }
@@ -604,12 +659,13 @@ footer p { max-width: 52em; }
           <svg class="geo" id="apSvg" aria-hidden="true" preserveAspectRatio="xMidYMid meet"></svg>
           <div class="marks" id="apMarks" aria-hidden="true"></div>
           <div class="marks" id="mapMarks"></div>
-          <div class="mapbar" id="mapBar" hidden><button type="button" id="mapBack"></button></div>
+          <div class="mapbar" id="mapBar" hidden><button type="button" id="mapBack"></button><div class="mapfind" id="mapFind" role="search" hidden><div class="mf-box"><svg class="mf-ic" viewBox="0 0 16 16" aria-hidden="true"><circle cx="6.8" cy="6.8" r="4.6"/><path d="M10.3 10.3 14 14"/></svg><input type="search" id="findIn" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="findList"><button type="button" class="mf-x" id="findX" hidden>×</button></div><ul class="mf-list" id="findList" role="listbox" hidden></ul><button type="button" class="mf-sum" id="findSum" hidden></button><p class="sr" id="findLive" aria-live="polite"></p></div></div>
           <div class="mapzoom"><button type="button" id="zoomIn">+</button><button type="button" id="zoomOut">−</button></div>
           <button type="button" class="mapsat" id="satBtn" hidden></button>
           <button type="button" class="mapsat" id="vinBtn" hidden></button>
           <div class="maplegend" id="mapLegend" hidden></div>
           <p class="mapattr" id="satAttr" hidden></p>
+          <div class="mapscale" id="mapScale" aria-hidden="true" hidden><span></span><i></i></div>
           <p class="maphint" id="mapHint" aria-hidden="true"></p>
           <p class="mapmsg" id="mapMsg" hidden></p>
         </div>
@@ -710,7 +766,7 @@ footer p { max-width: 52em; }
       inView: '这一带的产区', areas: '按地区看', restOfEurope: '欧洲其他产区，按国家看',
       hint: '在地图上点一个产区，或从上面的名字里选一个。',
       climate: '气候', grapesF: '主要品种', spotsF: '村庄与子产区', stylesF: '风格',
-      mapNote: '底图：Natural Earth，只画了各方都承认的陆地国界。法国的产区边界来自 INAO（法国国家原产地与质量研究院，Licence Ouverte 开放许可），美国的 AVA 来自 UC Davis 的 AVA Project（CC0）；纳帕谷的葡萄园、道路和河流来自 OpenStreetMap（ODbL），酒庄来自 Wikidata（CC0）和 Overture Maps（CDLA Permissive 2.0）；放大后的卫星影像来自 Esri（Maxar、Earthstar Geographics）。纳帕谷葡萄园的边界与归属取自 Vinous 的《The Vineyards of Napa Valley》（Antonio Galloni 与 Alessandro Masnaghetti 著，© 2016–2023 Vinous Media LLC），经授权使用，仅供个人学习交流，禁止任何形式的商业用途。用 + 和 −、双指，或按住 Ctrl（Mac 上是 ⌘）滚动来缩放，拖动来移动。',
+      mapNote: '底图：Natural Earth，只画了各方都承认的陆地国界。法国的产区边界来自 INAO（法国国家原产地与质量研究院，Licence Ouverte 开放许可），美国的 AVA 来自 UC Davis 的 AVA Project（CC0）；纳帕谷的葡萄园、道路和河流来自 OpenStreetMap（ODbL），酒庄来自 Wikidata（CC0）和 Overture Maps（CDLA Permissive 2.0）；放大后的卫星影像来自 Esri（Maxar、Earthstar Geographics）。纳帕谷葡萄园的边界与归属取自 Vinous 的《The Vineyards of Napa Valley》（Antonio Galloni 与 Alessandro Masnaghetti 著，© 2016–2023 Vinous Media LLC），经授权使用，仅供个人学习交流，禁止任何形式的商业用途。用 + 和 −、双指，或按住 Ctrl（Mac 上是 ⌘）滚动来缩放，拖动来移动；在纳帕谷，左上角的搜索框能找出一家酒庄或一块葡萄园在哪里有田。',
       apTiers: { 1: '大区级', 2: '地区级', 3: '村庄级', 4: '一级园', 5: '特级园' },
       apTiersUS: { 2: 'AVA', 3: '其中的子产区' },
       apLegend: '法定产区等级', apLegendUS: '美国葡萄种植区 AVA', apLoading: '正在加载产区边界…',
@@ -727,6 +783,13 @@ footer p { max-width: 52em; }
       vinSource: '来源：Vinous《The Vineyards of Napa Valley》，经授权使用',
       vinCredit: '葡萄园边界与归属 © 2016–2023 <a href="https://vinous.com/" target="_blank" rel="noopener">Vinous Media LLC</a>《The Vineyards of Napa Valley》，经授权使用；仅供个人学习交流，禁止任何形式的商业用途',
       vinAttr: '葡萄园边界与归属 © 2016–2023 Vinous Media LLC，经授权使用；仅供个人学习交流，禁止任何形式的商业用途',
+      findPh: '搜索酒庄或葡萄园', findLabel: '在 Vinous 的纳帕地图里找酒庄或葡萄园', findClear: '清除搜索',
+      findNone: 'Vinous 的地图里没有这个名字', findWait: '正在加载葡萄园…', findGo: '移到这些葡萄园',
+      findAll: function (q) { return '所有名字含“' + q + '”的葡萄园'; },
+      findWhere: function (n, ha) { return n + ' 处 · ' + ha + ' 公顷'; }, findHa: function (ha) { return ha + ' 公顷'; },
+      findSaid: function (t, n, ha) { return t + '：' + n + ' 处，共 ' + ha + ' 公顷'; },
+      findCount: function (n) { return n ? n + ' 个结果，用上下键选择' : '没有结果'; },
+      scaleLen: function (m) { return m < 1000 ? m + ' 米' : m / 1000 + ' 公里'; },
       loading: '地图加载中…', failed: '地图没能加载，请检查网络后刷新。',
       count2: function (n) { return n + ' 个'; },
       footNote: '风土是我做的一份葡萄酒入门。地图底图来自 Natural Earth（公有领域），村镇位置核对自 OpenStreetMap；法国的产区边界来自 INAO 的《葡萄酒 AOC 地块划定》（Licence Ouverte），美国的 AVA 来自 UC Davis AVA Project（CC0），纳帕谷的葡萄园、道路和河流来自 OpenStreetMap 贡献者（ODbL），酒庄来自 Wikidata（CC0）和 Overture Maps Foundation（CDLA Permissive 2.0）；放大后的卫星影像来自 Esri World Imagery（Maxar、Earthstar Geographics）。纳帕谷葡萄园的边界与归属取自 Vinous Media LLC 的《The Vineyards of Napa Valley》（Antonio Galloni 与 Alessandro Masnaghetti 著，© 2016–2023），经授权使用，仅供个人学习交流，禁止任何形式的商业用途。葡萄酒每个年份都在变，这里写的是大致、典型的样子。',
@@ -780,7 +843,7 @@ footer p { max-width: 52em; }
       inView: 'Regions here', areas: 'By area', restOfEurope: 'The rest of Europe, by country',
       hint: 'Pick a region on the map, or one of the names above.',
       climate: 'Climate', grapesF: 'Main grapes', spotsF: 'Villages and sub-regions', stylesF: 'Styles',
-      mapNote: 'Base map: Natural Earth; only land borders that every side recognises are drawn. French appellation boundaries are from INAO, France’s institute of origin and quality (Licence Ouverte); the American Viticultural Areas from the UC Davis AVA Project (CC0); Napa’s vineyards, roads and streams from OpenStreetMap (ODbL), its wineries from Wikidata (CC0) and Overture Maps (CDLA Permissive 2.0); the satellite imagery close up is Esri’s (Maxar, Earthstar Geographics). Napa’s vineyard boundaries and their owners are taken from Vinous’s The Vineyards of Napa Valley by Antonio Galloni with Alessandro Masnaghetti (© 2016–2023 Vinous Media LLC), used with permission, for personal study and exchange only; no commercial use of any kind. Zoom with + and −, two fingers, or Ctrl (⌘ on a Mac) and scroll; drag to move.',
+      mapNote: 'Base map: Natural Earth; only land borders that every side recognises are drawn. French appellation boundaries are from INAO, France’s institute of origin and quality (Licence Ouverte); the American Viticultural Areas from the UC Davis AVA Project (CC0); Napa’s vineyards, roads and streams from OpenStreetMap (ODbL), its wineries from Wikidata (CC0) and Overture Maps (CDLA Permissive 2.0); the satellite imagery close up is Esri’s (Maxar, Earthstar Geographics). Napa’s vineyard boundaries and their owners are taken from Vinous’s The Vineyards of Napa Valley by Antonio Galloni with Alessandro Masnaghetti (© 2016–2023 Vinous Media LLC), used with permission, for personal study and exchange only; no commercial use of any kind. Zoom with + and −, two fingers, or Ctrl (⌘ on a Mac) and scroll; drag to move. Over Napa, the search at the top left finds where a winery or a vineyard has its blocks.',
       apTiers: { 1: 'Regional', 2: 'Sub-regional', 3: 'Village', 4: 'Premier cru', 5: 'Grand cru' },
       apTiersUS: { 2: 'AVA', 3: 'AVA within it' },
       apLegend: 'Appellation level', apLegendUS: 'American Viticultural Areas', apLoading: 'Loading the appellations…',
@@ -797,6 +860,13 @@ footer p { max-width: 52em; }
       vinSource: 'From Vinous’s The Vineyards of Napa Valley, used with permission',
       vinCredit: 'Vineyard boundaries and owners © 2016–2023 <a href="https://vinous.com/" target="_blank" rel="noopener">Vinous Media LLC</a>, The Vineyards of Napa Valley, used with permission; for personal study and exchange only, no commercial use of any kind',
       vinAttr: 'Vineyard boundaries and owners © 2016–2023 Vinous Media LLC, used with permission; for personal study and exchange only, no commercial use of any kind',
+      findPh: 'Find a winery or vineyard', findLabel: 'Find a winery or vineyard on Vinous’s maps of Napa', findClear: 'Clear the search',
+      findNone: 'No such name on Vinous’s maps', findWait: 'Loading the vineyards…', findGo: 'Show them all',
+      findAll: function (q) { return 'Every vineyard named “' + q + '”'; },
+      findWhere: function (n, ha) { return (n === 1 ? '1 place' : n + ' places') + ' · ' + ha + ' ha'; }, findHa: function (ha) { return ha + ' ha'; },
+      findSaid: function (t, n, ha) { return t + ': ' + (n === 1 ? '1 place' : n + ' places') + ', ' + ha + ' ha in all'; },
+      findCount: function (n) { return n ? (n === 1 ? '1 result' : n + ' results') + ', up and down arrows to choose' : 'No results'; },
+      scaleLen: function (m) { return m < 1000 ? m + ' m' : m / 1000 + ' km'; },
       loading: 'Loading the map…', failed: 'The map did not load. Check the connection and reload.',
       count2: function (n) { return String(n); },
       footNote: 'Terroir is a wine primer I made. The base map is from Natural Earth (public domain) and the places on it were checked against OpenStreetMap; the French appellation boundaries are INAO’s parcel-by-parcel delimitation of the wine AOCs (Licence Ouverte), and the American Viticultural Areas are from the UC Davis AVA Project (CC0); Napa’s vineyards, roads and streams are © OpenStreetMap contributors (ODbL), and its wineries are from Wikidata (CC0) and the Overture Maps Foundation (CDLA Permissive 2.0); the satellite imagery close up is Esri World Imagery (Maxar, Earthstar Geographics). Napa’s vineyard boundaries and their owners are taken from Vinous Media LLC’s The Vineyards of Napa Valley by Antonio Galloni with Alessandro Masnaghetti (© 2016–2023), used with permission, for personal study and exchange only; no commercial use of any kind. Wine changes with every vintage; this is the typical picture.',
@@ -1187,7 +1257,7 @@ footer p { max-width: 52em; }
     items.forEach(function (it) { if (!it.out && it.r) taken.push([it.sx - it.r, it.sy - it.r, it.sx + it.r, it.sy + it.r]); });
     // and none under the map's own controls: the way back, the zoom buttons, the layers', the legend
     var mr = mapEl.getBoundingClientRect();
-    [$('mapBar'), mapEl.querySelector('.mapzoom'), $('satBtn'), $('vinBtn'), $('mapLegend')].forEach(function (el) {
+    [$('mapBar'), mapEl.querySelector('.mapzoom'), $('satBtn'), $('vinBtn'), $('mapLegend'), $('mapScale')].forEach(function (el) {
       if (!el || el.hidden) return;
       var r = el.getBoundingClientRect();
       taken.push([r.left - mr.left - 3, r.top - mr.top - 3, r.right - mr.left + 3, r.bottom - mr.top + 3]);
@@ -1225,6 +1295,7 @@ footer p { max-width: 52em; }
     var v = b.x.toFixed(2) + ' ' + b.y.toFixed(2) + ' ' + b.w.toFixed(2) + ' ' + b.h.toFixed(2);
     svg.setAttribute('viewBox', v); apSvg.setAttribute('viewBox', v);
     if (cur) satDraw();
+    renderScale();
   }
   function animateTo(target, ms) {
     cancelAnimationFrame(anim);
@@ -1324,7 +1395,14 @@ footer p { max-width: 52em; }
     var vn = $('vinBtn');
     vn.hidden = !VIN.near;
     vn.textContent = l.vinous; vn.title = l.vinTitle; vn.setAttribute('aria-pressed', VIN.on ? 'true' : 'false');
-    renderZoomButtons();
+    var fi = $('findIn');
+    if (!VIN.findable && document.activeElement === fi) fi.blur();
+    $('mapFind').hidden = !VIN.findable;
+    fi.placeholder = l.findPh; fi.setAttribute('aria-label', l.findLabel);
+    $('findX').setAttribute('aria-label', l.findClear); $('findX').title = l.findClear;
+    findSummary();
+    if (!$('findList').hidden) findRender();
+    renderZoomButtons(); renderScale();
   }
 
   function renderRegionsTop() {
@@ -1503,12 +1581,12 @@ footer p { max-width: 52em; }
       if (!it) {
         var el = document.createElement('span'), lb = document.createElement('span');
         el.className = 'mk ' + kind + (kind === 'ap' ? ' t' + t : '');
-        if (kind === 'wy') { var dot = document.createElement('i'); dot.className = 'dot'; el.appendChild(dot); }
+        if (kind === 'wy' || kind === 'hit') { var dot = document.createElement('i'); dot.className = 'dot'; el.appendChild(dot); }
         lb.className = 'lb'; lb.textContent = text; el.appendChild(lb);
         apMarks.appendChild(el);
-        it = apEls[key] = { kind: kind, tier: t, x: x, y: y, text: text, el: el, lb: lb, tw: w, base: base, r: kind === 'wy' ? 3 : 0 };
+        it = apEls[key] = { kind: kind, tier: t, x: x, y: y, text: text, el: el, lb: lb, tw: w, base: base, r: kind === 'wy' ? 3 : kind === 'hit' ? 5 : 0 };
       }
-      keep[key] = 1; list.push(it);
+      it.base = base; keep[key] = 1; list.push(it);
     };
     var mpp = 6371000 / cur.proj.scale / s;
     if (AP.shown) AP.shown.split(',').forEach(function (id) {
@@ -1542,13 +1620,21 @@ footer p { max-width: 52em; }
       });
     });
     if (VIN.shown) {   // Vinous's names: from afar each owner's, closer in each vineyard's whole name
-      var vk = VIN.data.unit * s, pxHa = vk * vk * 10000;   // px² in a hectare
+      var vk = VIN.data.unit * s, pxHa = vk * vk * 10000, sel = VIN.sel;   // px² in a hectare
       var put = function (key, q) {   // the bigger first, after the AVAs' names
         var x = (q.x - vb.x) * s, y = (q.y - vb.y) * s;
         if (x >= 0 && y >= 0 && x <= cw && y <= ch) label(key, 'ap', 6, q.x, q.y, q.text, vinWidth(q.text), 1.45 - 0.015 * Math.log2(1 + q.ha));
       };
       VIN.places.forEach(function (pl, i) {
         var fit = 0;
+        if (sel) {   // during a search, only what it found, each place marked and named whatever its size, before all else:
+          pl.parts.forEach(function (q, j) {   // by its vineyard's own name when an owner was sought
+            if (!sel.names[q.n]) return;
+            var x = (q.x - vb.x) * s, y = (q.y - vb.y) * s, t = sel.kind === 'owner' ? VIN.idx.names[q.n].part : q.text;
+            if (x >= -10 && y >= -10 && x <= cw + 10 && y <= ch + 10) label('vin:' + i + ':' + j, 'hit', 0, q.x, q.y, t, vinWidth(t), 0.5 - 0.01 * Math.log2(1 + q.ha));
+          });
+          return;
+        }
         pl.parts.forEach(function (q) {
           q.fits = q.ha * pxHa >= vinWidth(q.text) * (q.text === pl.text ? VIN_FIT[0] : VIN_FIT[1]);
           if (q.fits) fit += q.ha;
@@ -1578,6 +1664,7 @@ footer p { max-width: 52em; }
     var src = Array.prototype.map.call(el.querySelectorAll('.lg-src'), function (x) { return x.innerHTML; }), mc = $('mapCredit');
     mc.innerHTML = src.join(' · ');
     mc.hidden = el.hidden || !src.length;
+    placeScale();
   }
   function legendBody() {
     var el = $('mapLegend'), l = L(), ids = AP.shown ? AP.shown.split(',') : [];
@@ -1658,11 +1745,11 @@ footer p { max-width: 52em; }
     var cw = mapEl.clientWidth, ch = mapEl.clientHeight;
     return { x: free.cx - free.u * cw / 2, y: free.cy - free.u * ch / 2, w: free.u * cw, h: free.u * ch };
   }
-  function moveTo(b, animate) {
+  function moveTo(b, animate, ms) {
     b = clampBox(b);
     free = { cx: b.x + b.w / 2, cy: b.y + b.h / 2, u: b.w / (mapEl.clientWidth || 1) };
     apHover(null);
-    if (animate) animateTo(b, 300);
+    if (animate) animateTo(b, ms || 300);
     else { cancelAnimationFrame(anim); animTarget = null; mapEl.classList.remove('moving'); setViewBox(b); placeAll(false); settleSoon(); }
     if ($('mapBar').hidden) renderMapChrome();
   }
@@ -1679,6 +1766,28 @@ footer p { max-width: 52em; }
   function settleSoon() { clearTimeout(settleTimer); settleTimer = setTimeout(settled, 160); }
   // the map has stopped: fetch and show the appellations in view, name them, place every label
   function settled() { clearTimeout(settleTimer); if (!cur || !vb) return; apUpdate(); vinUpdate(); placeAll(true); renderZoomButtons(); satRequest(vb); }
+  // the scale: a round length about a hundred pixels long (eighty on a phone), measured across the
+  // middle of the map; in every view but the world's, whose projection keeps no one scale
+  function renderScale() {
+    var el = $('mapScale');
+    if (!cur || !vb || !cur.U) { el.hidden = true; return; }
+    var cw = mapEl.clientWidth || 1, u = vb.w / cw, cx = vb.x + vb.w / 2, cy = vb.y + vb.h / 2;
+    var a = cur.U(cx - 50 * u, cy), b = cur.U(cx + 50 * u, cy), r = Math.PI / 180;
+    var h = Math.sin((b[1] - a[1]) * r / 2), k = Math.sin((b[0] - a[0]) * r / 2);
+    var m = 2 * 6371000 * Math.asin(Math.min(1, Math.sqrt(h * h + Math.cos(a[1] * r) * Math.cos(b[1] * r) * k * k))) / 100;   // metres a pixel
+    if (!(m > 0)) { el.hidden = true; return; }
+    var most = (cw < 500 ? 80 : 110) * m, e = Math.pow(10, Math.floor(Math.log(most) / Math.LN10)), len = most >= 5 * e ? 5 * e : most >= 2 * e ? 2 * e : e;
+    el.hidden = false;
+    el.lastChild.style.width = (len / m).toFixed(1) + 'px';
+    var t = L().scaleLen(len);
+    if (el.firstChild.textContent !== t) el.firstChild.textContent = t;
+  }
+  function placeScale() {   // above the corner's credits, or the legend where it runs along the map's foot
+    var el = $('mapScale'), lg = $('mapLegend'), at = $('satAttr'), b = 12;
+    if (!at.hidden) b = at.offsetHeight + 12;
+    else if (!lg.hidden && lg.offsetLeft + lg.offsetWidth > mapEl.clientWidth - 150) b = lg.offsetHeight + 18;
+    el.style.bottom = b + 'px';
+  }
   function renderZoomButtons() {
     if (!cur || !vb) return;
     var lim = zoomLimits(), u = vb.w / (mapEl.clientWidth || 1);
@@ -1793,13 +1902,14 @@ footer p { max-width: 52em; }
   // their names give way (map/vinous/vineyards.json outlines where).
   var VIN_URL = 'map/vinous/vineyards.json', VIN_VIEW = 'california', VIN_MPP = 160;
   var VIN_BOX = [438.3, 88.5, 462.1, 123.4];   // the file's box, to know before it comes when it is wanted
-  var VIN = { on: true, req: null, failed: 0, data: null, g: null, cover: null, shown: false, near: false, places: [], w: {} };
+  var VIN = { on: true, req: null, failed: 0, data: null, g: null, cover: null, shown: false, near: false, places: [], w: {},
+    findable: false, box: null, idx: null, sel: null, lit: [], hl: null, rows: [], act: -1 };   // and what a search found
   try { VIN.on = localStorage.getItem('terroir.vinous') !== '0'; } catch (e) {}
-  // Napa, close enough for its vineyards
-  function vinNear(b) {
+  // Napa, close enough for its vineyards, or for finding them
+  function vinNear(b, mpp) {
     if (!cur || cur.id !== VIN_VIEW || !cur.U || !b) return false;
     if (b.x > VIN_BOX[2] || b.x + b.w < VIN_BOX[0] || b.y > VIN_BOX[3] || b.y + b.h < VIN_BOX[1]) return false;
-    return b.w / (mapEl.clientWidth || 1) * 6371000 / cur.proj.scale <= VIN_MPP;
+    return b.w / (mapEl.clientWidth || 1) * 6371000 / cur.proj.scale <= (mpp || VIN_MPP);
   }
   function vinLoad() {
     VIN.req = fetch(VIN_URL).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
@@ -1810,7 +1920,9 @@ footer p { max-width: 52em; }
         d.parcels.forEach(function (p, i) { h += '<path class="vp ' + (p[0] < 0 ? 'cx' : 'c' + d.names[p[0]][1]) + '" data-p="' + i + '" d="' + p[3] + '"/>'; });
         g.innerHTML = h;
         try { VIN.cover = new Path2D(d.cover); } catch (e) { VIN.cover = null; }
-        VIN.data = d; VIN.g = g; VIN.places = vinPlaces(d);
+        VIN.data = d; VIN.g = g; VIN.places = vinPlaces(d); VIN.idx = null;
+        if (VIN.sel) vinShowSel();
+        if (document.activeElement === $('findIn') && $('findIn').value) findRender();   // typed while it came
         Object.keys(AP.areas).forEach(function (id) { vinMark(AP.areas[id]); });
         vinUpdate();
       })
@@ -1852,7 +1964,7 @@ footer p { max-width: 52em; }
         var e = (p[4] - cx) * (p[4] - cx) + (p[5] - cy) * (p[5] - cy);
         if (e < bd) { bd = e; best = p; }
       });
-      return best && { text: text, ha: ha, x: best[4], y: best[5] };
+      return best && { text: text, ha: ha, x: best[4], y: best[5], list: list };
     };
     Object.keys(byOwner).forEach(function (o) {
       var list = byOwner[o];
@@ -1869,12 +1981,13 @@ footer p { max-width: 52em; }
           bl.forEach(function (i) { up[i] = i; });
           bl.forEach(function (i, a) { for (var b = 0; b < a; b++) if (near(box[i], box[bl[b]])) up[top(i)] = top(bl[b]); });
           bl.forEach(function (i) { var r = top(i); (sub[r] = sub[r] || []).push(i); });
-          Object.keys(sub).forEach(function (r) { var q = spot(sub[r], d.names[n][0]); if (q) parts.push(q); });
+          Object.keys(sub).forEach(function (r) { var q = spot(sub[r], d.names[n][0]); if (q) { q.n = +n; parts.push(q); } });
         });
         pl.parts = parts;
         places.push(pl);
       });
     });
+    VIN.box = box;
     return places;
   }
   function vinWidth(text) { return VIN.w[text] || (VIN.w[text] = apWidth(text, 6)); }
@@ -1885,7 +1998,8 @@ footer p { max-width: 52em; }
     if (near && VIN.on && !VIN.data && !VIN.req && Date.now() - VIN.failed > 15000) vinLoad();
     if (on) { var layer = apSvg.querySelector('.g-ap'); if (layer && VIN.g.parentNode !== layer) layer.appendChild(VIN.g); }
     if (VIN.g) VIN.g.style.display = on ? '' : 'none';
-    if (near !== VIN.near) { VIN.near = near; renderMapChrome(); }
+    var findable = vinNear(vb, VIN_FIND_MPP);
+    if (near !== VIN.near || findable !== VIN.findable) { VIN.near = near; VIN.findable = findable; renderMapChrome(); }
     if (on !== VIN.shown) {
       VIN.shown = on; mapEl.classList.toggle('vin', on); renderLegend();
       if (AP.shown) { apLabels(); placeAll(true); }
@@ -1914,6 +2028,186 @@ footer p { max-width: 52em; }
     if (p[1] >= 0) bits.push(apName(d.avas[p[1]]));
     bits.push(l.apAreaUS(fmtHa(p[2])));
     return '<b>' + esc(p[0] >= 0 ? d.names[p[0]][0] : l.vinUnnamed) + '</b><br>' + esc(bits.join(' · ')) + '<br><span class="tip-src">' + esc(l.vinSource) + '</span>';
+  }
+
+  // ---------- finding an owner or a vineyard of Vinous's by name ----------
+  // A field beside the way back, once the map is near Napa (a little farther out than the vineyards
+  // show). Its suggestions are the owners whose name has what is typed, each with its vineyards, then
+  // the vineyards whose own name has it, and first, when these are more than one owner's, all of
+  // them. The one chosen is lit, the rest fade, only it is named, and the map moves to show it all
+  var VIN_FIND_MPP = 250;
+  // a name for matching: lower case, no accents, stops or apostrophes, its spaces and dashes single
+  // spaces; with where in the name each of its letters came from
+  function fold(t) {
+    var s = '', at = [];
+    for (var i = 0; i < t.length; i++) {
+      var c = (t[i].normalize ? t[i].normalize('NFD') : t[i]).replace(/[̀-ͯ]/g, '').toLowerCase();
+      if (!c || /^['’‘`.]$/.test(c)) continue;
+      if (/^[\s\-–—\/,&()#+:;]$/.test(c)) { if (s && s[s.length - 1] !== ' ') { s += ' '; at.push(i); } continue; }
+      for (var j = 0; j < c.length; j++) { s += c[j]; at.push(i); }
+    }
+    if (s[s.length - 1] === ' ') { s = s.slice(0, -1); at.pop(); }
+    return { s: s, at: at };
+  }
+  function mark(text, fq) {   // the name, with what matched in bold
+    var f = fold(text), k = fq ? f.s.indexOf(fq) : -1;
+    if (k < 0) return esc(text);
+    var a = f.at[k], b = f.at[k + fq.length - 1] + 1;
+    return esc(text.slice(0, a)) + '<b>' + esc(text.slice(a, b)) + '</b>' + esc(text.slice(b));
+  }
+  function vinIndex() {   // each name with its owner, land and AVA; each owner with its names and places
+    if (VIN.idx) return VIN.idx;
+    var d = VIN.data, owners = {};
+    var names = d.names.map(function (nm, n) {
+      var k = nm[0].indexOf(' - ');
+      return { n: n, text: nm[0], own: (k > 0 ? nm[0].slice(0, k) : nm[0]).trim(), part: k > 0 ? nm[0].slice(k + 3).trim() : nm[0],
+        c: nm[1], f: fold(nm[0]).s, ha: 0, at: {}, ava: -1, places: 0 };
+    });
+    d.parcels.forEach(function (p) { if (p[0] >= 0) { var x = names[p[0]]; x.ha += p[2]; if (p[1] >= 0) x.at[p[1]] = (x.at[p[1]] || 0) + p[2]; } });
+    names.forEach(function (x) {
+      var o = owners[x.own] || (owners[x.own] = { text: x.own, f: fold(x.own).s, c: x.c, ha: 0, names: [], places: 0 });
+      o.ha += x.ha; o.names.push(x);
+      Object.keys(x.at).forEach(function (a) { if (x.ava < 0 || x.at[a] > x.at[x.ava]) x.ava = +a; });   // where most of it lies
+    });
+    VIN.places.forEach(function (pl) { if (owners[pl.text]) owners[pl.text].places++; pl.parts.forEach(function (q) { names[q.n].places++; }); });
+    Object.keys(owners).forEach(function (k) { owners[k].names.sort(function (a, b) { return b.ha - a.ha; }); });
+    return (VIN.idx = { names: names, owners: owners });
+  }
+  function vinFind(q) {
+    var I = vinIndex(), fq = fold(q).s, rows = [], seen = {}, whose = {}, os = [], ns = [];
+    if (!fq) return rows;
+    var rank = function (f) { var k = f.indexOf(fq); return k < 0 ? -1 : k === 0 ? 0 : f[k - 1] === ' ' ? 1 : 2; };
+    var by = function (a, b) { return a[0] - b[0] || b[1].ha - a[1].ha; };
+    Object.keys(I.owners).forEach(function (k) { var o = I.owners[k], r = rank(o.f); if (r >= 0) os.push([r, o]); });
+    os.sort(by).forEach(function (x) {
+      var o = x[1];
+      rows.push({ kind: 'owner', o: o, names: o.names, text: o.text });
+      if (o.names.length > 1 || o.names[0].text !== o.text) o.names.forEach(function (nm) { rows.push({ kind: 'sub', nm: nm, names: [nm], text: nm.text }); });
+      o.names.forEach(function (nm) { seen[nm.n] = 1; });
+      whose[o.text] = 1;
+    });
+    I.names.forEach(function (nm) { if (!seen[nm.n]) { var r = rank(nm.f); if (r >= 0) ns.push([r, nm]); } });
+    ns.sort(by).forEach(function (x) { rows.push({ kind: 'name', nm: x[1], names: [x[1]], text: x[1].text }); whose[x[1].own] = 1; });
+    if (fq.length >= 3 && Object.keys(whose).length > 1) {   // all of them: first, unless an owner has just that name
+      var all = [], row;
+      rows.forEach(function (r) { if (r.kind !== 'sub') all = all.concat(r.names); });
+      row = { kind: 'all', names: all, text: q.trim() };
+      if (os.some(function (x) { return x[1].f === fq; })) rows.push(row); else rows.unshift(row);
+    }
+    return rows.slice(0, 60);
+  }
+  function findRender() {   // the suggestions for what is in the field
+    var l = L(), fi = $('findIn'), fq = fold(fi.value).s, h = '';
+    if (!fq) { findClose(); return; }
+    VIN.rows = [];
+    if (!VIN.data) {
+      if (!VIN.req) vinLoad();
+      h = '<li class="mf-none">' + esc(l.findWait) + '</li>';
+    } else {
+      VIN.rows = vinFind(fi.value);
+      if (!VIN.rows.length) h = '<li class="mf-none">' + esc(l.findNone) + '</li>';
+      VIN.rows.forEach(function (r, k) {
+        var t, m, sw = -1, ha = 0, n = 0;
+        r.names.forEach(function (nm) { ha += nm.ha; n += nm.places; });
+        if (r.kind === 'owner') { t = mark(r.o.text, fq); m = l.findWhere(r.o.places, fmtHa(r.o.ha)); sw = r.o.c; }
+        else if (r.kind === 'all') { t = esc(l.findAll(r.text)); m = l.findWhere(n, fmtHa(ha)); }
+        else {
+          t = mark(r.kind === 'sub' ? r.nm.part : r.nm.text, fq);
+          m = (r.nm.ava >= 0 ? apName(VIN.data.avas[r.nm.ava].trim()) + ' · ' : '') + l.findHa(fmtHa(r.nm.ha));
+          if (r.kind === 'name') sw = r.nm.c;
+        }
+        h += '<li class="mf-o ' + r.kind + '" role="option" id="fo' + k + '" aria-selected="false" data-k="' + k + '">' +
+          (sw >= 0 ? '<i class="mf-sw c' + sw + '"></i>' : '') + '<span class="mf-t">' + t + '</span><span class="mf-m">' + esc(m) + '</span></li>';
+      });
+    }
+    $('findList').innerHTML = h;
+    VIN.act = -1;
+    findOpen();
+    $('findLive').textContent = VIN.data ? l.findCount(VIN.rows.length) : l.findWait;
+  }
+  function findOpen() {   // as wide as the map allows, and kept inside it
+    var list = $('findList'), mw = mapEl.clientWidth, x0 = $('mapFind').getBoundingClientRect().left - mapEl.getBoundingClientRect().left;
+    var w = Math.min(300, mw - 20);
+    list.style.width = w + 'px';
+    list.style.left = Math.min(0, mw - 10 - x0 - w) + 'px';
+    list.style.maxHeight = Math.max(120, Math.min(264, mapEl.clientHeight - 60)) + 'px';
+    list.hidden = false;
+    $('findIn').setAttribute('aria-expanded', 'true');
+  }
+  function findClose() {
+    $('findList').hidden = true; VIN.act = -1;
+    $('findIn').setAttribute('aria-expanded', 'false'); $('findIn').removeAttribute('aria-activedescendant');
+  }
+  function findAct(k) {   // the suggestion the arrow keys or the pointer are on
+    var list = $('findList'), fi = $('findIn'), was = VIN.act >= 0 ? $('fo' + VIN.act) : null, el = k >= 0 ? $('fo' + k) : null;
+    if (was) was.setAttribute('aria-selected', 'false');
+    VIN.act = el ? k : -1;
+    if (!el) { fi.removeAttribute('aria-activedescendant'); return; }
+    el.setAttribute('aria-selected', 'true'); fi.setAttribute('aria-activedescendant', el.id);
+    if (el.offsetTop < list.scrollTop) list.scrollTop = el.offsetTop - 4;
+    else if (el.offsetTop + el.offsetHeight > list.scrollTop + list.clientHeight) list.scrollTop = el.offsetTop + el.offsetHeight - list.clientHeight + 4;
+  }
+  function vinSelect(r) {   // a suggestion chosen: its vineyards lit, named, and in view
+    var l = L(), names = {}, hits = [], n = 0, ha = 0;
+    if (!r || !VIN.data) return;
+    r.names.forEach(function (nm) { names[nm.n] = 1; ha += nm.ha; });
+    VIN.data.parcels.forEach(function (p, i) { if (p[0] >= 0 && names[p[0]]) hits.push(i); });
+    VIN.places.forEach(function (pl) {
+      if (r.kind === 'owner') { if (pl.text === r.o.text) n++; }
+      else pl.parts.forEach(function (q) { if (names[q.n]) n++; });
+    });
+    VIN.sel = { kind: r.kind === 'owner' ? 'owner' : 'name', names: names, hits: hits, n: n, ha: ha, text: r.text, all: r.kind === 'all' };
+    $('findIn').value = r.text;
+    findClose();
+    if (!VIN.on) { VIN.on = true; try { localStorage.setItem('terroir.vinous', '1'); } catch (e) {} renderMapChrome(); }
+    vinShowSel(); findSummary();
+    $('findLive').textContent = l.findSaid(selName(), n, fmtHa(ha));
+    vinFocus(); vinUpdate();
+    if (AP.shown) { apLabels(); placeAll(true); }
+  }
+  function vinShowSel() {   // what was found, lit and outlined; the rest faded
+    var g = VIN.g, sel = VIN.sel, d = '';
+    if (!g) return;
+    VIN.lit.forEach(function (i) { g.children[i].classList.remove('hit'); });
+    VIN.lit = sel ? sel.hits : [];
+    g.classList.toggle('find', !!sel); mapEl.classList.toggle('finding', !!sel);
+    if (VIN.hl) { VIN.hl.remove(); VIN.hl = null; }
+    if (!sel) return;
+    sel.hits.forEach(function (i) { g.children[i].classList.add('hit'); d += VIN.data.parcels[i][3]; });
+    VIN.hl = document.createElementNS(NS, 'g'); VIN.hl.setAttribute('class', 'vin-hl');
+    VIN.hl.innerHTML = '<path class="vh-c" d="' + d + '"/><path class="vh-l" d="' + d + '"/>';
+    g.appendChild(VIN.hl);
+  }
+  // The map moved to show all that was found, in the part of it the search above and a legend along
+  // its foot leave clear, no farther out than the vineyards show
+  function vinFocus() {
+    var sel = VIN.sel, d = VIN.data;
+    if (!sel || !sel.hits.length || !cur || cur.id !== VIN_VIEW) return;
+    var b = [Infinity, Infinity, -Infinity, -Infinity];
+    sel.hits.forEach(function (i) { var x = VIN.box[i]; b[0] = Math.min(b[0], x[0]); b[1] = Math.min(b[1], x[1]); b[2] = Math.max(b[2], x[2]); b[3] = Math.max(b[3], x[3]); });
+    var box = pad([d.origin[0] + b[0] * d.unit, d.origin[1] + b[1] * d.unit, d.origin[0] + b[2] * d.unit, d.origin[1] + b[3] * d.unit], 0.15, 1500 * d.unit);
+    var cw = mapEl.clientWidth || 1, ch = mapEl.clientHeight || 1, mr = mapEl.getBoundingClientRect(), lg = $('mapLegend');
+    var top = Math.max(0, $('mapBar').getBoundingClientRect().bottom - mr.top + 6), bot = 0;
+    if (!lg.hidden) { var lr = lg.getBoundingClientRect(); if (lr.width > cw * 0.6) bot = mr.bottom - lr.top + 6; }
+    var fh = Math.max(ch * 0.4, ch - top - bot);   // the clear height, in pixels
+    var u = Math.min(Math.max((box[2] - box[0]) / cw, (box[3] - box[1]) / fh), VIN_MPP * 0.9 * cur.proj.scale / 6371000);
+    var cx = (box[0] + box[2]) / 2, cy = (box[1] + box[3]) / 2;
+    moveTo({ x: cx - cw / 2 * u, y: cy - (top + fh / 2) * u, w: cw * u, h: ch * u }, true, 700);
+  }
+  function selName() { var sel = VIN.sel; return sel ? (sel.all ? L().findAll(sel.text) : sel.text) : ''; }
+  function findSummary() {   // how many places and how much land, under the field
+    var b = $('findSum'), sel = VIN.sel, l = L();
+    $('findX').hidden = !$('findIn').value && !sel;
+    b.hidden = !sel;
+    if (!sel) return;
+    b.textContent = l.findWhere(sel.n, fmtHa(sel.ha)); b.title = l.findGo;
+    b.setAttribute('aria-label', l.findSaid(selName(), sel.n, fmtHa(sel.ha)) + ' · ' + l.findGo);
+  }
+  function findClear() {
+    $('findIn').value = ''; VIN.sel = null;
+    findClose(); vinShowSel(); findSummary();
+    $('findLive').textContent = '';
+    if (AP.shown) { apLabels(); placeAll(true); }
   }
 
   // ---------- chrome, language ----------
@@ -1994,6 +2288,31 @@ footer p { max-width: 52em; }
     vinUpdate(); renderMapChrome();
   });
   $('zoomOut').addEventListener('click', function () { zoomBy(0.5, null, null, true); });
+  // the search: typing suggests, the arrow keys and the pointer choose, Escape closes or clears
+  var findIn = $('findIn');
+  findIn.addEventListener('input', function () { findSummary(); findRender(); });
+  findIn.addEventListener('focus', function () { if (!VIN.data && !VIN.req) vinLoad(); });
+  findIn.addEventListener('keydown', function (e) {
+    var open = !$('findList').hidden, n = VIN.rows.length;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (!open) { findRender(); return; }
+      if (n) { var k = VIN.act + (e.key === 'ArrowDown' ? 1 : -1); findAct(k < 0 ? n - 1 : k >= n ? 0 : k); }
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (!open) findRender();
+      if (VIN.rows.length) vinSelect(VIN.rows[VIN.act >= 0 ? VIN.act : 0]);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      if (open) findClose(); else if (findIn.value || VIN.sel) findClear();
+    }
+  });
+  findIn.addEventListener('blur', function () { setTimeout(function () { if (document.activeElement !== findIn) findClose(); }, 150); });
+  $('findList').addEventListener('mousedown', function (e) { e.preventDefault(); });   // the field keeps the focus
+  $('findList').addEventListener('click', function (e) { var li = e.target.closest('[data-k]'); if (li) vinSelect(VIN.rows[+li.getAttribute('data-k')]); });
+  $('findList').addEventListener('mousemove', function (e) { var li = e.target.closest('[data-k]'); if (li && +li.getAttribute('data-k') !== VIN.act) findAct(+li.getAttribute('data-k')); });
+  $('findX').addEventListener('click', function () { findClear(); findIn.focus(); });
+  $('findSum').addEventListener('click', vinFocus);
   // a mouse or pen drags the map; on a touch screen one finger scrolls the page and two move the map
   mapEl.addEventListener('pointerdown', function (e) {
     lastPointer = e.pointerType;
@@ -2021,7 +2340,7 @@ footer p { max-width: 52em; }
   window.addEventListener('pointercancel', endDrag);
   mapEl.addEventListener('click', function (e) { if (Date.now() < suppressUntil) { e.stopPropagation(); e.preventDefault(); } }, true);
   mapEl.addEventListener('wheel', function (e) {
-    if (!cur) return;
+    if (!cur || e.target.closest('.mapfind')) return;   // the suggestions scroll
     if (!(e.ctrlKey || e.metaKey)) { showHint('wheel'); return; }   // the page scrolls on
     e.preventDefault();
     var r = mapEl.getBoundingClientRect(), dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaMode === 2 ? e.deltaY * r.height : e.deltaY;
@@ -2054,18 +2373,18 @@ footer p { max-width: 52em; }
       var u0 = pinch.b.w / cw, u = Math.min(lim.max, Math.max(lim.min, u0 * pinch.d / t.d));
       var px = pinch.b.x + pinch.x * u0, py = pinch.b.y + pinch.y * u0;
       moveTo({ x: px - t.x * u, y: py - t.y * u, w: u * cw, h: u * ch }, false);
-    } else if (!pinch && e.touches.length === 1 && cur) showHint('touch');
+    } else if (!pinch && e.touches.length === 1 && cur && !e.target.closest('.mapfind')) showHint('touch');
   }, { passive: false });
   var endTouch = function (e) { if (pinch && e.touches.length < 2) { pinch = null; suppressUntil = Date.now() + 400; settled(); } };
   mapEl.addEventListener('touchend', endTouch);
   mapEl.addEventListener('touchcancel', endTouch);
   mapEl.addEventListener('dblclick', function (e) {
-    if (!cur || e.target.closest('button')) return;
+    if (!cur || e.target.closest('button, .mapbar')) return;
     var r = mapEl.getBoundingClientRect();
     zoomBy(e.shiftKey ? 0.5 : 2, e.clientX - r.left, e.clientY - r.top, true);
   });
   mapEl.addEventListener('keydown', function (e) {
-    if (!cur || e.altKey || e.ctrlKey || e.metaKey) return;
+    if (!cur || e.altKey || e.ctrlKey || e.metaKey || e.target.closest('.mapfind')) return;   // typing a name
     var k = e.key, b = animTarget || vb;
     if (k === '+' || k === '=') zoomBy(2, null, null, true);
     else if (k === '-' || k === '_') zoomBy(0.5, null, null, true);
@@ -2106,7 +2425,7 @@ footer p { max-width: 52em; }
   window.addEventListener('scroll', hideTip, { passive: true });
 
   // the map follows its frame's size
-  var refit = function () { if (!cur) return; cancelAnimationFrame(anim); animTarget = null; mapEl.classList.remove('moving'); setViewBox(targetBox()); settled(); };
+  var refit = function () { if (!cur) return; cancelAnimationFrame(anim); animTarget = null; mapEl.classList.remove('moving'); setViewBox(targetBox()); placeScale(); settled(); };
   if ('ResizeObserver' in window) new ResizeObserver(refit).observe(mapEl); else window.addEventListener('resize', refit);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { items.forEach(function (it) { it.tw = null; }); VIN.w = {}; if (cur) placeAll(true); });
 
