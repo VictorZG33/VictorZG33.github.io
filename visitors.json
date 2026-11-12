@@ -1,7 +1,7 @@
 {
- "updated": "2026-11-10",
+ "updated": "2026-11-12",
  "since": "2026-10-23",
- "total": 83,
+ "total": 85,
  "countries": [
   {
    "code": "US",
@@ -25,6 +25,13 @@
    "lon": 107.83
   },
   {
+   "code": "CA",
+   "name": "Canada",
+   "count": 2,
+   "lat": 60,
+   "lon": -95
+  },
+  {
    "code": "AT",
    "name": "Austria",
    "count": 1,
@@ -32,11 +39,11 @@
    "lon": 13.33
   },
   {
-   "code": "CA",
-   "name": "Canada",
+   "code": "HR",
+   "name": "Croatia",
    "count": 1,
-   "lat": 60,
-   "lon": -95
+   "lat": 45.17,
+   "lon": 15.5
   }
  ]
 }
