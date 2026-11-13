@@ -23,22 +23,32 @@ rotation and shift, from the map's SVG units to the California view's. Then, for
      buildings, water, terrain or lines. A fill is terrain if one of its shapes covers 60 ha or more,
      or its shapes cover 20 ha and wind like the bands between contours (by area, less compact than
      0.3, where a circle is 1 and a vineyard's block about 0.6).
-  2. Vinous names a vineyard in a box laid over it, or beside it with a thin line to a dot on it.
-     Each box's name is read by Tesseract from the box's own glyphs, drawn alone line by line;
+  2. Vinous names a place in a box laid over it, or beside it with a thin line to a dot. Each
+     box's name is read by Tesseract from the box's own glyphs, drawn alone line by line;
      Coombsville's text is live. vinous-names.json corrects what Tesseract misreads.
-  3. The parcel under a box, or at the end of its line, is the name's. Vinous gives an owner's
-     parcels one look, so parcels that look the same within 80 m of it, and of those, are the name's
-     too, each going to the nearest name where two reach it. Looking the same is having the same
-     fill, or, for patterns, about the same mean colour as drawn, over the same fill beneath:
-     Coombsville gives each parcel a pattern of its own. Parcels in a vineyard pattern that no name
+  3. A line starts just beyond its box, past the shadow the box casts, and ends on a dot. The dot
+     names the vineyard it is on: the one that shows most under the dot, with the blocks in the same
+     fill, the lanes between them closed (Vinous sets a dot in a vineyard, on its edge or on a
+     lane through it), if that holds a quarter of the dot, twice what any other vineyard there
+     holds, and is more than a scrap of colour the dot nearly covers. Where two names' dots are on
+     one vineyard, it is the name's whose dot is further inside. Any other dot, on buildings, on a
+     winery's yard, between two vineyards or on another name's vineyard, marks a place, a winery
+     mostly, kept as a point. A name with no line has the parcel under its box, or just beside
+     it, unless a dot names it. Vinous gives an owner's parcels one look, so parcels that look the
+     same within 80 m of a name's, and of those, are the name's too, each going to the nearest
+     name where two reach it, and none that another name has. Looking the same is having the same
+     fill, or, for patterns, about the same mean colour as drawn, with stripes of about the same
+     colour, over the same fill beneath: Coombsville gives each parcel a pattern of its own, and the
+     other maps' blocks often a copy of their owner's. Parcels in a vineyard pattern that no name
      reaches are kept, unnamed.
 
 Then, where maps overlap, a parcel is kept from the map that shows there: the map of its own AVA
 (the UC Davis boundary) first, Pritchard Hill over all of its own ground, else the map whose AVA is
-nearest. Each owner (the name before ' - ') gets a colour from the page's palette so that
-neighbouring owners differ and each colour covers about as much as the others, and the parcels
-are written in the California view's units as relative paths in metres, with the outline of what
-the maps cover, where the page's open-data vineyards give way.
+nearest, and so is a place. Each owner (the name before ' - ') gets a colour from the page's
+palette so that neighbouring owners differ and each colour covers about as much as the others, and
+the parcels are written in the California view's units as relative paths in metres, with the
+places and the outline of what the maps cover, where the page's open-data vineyards and wineries
+give way.
 """
 import json, math, os, re, subprocess, sys, tempfile, time, collections
 import multiprocessing as mp
@@ -58,6 +68,10 @@ RENDER = os.path.join(HERE, 'render-svg.cjs')
 
 BAND = 3          # pixels (at 1 a point) round what a map draws, still its own
 REACH = 80        # metres: a name's parcels of one fill reach this far from each other
+LEAD = 6          # SVG units: how far beyond its box a leader line may start (past the box's shadow)
+LANE = 2          # SVG units: half the widest lane between an owner's blocks that a dot may sit on
+ON = 0.25         # how much of a dot its vineyard must hold, for the dot to name it
+INK = 40          # how far apart, in RGB, two patterns' stripes may be and the patterns still look alike
 TERRAIN = 60e4    # square metres: a fill with a shape this large is terrain, not a vineyard
 COLOURS = 8       # the page's palette for names
 
@@ -231,7 +245,7 @@ def owner_at(sheets, X, Y):
 
 # ---------- an SVG, shape by shape ----------
 
-DARK = re.compile(r'^(black|#000|#000000|#1d1d1b|#1a1a18|#3c3c3b|#192223|#231f20)$', re.I)
+DARK = re.compile(r'^(black|#000|#000000|#1d1d1b|#1a1a18|#3c3c3b|#192223|#231f20|#27272b)$', re.I)
 WHITE = re.compile(r'^(white|#fff|#ffffff|#fefefe)$', re.I)
 
 
@@ -447,6 +461,7 @@ def join_lines(lines):
 
 def learn(sh, path, pool, fixes={}):
     from shapely.geometry import Polygon, Point
+    from shapely.ops import unary_union
     from shapely.strtree import STRtree
     shapes, strokes, boxes, live = read_svg(path)
     m = sh.m
@@ -479,30 +494,32 @@ def learn(sh, path, pool, fixes={}):
         names[bi] = join_lines(texts)
     for bi in range(len(boxes)):   # what Tesseract misreads, as vinous-names.json has it
         if f'{sh.id}:{bi}' in fixes: names[bi] = fixes[f'{sh.id}:{bi}']
-    # leader lines: thin dark strokes from a box out to a dot on a parcel
-    dots = [s['geom'] for s in shapes if DARK.match(s['fill']) and s['k'] not in text_k and 0.4 < s['geom'].area < 12
-            and s['geom'].area / max(s['geom'].envelope.area, 1e-9) > 0.55]
+    # leader lines: thin dark strokes from a box out to a dot. A box casts a shadow, so a line starts
+    # up to LEAD beyond its box; it ends on a dot, which tells it from a railway's ticks or lettering
+    round_ = lambda g: 4 * math.pi * g.area / max(g.length ** 2, 1e-9) > 0.88
+    dark = [s for s in shapes if DARK.match(s['fill']) and s['k'] not in text_k]
+    dots = [s['geom'] for s in dark if 2 < s['geom'].area < 80 and round_(s['geom'])]
     dtree = STRtree(dots) if dots else None
     leaders = [st for st in strokes if DARK.match(st['stroke']) and st['sw'] <= 0.6]
     ends = STRtree([Point(st['pts'][0]) for st in leaders] + [Point(st['pts'][-1]) for st in leaders]) if leaders else None
-    anchors = collections.defaultdict(list)
+    raw = [Polygon(b['ring']) for b in boxes]
+    anchors = collections.defaultdict(list)   # box: [(the middle of the dot its line ends on, the dot)]
     for li, st in enumerate(leaders):
         a, b = Point(st['pts'][0]), Point(st['pts'][-1])
-        for end, far in ((a, b), (b, a)):
-            hit = [int(i) for i in btree.query(end.buffer(1.5)) if bpolys[int(i)].buffer(1.5).contains(end) and not bpolys[int(i)].buffer(1.5).contains(far)]
-            if not hit: continue
-            seen = {li}
-            for _ in range(3):   # a line drawn in pieces: on to the end of the next piece
-                nxt = [int(j) % len(leaders) for j in ends.query(far.buffer(0.5)) if int(j) % len(leaders) not in seen]
-                if not nxt: break
-                j = nxt[0]; seen.add(j)
-                pa, pb = Point(leaders[j]['pts'][0]), Point(leaders[j]['pts'][-1])
-                far = pb if pa.distance(far) < pb.distance(far) else pa
-            if dtree is not None:
-                near = [dots[int(j)] for j in dtree.query(far.buffer(2.0))]
-                if near: far = min(near, key=lambda d: d.distance(far)).centroid
-            anchors[hit[0]].append(far)
-            break
+        near = [(raw[int(i)].distance(end), int(i), far) for end, far in ((a, b), (b, a)) for i in btree.query(end.buffer(LEAD))]
+        near = [x for x in near if x[0] <= LEAD and raw[x[1]].distance(x[2]) > LEAD]
+        if not near: continue
+        _, bi, far = min(near, key=lambda x: x[0])
+        seen = {li}
+        for _ in range(3):   # a line drawn in pieces: on to the end of the next piece
+            nxt = [int(j) % len(leaders) for j in ends.query(far.buffer(0.5)) if int(j) % len(leaders) not in seen]
+            if not nxt: break
+            j = nxt[0]; seen.add(j)
+            pa, pb = Point(leaders[j]['pts'][0]), Point(leaders[j]['pts'][-1])
+            far = pb if pa.distance(far) < pb.distance(far) else pa
+        on = [dots[int(j)] for j in dtree.query(far.buffer(1.0)) if dots[int(j)].distance(far) <= 1.0] if dtree is not None else []
+        dot = min(on, key=lambda g: g.centroid.distance(far)) if on else None
+        if dot is not None: anchors[bi].append((dot.centroid, dot))
     # the parcels
     rgb = {s['fill']: hexrgb(s['fill']) for s in shapes}
     biggest, total, curvy = collections.defaultdict(float), collections.defaultdict(float), collections.defaultdict(float)
@@ -517,7 +534,7 @@ def learn(sh, path, pool, fixes={}):
             c = rgb.get(f)
             if c is None: return False
             r, g, b = c
-            if b > 200 and b - r > 25 and g > 170 and b - g > 5: return False      # water
+            if b > 200 and b - r > 25 and g - r > 20 and g > 170 and b - g > 5: return False   # water: a cyan blue, not lavender
             if max(c) - min(c) < 18 and max(c) < 215: return False                 # buildings, paving
             if biggest[f] * m * m > TERRAIN: return False                          # terrain
             if total[f] * m * m > 20e4 and curvy[f] / total[f] < 0.3: return False   # bands of it
@@ -539,25 +556,6 @@ def learn(sh, path, pool, fixes={}):
                 drop.add(low)
                 if not cands[low]['fill'].startswith('url('): cands[top]['base'] = cands[low]['fill']
     cands = [s for i, s in enumerate(cands) if i not in drop]
-    tree = STRtree([s['geom'] for s in cands])
-    def topmost_at(p, box=None):
-        hits = [cands[int(i)] for i in tree.query(p) if cands[int(i)]['geom'].contains(p)]
-        if hits: return max(hits, key=lambda s: s['k'])
-        if box is not None:   # a box beside its parcel, or over its edge
-            near = [(cands[int(i)]['geom'].intersection(box.buffer(1.0)).area, cands[int(i)]) for i in tree.query(box.buffer(1.0))]
-            near = [x for x in near if x[0] > 0]
-            if near: return max(near, key=lambda x: (x[0], x[1]['k']))[1]
-        reach = box.buffer(12) if box is not None else p.buffer(3.0)   # a box set just beside its parcel
-        near = [cands[int(i)] for i in tree.query(reach)]
-        target = box if box is not None else p
-        near = [s for s in near if s['geom'].distance(target) <= (12 if box is not None else 3)]
-        return min(near, key=lambda s: s['geom'].distance(target)) if near else None
-    seeds = []
-    for bi, bp in enumerate(bpolys):
-        if not names.get(bi): continue
-        for p in anchors.get(bi) or [bp.centroid]:
-            s = topmost_at(p, None if anchors.get(bi) else bp)
-            if s is not None: seeds.append((bi, s))
     # how each patterned parcel looks: its mean colour as drawn. Coombsville gives every parcel a
     # pattern of its own, so an owner's blocks share a look rather than a fill
     lo = drawing(sh.cfg, 1)
@@ -574,37 +572,121 @@ def learn(sh, path, pool, fixes={}):
             ImageDraw.Draw(img).polygon([(x - x0, y - y0) for x, y in poly.exterior.coords], fill=1)
         px = lo[y0:y1, x0:x1][np.asarray(img, bool) & ~covered[y0:y1, x0:x1]].astype(np.float32)
         px = px[(px.min(axis=1) < 235) & (px.max(axis=1) > 90)]   # not the paper of a box over it, nor text
-        if len(px) >= 4: s['look'] = px.mean(axis=0)
+        if len(px) >= 4:
+            lum = px.sum(axis=1)
+            s['look'], s['ink'] = px.mean(axis=0), px[lum <= np.percentile(lum, 30)].mean(axis=0)   # and its stripes' colour
     def alike(a, b):
         if a['fill'] == b['fill']: return True
         if 'look' not in a or 'look' not in b: return False
         d = np.linalg.norm(a['look'] - b['look'])
-        return d < 30 if a.get('base') and a.get('base') == b.get('base') else d < 12
-    # each name's parcels: its own, and those alike near it, chained, each to the nearest name
-    D = REACH / m
+        return (d < 30 if a.get('base') and a.get('base') == b.get('base') else d < 12) and np.linalg.norm(a['ink'] - b['ink']) < INK
+    tree = STRtree([s['geom'] for s in cands])
     index = {s['k']: i for i, s in enumerate(cands)}
-    owner, dist, seed_of = {}, {}, {}
-    for bi, s0 in seeds:
-        start = index[s0['k']]
+    kin = lambda a, b: a['fill'] == b['fill'] and a.get('base') == b.get('base')   # one fill: one vineyard's
+    def under_dot(disc):
+        """The vineyard a dot names, and how much of the dot it holds. Vinous sets a vineyard's dot in it,
+        on its edge or on a lane through it: the vineyard is the one that shows most under the dot, with
+        the blocks in its very fill, the lanes between them closed (blocks that only look alike, as two
+        pale patterns do, may be two owners'). It must hold ON of the dot and twice what any other
+        vineyard there holds, and be more than a scrap of colour the dot nearly covers: a dot on
+        buildings, on a winery's yard or between two vineyards marks a place, a winery mostly."""
+        near = [cands[int(i)] for i in tree.query(disc.buffer(3 * LANE))]
+        shown, over = [], None
+        for s in sorted((x for x in near if x['geom'].intersects(disc)), key=lambda s: -s['k']):   # topmost first
+            g = s['geom'].intersection(disc)
+            seen = g if over is None else g.difference(over)
+            if seen.area > 0: shown.append((seen.area / disc.area, s))
+            over = g if over is None else over.union(g)
+        if not shown: return None
+        groups = []   # what each vineyard there shows of the dot
+        for f, x in sorted(shown, key=lambda t: -t[0]):
+            g = next((g for g in groups if kin(x, g[1])), None)
+            if g: g[0] += f
+            else: groups.append([f, x])
+        groups.sort(key=lambda g: -g[0])
+        s = groups[0][1]
+        other = groups[1][0] if len(groups) > 1 else 0.0
+        same = unary_union([x['geom'] for x in near if kin(x, s)])
+        whole = same.buffer(LANE, join_style=2).buffer(-LANE, join_style=2).union(same)
+        above = [x['geom'] for x in near if not kin(x, s) and x['k'] > s['k']]
+        below = [x['geom'] for x in near if not kin(x, s) and x['k'] < s['k']]
+        if above: whole = whole.difference(unary_union(above))
+        if below: whole = whole.difference(unary_union(below).difference(same))
+        held = whole.intersection(disc).area / disc.area
+        ok = held >= ON and held >= 2 * other and s['geom'].area >= 1.5 * disc.area
+        return (s, held) if ok else None
+    def under_box(box):
+        """The parcel a box is laid over (rank 1), or set just beside (rank 2)."""
+        c = box.centroid
+        hits = [cands[int(i)] for i in tree.query(c) if cands[int(i)]['geom'].contains(c)]
+        if hits: return max(hits, key=lambda s: s['k']), 1
+        near = [(cands[int(i)]['geom'].intersection(box.buffer(1.0)).area, cands[int(i)]) for i in tree.query(box.buffer(1.0))]
+        near = [x for x in near if x[0] > 0]
+        if near: return max(near, key=lambda x: (x[0], x[1]['k']))[1], 1
+        near = [s for s in (cands[int(i)] for i in tree.query(box.buffer(12))) if s['geom'].distance(box) <= 12]
+        return (min(near, key=lambda s: s['geom'].distance(box)), 2) if near else (None, None)
+    def vineyard(i):   # a parcel and the blocks in its very fill, lanes apart: one vineyard
+        out, todo = {i}, [i]
+        while todo:
+            j = todo.pop()
+            for k in tree.query(cands[j]['geom'].buffer(2 * LANE)):
+                k = int(k)
+                if k not in out and kin(cands[k], cands[i]) and cands[k]['geom'].distance(cands[j]['geom']) <= 2 * LANE:
+                    out.add(k); todo.append(k)
+        return out
+    # each name's claim on a parcel: its dot on it, the dot most inside its vineyard first; then a box
+    # over it, then a box beside it. A dot on no vineyard, or on one whose vineyard another name's dot
+    # is further inside, marks a place: a winery, mostly
+    claims, points, lost = [], collections.defaultdict(list), []
+    for bi, bp in enumerate(bpolys):
+        if not names.get(bi): continue
+        if anchors.get(bi):
+            for p, dot in anchors[bi]:
+                hit = under_dot(dot)
+                if hit: claims.append((0, -hit[1], bi, index[hit[0]['k']], (p.x, p.y)))
+                else: points[bi].append((p.x, p.y))
+        else:
+            s, rank = under_box(bp)
+            if s is not None: claims.append((rank, 0, bi, index[s['k']], None))
+    seed_owner, held = {}, {}   # parcel: the name it is a seed of; parcel: the name whose dot holds its vineyard
+    for rank, _, bi, i, p in sorted(claims, key=lambda c: c[:2]):
+        if rank == 0:
+            v = vineyard(i)
+            if any(held.get(j, bi) != bi for j in v) or seed_owner.get(i, bi) != bi:
+                points[bi].append(p); lost.append((bi, rank, i)); continue
+            for j in v: held[j] = bi
+        elif seed_owner.get(i, bi) != bi or held.get(i, bi) != bi:
+            lost.append((bi, rank, i)); continue
+        seed_owner[i] = bi
+    # each name's parcels: those it claims, and those alike near them, chained, each to the nearest
+    # name; never one that another name claims
+    D = REACH / m
+    owner, dist, seed_of = dict(seed_owner), {i: 0.0 for i in seed_owner}, {}
+    for start, bi in seed_owner.items():
+        s0 = cands[start]
         seen = {start: 0.0}; frontier = [start]
         while frontier:
             nxt = []
             for i in frontier:
                 for j in tree.query(cands[i]['geom'].buffer(D)):
                     j = int(j)
-                    if j not in seen and alike(cands[j], s0) and cands[j]['geom'].distance(cands[i]['geom']) <= D:
+                    if j in seen or seed_owner.get(j, bi) != bi or held.get(j, bi) != bi: continue
+                    if alike(cands[j], s0) and cands[j]['geom'].distance(cands[i]['geom']) <= D:
                         seen[j] = cands[j]['geom'].distance(s0['geom']); nxt.append(j)
             frontier = nxt
         for j, d in seen.items():
+            if j in seed_owner or held.get(j, bi) != bi: continue
             if j not in owner or d < dist[j]: owner[j] = bi; dist[j] = d
         seed_of.setdefault(bi, start)
     parcels = []
     for i, s in enumerate(cands):
         if i in owner: parcels.append({'geom': s['geom'], 'box': owner[i], 'seed': seed_of.get(owner[i]) == i})
         elif s['fill'].startswith('url('): parcels.append({'geom': s['geom'], 'box': None, 'seed': False})
-    print(f'  {sh.id:16} {len(boxes)} boxes, {sum(1 for bi in range(len(boxes)) if names.get(bi))} read, {len(anchors)} with a line; '
+    print(f'  {sh.id:16} {len(boxes)} boxes, {sum(1 for bi in range(len(boxes)) if names.get(bi))} read, {len(anchors)} with a line, '
+          f'{sum(1 for c in claims if c[0] == 0)} dots on a parcel, {sum(len(v) for v in points.values())} on none, {len(lost)} claims lost; '
           f'{len(cands)} parcels, {len(owner)} named, {sum(1 for p in parcels if p["box"] is None)} in a pattern unnamed', flush=True)
-    return {'boxes': boxes, 'names': names, 'anchors': {b: [(p.x, p.y) for p in a] for b, a in anchors.items()}, 'parcels': parcels}
+    return {'boxes': boxes, 'names': names, 'parcels': parcels, 'points': dict(points), 'lost': lost,
+            'anchors': {b: [(p.x, p.y) for p, _ in a] for b, a in anchors.items()}}
 
 
 def picture(sh, found, out):
@@ -625,6 +707,8 @@ def picture(sh, found, out):
         d.text((min(x for x, _ in b['ring']) * S + 2, min(y for _, y in b['ring']) * S + 2), found['names'].get(bi, '?')[:34], fill=(0, 0, 0, 255))
         for x, y in found['anchors'].get(bi, []):
             d.ellipse((x * S - 4, y * S - 4, x * S + 4, y * S + 4), fill=(255, 0, 255, 255))
+        for x, y in found['points'].get(bi, []):   # a place: its dot on no vineyard
+            d.ellipse((x * S - 9, y * S - 9, x * S + 9, y * S + 9), outline=(220, 0, 0, 255), width=3)
     pic.save(out)
 
 
@@ -687,7 +771,20 @@ def main():
             gid = (sh.id, p['box']) if name else None
             if gid: groups.setdefault(gid, name)
             parcels.append({'geom': g, 'group': gid, 'seed': p['seed']})
-    print(f'{len(parcels)} parcels kept, {len(groups)} names', flush=True)
+    # the places Vinous marks with a dot on no vineyard, wineries mostly, each from the map that shows there
+    sites = []
+    for sh in sheets:
+        f = found[sh.id]
+        for bi, pts in sorted(f['points'].items()):
+            name = f['names'].get(bi)
+            if not name: continue
+            for u, v in pts:
+                if not nearest(sh.cand, np.array([u]), np.array([v]))[0]: continue
+                X, Y = sh.to_view(u, v)
+                if owner_at(sheets, X, Y) is not sh: continue
+                if any(n == name and math.hypot(X - x, Y - y) < 30 * UPM for n, x, y in sites): continue   # one dot, found twice
+                sites.append((name, X, Y))
+    print(f'{len(parcels)} parcels kept, {len(groups)} names; {len(sites)} places on no vineyard', flush=True)
     # one colour an owner, neighbours different
     tree = STRtree([p['geom'] for p in parcels])
     adjacent = collections.defaultdict(set)
@@ -700,7 +797,7 @@ def main():
     ground = collections.Counter()   # each owner's vineyards, in view units squared
     for p in parcels:
         if p['group'] is not None: ground[owner_of(groups[p['group']])] += p['geom'].area
-    colour = palette(sorted(set(owner_of(n) for n in groups.values())), adjacent, ground)
+    colour = palette(sorted(set(owner_of(n) for n in groups.values()) | set(owner_of(n) for n, _, _ in sites)), adjacent, ground)
     # the AVA each parcel lies in, the smallest that holds it
     whole = gshape(av['Napa Valley']).buffer(0.01)
     napa = [n for n, g in av.items() if n == 'Napa Valley' or gshape(g).buffer(0).within(whole)]
@@ -726,7 +823,7 @@ def main():
                 d = np.diff(pts, axis=0)
                 out.append(f'M{pts[0][0]} {pts[0][1]}l' + ' '.join(f'{a} {b}' for a, b in d).replace(' -', '-') + 'z')
         return ''.join(out)
-    names = sorted(set(groups.values()))
+    names = sorted(set(groups.values()) | set(n for n, _, _ in sites))
     nidx = {n: i for i, n in enumerate(names)}
     rows = []
     for p in parcels:
@@ -768,11 +865,13 @@ def main():
         'avas': ava_names,
         'names': [[n, colour[owner_of(n)]] for n in names],   # [name, its owner's colour 0..COLOURS-1]
         'parcels': rows,                             # [name or -1, AVA or -1, hectares, path, label x, label y]
+        'wineries': [[nidx[n], next((ai for ai, a in enumerate(ava_names) if ava_geoms[a].contains(Point(x, y))), -1), round(x, 4), round(y, 4)]
+                     for n, x, y in sorted(sites)],      # [name, AVA or -1, x, y]: a dot on no vineyard, a winery mostly
         'cover': rel(cov),
     }
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     json.dump(data, open(OUT, 'w', encoding='utf-8'), separators=(',', ':'), ensure_ascii=False)
-    print(f'{len(rows)} parcels, {len(names)} names, {sum(1 for r in rows if r[0] < 0)} unnamed; '
+    print(f'{len(rows)} parcels, {len(names)} names, {sum(1 for r in rows if r[0] < 0)} unnamed, {len(data["wineries"])} places on no vineyard; '
           f'{os.path.getsize(OUT) / 1e3:.0f} kB; {time.time() - t0:.0f} s in all')
 
 
