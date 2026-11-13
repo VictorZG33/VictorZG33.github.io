@@ -5,6 +5,7 @@
 //
 //   npm ci                       once, in this folder
 //   node --max-old-space-size=8192 build-appellations.mjs     about ten minutes
+//   node build-appellations.mjs --names                       only names.json, from the areas as written
 //
 // The first run downloads, into .cache/ (which git ignores):
 //   - INAO's "Délimitation parcellaire des AOC viticoles" (data.gouv.fr, Licence Ouverte), about
@@ -21,7 +22,10 @@
 // shape's name goes where the tiers above leave room for it (labelPoints). A shape is written as
 //   [name, tier, parent, hectares, hectares not under a higher tier, label x, label y,
 //    box x0, y0, x1, y1, path]
-// in the units of its view, the path relative and in metres from the file's origin.
+// in the units of its view, the path relative and in metres from the file's origin. names.json
+// lists every shape's name for the page's search, so that it need not load the areas to find one:
+//   { areas: [area ids], rows: [[area, shape, name, tier, parent, hectares, label x, y, box x0, y0, x1, y1]] }
+// with `area` an index into `areas` and `shape` into that area's shapes.
 import { readFile, writeFile, mkdir, readdir, stat } from 'node:fs/promises';
 import { createWriteStream } from 'node:fs';
 import { Readable } from 'node:stream';
@@ -571,9 +575,27 @@ async function buildDetail(key, cfg, avas) {
   return { id: cfg.id, view: cfg.view, box: out.box, n: out.vines.length, near: cfg.near };
 }
 
+// the names of every area's shapes, for the page's search
+async function writeNames(index) {
+  const areas = [], rows = [];
+  for (const a of index) {
+    const d = JSON.parse(await readFile(path.join(OUT, a.id + '.json'), 'utf8'));
+    if (!d.shapes || !d.shapes.length) continue;
+    const k = areas.push(a.id) - 1;
+    d.shapes.forEach((s, i) => rows.push([k, i, s[0], s[1], s[2], s[3], s[5], s[6], s[7], s[8], s[9], s[10]]));
+  }
+  const json = JSON.stringify({ areas, rows });
+  await writeFile(path.join(OUT, 'names.json'), json + '\n');
+  console.log(`names: ${rows.length} in ${areas.length} areas, ${(json.length / 1024).toFixed(0)} KB`);
+}
+
 /* ---- main ---- */
 await mkdir(OUT, { recursive: true });
 const indexFile = path.join(OUT, 'index.json');
+if (process.argv.includes('--names')) {
+  await writeNames(JSON.parse(await readFile(indexFile, 'utf8')));
+  process.exit(0);
+}
 const index = ONLY && (await exists(indexFile)) ? JSON.parse(await readFile(indexFile, 'utf8')).filter((a) => !ONLY.has(a.id)) : [];
 
 // France
@@ -628,3 +650,4 @@ for (const [key, cfg] of Object.entries(DETAIL)) {
 index.sort((a, b) => (a.id < b.id ? -1 : 1));
 await writeFile(indexFile, JSON.stringify(index) + '\n');
 console.log(`index: ${index.length} areas`);
+await writeNames(index);
