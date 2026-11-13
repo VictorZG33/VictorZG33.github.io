@@ -1,7 +1,7 @@
 # Vinous's maps of Napa Valley: copyright and terms of use
 
-The vineyard boundaries and the names they carry in this folder (`vineyards.json`) are taken from
-the eight maps of **The Vineyards of Napa Valley** by Antonio Galloni with Alessandro Masnaghetti,
+The vineyard boundaries and the names they carry, and the places marked by name off the vineyards,
+in this folder (`vineyards.json`) are taken from the eight maps of **The Vineyards of Napa Valley** by Antonio Galloni with Alessandro Masnaghetti,
 published by Vinous Media LLC ([vinous.com](https://vinous.com/)):
 
 | Map | Edition | ©  |
@@ -24,7 +24,8 @@ Vinous Media LLC.
 
 For 风土 Terroir (terroir/index.html), the maps were laid on the ground by
 `terroir/tools/georef-vinous.py`. `terroir/tools/build-vinous.py` then read each parcel's outline and
-the name in its box, and the page draws them in its own colours; nothing of the maps' look is kept.
+the name in its box, following a box's line to the dot it ends on, and the page draws them in its own
+colours; nothing of the maps' look is kept.
 Where the maps overlap, each parcel is taken from the map of its own AVA, by the UC Davis AVA
 Project's boundaries. The names were read by OCR and checked; any error is ours, not Vinous's.
 
@@ -41,5 +42,5 @@ Yountville（2016）、Stags Leap（2016）和 Coombsville AVA（2023）。
 禁止任何形式的商业用途。**
 
 这些数据不是开放数据。本仓库中的其他内容不授予对它们的任何权利。未经 Vinous Media LLC 书面许可，
-不得复制、转载、翻印或以其他任何方式使用。本站只取用了地图上的葡萄园边界与名称，用自己的配色绘制，
+不得复制、转载、翻印或以其他任何方式使用。本站只取用了地图上的葡萄园边界、名称和标注点的位置，用自己的配色绘制，
 不保留原图的样式；名称经文字识别读出并核对，如有错误，责任在本站，与 Vinous 无关。

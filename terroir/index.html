@@ -772,7 +772,7 @@ footer p { max-width: 52em; }
       inView: '这一带的产区', areas: '按地区看', restOfEurope: '欧洲其他产区，按国家看',
       hint: '在地图上点一个产区，或从上面的名字里选一个。',
       climate: '气候', grapesF: '主要品种', spotsF: '村庄与子产区', stylesF: '风格',
-      mapNote: '底图：Natural Earth，只画了各方都承认的陆地国界。法国的产区边界来自 INAO（法国国家原产地与质量研究院，Licence Ouverte 开放许可），美国的 AVA 来自 UC Davis 的 AVA Project（CC0）；纳帕谷的葡萄园、道路和河流来自 OpenStreetMap（ODbL），酒庄来自 Wikidata（CC0）和 Overture Maps（CDLA Permissive 2.0）；放大后的卫星影像来自 Esri（Maxar、Earthstar Geographics）。纳帕谷葡萄园的边界与归属取自 Vinous 的《The Vineyards of Napa Valley》（Antonio Galloni 与 Alessandro Masnaghetti 著，© 2016–2023 Vinous Media LLC），经授权使用，仅供个人学习交流，禁止任何形式的商业用途。用 + 和 −、双指，或按住 Ctrl（Mac 上是 ⌘）滚动来缩放，拖动来移动。放大一个产区后，左上角的搜索框能找到产区和葡萄园，勃艮第细到每个一级园和特级园；在纳帕谷还能找出一家酒庄在哪里有田。',
+      mapNote: '底图：Natural Earth，只画了各方都承认的陆地国界。法国的产区边界来自 INAO（法国国家原产地与质量研究院，Licence Ouverte 开放许可），美国的 AVA 来自 UC Davis 的 AVA Project（CC0）；纳帕谷的葡萄园、道路和河流来自 OpenStreetMap（ODbL），酒庄来自 Wikidata（CC0）和 Overture Maps（CDLA Permissive 2.0）；放大后的卫星影像来自 Esri（Maxar、Earthstar Geographics）。纳帕谷葡萄园的边界与归属，以及 Vinous 标在葡萄园外的酒庄位置，取自 Vinous 的《The Vineyards of Napa Valley》（Antonio Galloni 与 Alessandro Masnaghetti 著，© 2016–2023 Vinous Media LLC），经授权使用，仅供个人学习交流，禁止任何形式的商业用途。用 + 和 −、双指，或按住 Ctrl（Mac 上是 ⌘）滚动来缩放，拖动来移动。放大一个产区后，左上角的搜索框能找到产区和葡萄园，勃艮第细到每个一级园和特级园；在纳帕谷还能找出一家酒庄在哪里有田。',
       apTiers: { 1: '大区级', 2: '地区级', 3: '村庄级', 4: '一级园', 5: '特级园' },
       apTiersUS: { 2: 'AVA', 3: '其中的子产区' },
       apLegend: '法定产区等级', apLegendUS: '美国葡萄种植区 AVA', apLoading: '正在加载产区边界…',
@@ -850,7 +850,7 @@ footer p { max-width: 52em; }
       inView: 'Regions here', areas: 'By area', restOfEurope: 'The rest of Europe, by country',
       hint: 'Pick a region on the map, or one of the names above.',
       climate: 'Climate', grapesF: 'Main grapes', spotsF: 'Villages and sub-regions', stylesF: 'Styles',
-      mapNote: 'Base map: Natural Earth; only land borders that every side recognises are drawn. French appellation boundaries are from INAO, France’s institute of origin and quality (Licence Ouverte); the American Viticultural Areas from the UC Davis AVA Project (CC0); Napa’s vineyards, roads and streams from OpenStreetMap (ODbL), its wineries from Wikidata (CC0) and Overture Maps (CDLA Permissive 2.0); the satellite imagery close up is Esri’s (Maxar, Earthstar Geographics). Napa’s vineyard boundaries and their owners are taken from Vinous’s The Vineyards of Napa Valley by Antonio Galloni with Alessandro Masnaghetti (© 2016–2023 Vinous Media LLC), used with permission, for personal study and exchange only; no commercial use of any kind. Zoom with + and −, two fingers, or Ctrl (⌘ on a Mac) and scroll; drag to move. Zoomed into a region, the search at the top left finds its appellations and vineyards, in Burgundy down to every premier and grand cru, and over Napa where a winery has its blocks.',
+      mapNote: 'Base map: Natural Earth; only land borders that every side recognises are drawn. French appellation boundaries are from INAO, France’s institute of origin and quality (Licence Ouverte); the American Viticultural Areas from the UC Davis AVA Project (CC0); Napa’s vineyards, roads and streams from OpenStreetMap (ODbL), its wineries from Wikidata (CC0) and Overture Maps (CDLA Permissive 2.0); the satellite imagery close up is Esri’s (Maxar, Earthstar Geographics). Napa’s vineyard boundaries and their owners, and the wineries Vinous marks off the vineyards, are taken from Vinous’s The Vineyards of Napa Valley by Antonio Galloni with Alessandro Masnaghetti (© 2016–2023 Vinous Media LLC), used with permission, for personal study and exchange only; no commercial use of any kind. Zoom with + and −, two fingers, or Ctrl (⌘ on a Mac) and scroll; drag to move. Zoomed into a region, the search at the top left finds its appellations and vineyards, in Burgundy down to every premier and grand cru, and over Napa where a winery has its blocks.',
       apTiers: { 1: 'Regional', 2: 'Sub-regional', 3: 'Village', 4: 'Premier cru', 5: 'Grand cru' },
       apTiersUS: { 2: 'AVA', 3: 'AVA within it' },
       apLegend: 'Appellation level', apLegendUS: 'American Viticultural Areas', apLoading: 'Loading the appellations…',
@@ -1279,7 +1279,8 @@ footer p { max-width: 52em; }
         var by0 = (it.box[1] - vb.y) * s - 6 - it.sy, by1 = (it.box[3] - vb.y) * s + 6 - it.sy;
         cands = [[-w / 2, by0 - hgt], [-w / 2, by1], [bx1 - w, by0 - hgt], [bx0, by0 - hgt], [bx1 - w, by1], [bx0, by1], [bx1, -hgt / 2], [bx0 - w, -hgt / 2]];
       } else if (it.anchor === 'right') cands = [[2, -hgt / 2]];
-      else if (it.kind === 'ap') cands = [[-w / 2, -hgt / 2]];   // centred on its appellation, or not at all
+      else if (it.kind === 'ap') cands = it.nudge   // centred on its appellation, or not at all; a vineyard's name may step off a dot
+        ? [[-w / 2, -hgt / 2], [-w / 2, hgt / 2], [-w / 2, -hgt * 1.5], [-w * 0.8, -hgt / 2], [-w * 0.2, -hgt / 2]] : [[-w / 2, -hgt / 2]];
       else cands = [[r + gap, -hgt / 2], [-r - gap - w, -hgt / 2], [-w / 2, -r - gap - hgt + 2], [-w / 2, r + gap - 2]];
       var done = false;
       for (var i = 0; i < cands.length && !done; i++) {
@@ -1635,7 +1636,9 @@ footer p { max-width: 52em; }
       var vk = VIN.data.unit * s, pxHa = vk * vk * 10000, sel = FIND.sel && FIND.sel.src === 'vin' ? FIND.sel : null;   // px² in a hectare
       var put = function (key, q) {   // the bigger first, after the AVAs' names
         var x = (q.x - vb.x) * s, y = (q.y - vb.y) * s;
-        if (x >= 0 && y >= 0 && x <= cw && y <= ch) label(key, 'ap', 6, q.x, q.y, q.text, vinWidth(q.text), 1.45 - 0.015 * Math.log2(1 + q.ha));
+        if (x < 0 || y < 0 || x > cw || y > ch) return;
+        label(key, 'ap', 6, q.x, q.y, q.text, vinWidth(q.text), 1.45 - 0.015 * Math.log2(1 + q.ha));
+        apEls[key].nudge = true;
       };
       VIN.places.forEach(function (pl, i) {
         var fit = 0;
@@ -1653,6 +1656,15 @@ footer p { max-width: 52em; }
         });
         if (fit >= pl.ha * 0.75) pl.parts.forEach(function (q, j) { if (q.fits) put('vin:' + i + ':' + j, q); });
         else if (pl.ha * pxHa >= vinWidth(pl.text) * VIN_FIT[0]) put('vin:' + i, pl);
+      });
+      VIN.data.wineries.forEach(function (w, i) {   // the places Vinous marks on no vineyard, as the wineries are
+        var x = (w[2] - vb.x) * s, y = (w[3] - vb.y) * s, t = VIN.data.names[w[0]][0];
+        if (x < -10 || y < -10 || x > cw + 10 || y > ch + 10) return;
+        if (sel) {   // during a search, only those it found, marked like the vineyards found
+          if (!sel.names[w[0]]) return;
+          if (sel.kind === 'owner') t = VIN.idx.names[w[0]].part;
+          label('vwf:' + i, 'hit', 0, w[2], w[3], t, vinWidth(t), 0.5);
+        } else if (mpp < WINERY_MPP) label('vw:' + i, 'wy', 0, w[2], w[3], t, null, 1.6);
       });
     }
     if (found) found.shapes.forEach(function (x) {   // the appellations found: each marked and named, before all else
@@ -1933,6 +1945,7 @@ footer p { max-width: 52em; }
     VIN.req = fetch(VIN_URL).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(function (d) {
         var g = document.createElementNS(NS, 'g'), h = '';
+        d.wineries = d.wineries || [];
         g.setAttribute('class', 'ap-vin');
         g.setAttribute('transform', 'translate(' + d.origin[0] + ' ' + d.origin[1] + ') scale(' + d.unit + ')');
         d.parcels.forEach(function (p, i) { h += '<path class="vp ' + (p[0] < 0 ? 'cx' : 'c' + d.names[p[0]][1]) + '" data-p="' + i + '" d="' + p[3] + '"/>'; });
@@ -2092,6 +2105,11 @@ footer p { max-width: 52em; }
       Object.keys(x.at).forEach(function (a) { if (x.ava < 0 || x.at[a] > x.at[x.ava]) x.ava = +a; });   // where most of it lies
     });
     VIN.places.forEach(function (pl) { if (owners[pl.text]) owners[pl.text].places++; pl.parts.forEach(function (q) { names[q.n].places++; }); });
+    d.wineries.forEach(function (w) {   // a place Vinous marks on no vineyard: a winery, mostly
+      var x = names[w[0]];
+      x.places++; owners[x.own].places++;
+      if (x.ava < 0) x.ava = w[1];
+    });
     Object.keys(owners).forEach(function (k) { owners[k].names.sort(function (a, b) { return b.ha - a.ha; }); });
     return (VIN.idx = { names: names, owners: owners });
   }
@@ -2173,11 +2191,15 @@ footer p { max-width: 52em; }
     var t, m, sw = '', ha = 0, n = 0;
     if (r.src === 'vin') {
       r.names.forEach(function (nm) { ha += nm.ha; n += nm.places; });
-      if (r.kind === 'owner') { t = mark(r.o.text, fq); m = l.findWhere(r.o.places, fmtHa(r.o.ha)); sw = 'c' + r.o.c; }
-      else if (r.kind === 'all') { t = esc(l.findAll(r.text)); m = l.findWhere(n, fmtHa(ha)); }
+      if (r.kind === 'owner') {
+        var one = !r.o.ha && r.o.places === 1 ? r.o.names[0] : null;   // just a winery: where, as a vineyard's row says
+        t = mark(r.o.text, fq); sw = 'c' + r.o.c;
+        m = one ? (one.ava >= 0 ? apName(VIN.data.avas[one.ava].trim()) + ' · ' : '') + l.winery : l.findWhere(r.o.places, r.o.ha ? fmtHa(r.o.ha) : null);
+      }
+      else if (r.kind === 'all') { t = esc(l.findAll(r.text)); m = l.findWhere(n, ha ? fmtHa(ha) : null); }
       else {
         t = mark(r.kind === 'sub' ? r.nm.part : r.nm.text, fq);
-        m = (r.nm.ava >= 0 ? apName(VIN.data.avas[r.nm.ava].trim()) + ' · ' : '') + l.findHa(fmtHa(r.nm.ha));
+        m = (r.nm.ava >= 0 ? apName(VIN.data.avas[r.nm.ava].trim()) + ' · ' : '') + (r.nm.ha ? l.findHa(fmtHa(r.nm.ha)) : l.winery);
         if (r.kind === 'name') sw = 'c' + r.nm.c;
       }
     } else {
@@ -2237,16 +2259,18 @@ footer p { max-width: 52em; }
     FIND.sel = { src: 'ap', shapes: r.shapes, keys: keys, dup: dup, n: r.shapes.length, ha: ha, text: r.text, all: r.kind === 'all' };
     findShow(r.kind === 'all' ? r.text : apName(r.text));
   }
-  function vinSelect(r) {   // Vinous's vineyards: their parcels, and how many places they make
-    var names = {}, hits = [], n = 0, ha = 0;
+  function vinSelect(r) {   // Vinous's vineyards: their parcels, and how many places they make; and their wineries
+    var names = {}, hits = [], sites = [], n = 0, ha = 0;
     if (!VIN.data) return;
     r.names.forEach(function (nm) { names[nm.n] = 1; ha += nm.ha; });
     VIN.data.parcels.forEach(function (p, i) { if (p[0] >= 0 && names[p[0]]) hits.push(i); });
+    VIN.data.wineries.forEach(function (w, i) { if (names[w[0]]) sites.push(i); });
     VIN.places.forEach(function (pl) {
       if (r.kind === 'owner') { if (pl.text === r.o.text) n++; }
       else pl.parts.forEach(function (q) { if (names[q.n]) n++; });
     });
-    FIND.sel = { src: 'vin', kind: r.kind === 'owner' ? 'owner' : 'name', names: names, hits: hits, n: n, ha: ha, text: r.text, all: r.kind === 'all' };
+    n += sites.length;
+    FIND.sel = { src: 'vin', kind: r.kind === 'owner' ? 'owner' : 'name', names: names, hits: hits, sites: sites, n: n, ha: ha || null, text: r.text, all: r.kind === 'all' };
     if (!VIN.on) { VIN.on = true; try { localStorage.setItem('terroir.vinous', '1'); } catch (e) {} renderMapChrome(); }
     findShow(r.text);
     vinUpdate();
@@ -2307,6 +2331,7 @@ footer p { max-width: 52em; }
       var d = VIN.data;
       if (cur.id !== VIN_VIEW || !d) return;
       sel.hits.forEach(function (i) { var x = VIN.box[i]; ext(d.origin[0] + x[0] * d.unit, d.origin[1] + x[1] * d.unit, d.origin[0] + x[2] * d.unit, d.origin[1] + x[3] * d.unit); });
+      sel.sites.forEach(function (i) { var w = d.wineries[i]; ext(w[2], w[3], w[2], w[3]); });
       min = 1500 * upm; most = VIN_MPP * 0.9 * upm;
     } else {
       sel.shapes.forEach(function (x) { if (areaView(x.area) === cur.id) ext(x.box[0], x.box[1], x.box[2], x.box[3]); });
