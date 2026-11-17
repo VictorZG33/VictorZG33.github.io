@@ -73,7 +73,7 @@ body {
   padding-block: 20px 56px;
 }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-button, input, select { font: inherit; color: inherit; }
+button, input, select, textarea { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
 
 /* home link back to wentaoz.com */
@@ -123,16 +123,17 @@ button, input, select { font: inherit; color: inherit; }
 .msg:empty { display: none; }
 .msg.bad { color: var(--red); }
 
-input[type="text"], select {
+input[type="text"], select, textarea {
   min-width: 0; min-height: 44px; padding: 10px 12px; font-size: 16px; line-height: 1.3;
   background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 8px;
 }
-input[type="text"]::placeholder { color: var(--muted); opacity: 0.8; }
+input[type="text"]::placeholder, textarea::placeholder { color: var(--muted); opacity: 0.8; }
 .btn {
   appearance: none; min-height: 44px; padding: 10px 16px; border: 1px solid var(--rule-strong); border-radius: 8px;
   background: var(--surface); font-size: 15px; font-weight: 500; line-height: 1.2; white-space: nowrap; cursor: pointer;
 }
 .btn:hover { border-color: var(--fg); }
+.btn[disabled] { opacity: 0.6; cursor: default; }
 .btn.primary { background: var(--fg); color: var(--bg); border-color: var(--fg); }
 .link-btn {
   appearance: none; border: 0; background: none; padding: 4px 2px; cursor: pointer;
@@ -158,9 +159,26 @@ input[type="text"]::placeholder { color: var(--muted); opacity: 0.8; }
 }
 .person button:hover { background: var(--rule); color: var(--fg); }
 
-/* step 2: the expense form, then the ledger */
+/* step 2: a sentence or a receipt photo for Claude to read into the form, the form, then the ledger */
+.scan { display: grid; gap: 10px; margin-bottom: 14px; padding: 14px 16px; border: 1px dashed var(--rule-strong); border-radius: 12px; }
+.scan textarea { width: 100%; min-height: 64px; resize: vertical; background: var(--surface); }
+.scan-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.scan-photo { display: inline-flex; align-items: center; }
+.scan-photo:focus-within { outline: 2px solid var(--green); outline-offset: 2px; }
+.scan-file { display: inline-flex; align-items: center; gap: 2px; }
+.scan-file img { display: block; width: 44px; height: 44px; object-fit: cover; border: 1px solid var(--rule-strong); border-radius: 6px; }
+.scan-file button {
+  appearance: none; width: 30px; height: 30px; border: 0; border-radius: 50%; background: none;
+  color: var(--muted); font-size: 18px; line-height: 1; cursor: pointer;
+}
+.scan-file button:hover { background: var(--rule); color: var(--fg); }
+#scan-go { margin-left: auto; }
+.scan .msg { margin: 0; }
+.draft-note { display: grid; gap: 4px; margin: -4px 0 0; padding: 10px 12px; border-radius: 8px; background: var(--green-soft); font-size: 14px; overflow-wrap: anywhere; }
+.draft-note p { margin: 0; }
+.draft-note .warn { color: var(--red); }
 .form { display: grid; gap: 18px; padding: 16px; background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; }
-.form.editing { border-color: var(--green); box-shadow: inset 0 0 0 1px var(--green); }
+.form.editing, .form.drafting { border-color: var(--green); box-shadow: inset 0 0 0 1px var(--green); }
 .editing-note { margin: -4px 0 0; font-size: 13.5px; font-weight: 500; color: var(--green); overflow-wrap: anywhere; }
 .fields { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
 @media (max-width: 520px) { .fields { grid-template-columns: minmax(0, 1fr); } }
@@ -301,8 +319,19 @@ footer .link-btn { margin-left: auto; }
     <h2 class="step-h"><span class="no" aria-hidden="true">2</span><span id="h-spend"></span></h2>
     <p class="locked-note" id="spend-locked"></p>
     <div id="spend-body">
+      <div class="scan" id="scan" hidden>
+        <label class="label" for="scan-text" id="scan-label"></label>
+        <textarea id="scan-text" rows="2" maxlength="500" autocomplete="off"></textarea>
+        <div class="scan-actions">
+          <label class="btn scan-photo"><input type="file" id="scan-photo" class="sr" accept="image/*"><span id="scan-photo-label"></span></label>
+          <span class="scan-file" id="scan-file" hidden><img id="scan-thumb" alt=""><button type="button" id="scan-clear">×</button></span>
+          <button type="button" class="btn primary" id="scan-go"></button>
+        </div>
+        <p class="msg" id="scan-msg" role="status"></p>
+      </div>
       <form class="form" id="spend-form" novalidate>
         <p class="editing-note" id="editing-note" hidden></p>
+        <div class="draft-note" id="draft-note" role="status" hidden></div>
         <div class="fields">
           <div class="field">
             <label class="label" for="what-input" id="what-label"></label>
@@ -404,6 +433,27 @@ footer .link-btn { margin-left: auto; }
       nobody: '还没勾人',
       add: '记下这笔', save: '保存修改', cancel: '取消',
       editing: function (i, w) { return '正在修改第 ' + i + ' 笔' + (w ? '：' + w : ''); },
+      scanLabel: '一句话或一张小票，Claude 帮你填表',
+      scanPh: function (a, b, n) { return '比如：昨晚晚饭 ' + a + ' 付了 240，' + n + ' 个人分，' + b + ' 没喝酒少算 20'; },
+      scanPhoto: '拍小票', scanClear: '去掉照片', scanGo: '识别', scanBusy: 'Claude 正在看…',
+      scanNeed: '写一句话，或者选一张小票照片。',
+      scanBadImage: '这张图打不开，换一张照片或截图试试。',
+      scanOff: '识别功能还没开通，请直接填下面的表。',
+      scanSlow: '识别得太频繁了，过一分钟再试。',
+      scanFail: '连不上 Claude（在中国大陆打不开），请直接填下面的表。',
+      scanRefused: 'Claude 没法处理这条内容，请直接填下面的表。',
+      scanNone: '没看出有花销，换个说法或换张照片试试。',
+      draftOne: 'Claude 填好了。核对一下，没问题就点「记下这笔」。',
+      draftMany: function (i, n) { return 'Claude 拆成了 ' + n + ' 笔，这是第 ' + i + ' 笔。核对一下，没问题就点「记下这笔」' + (i < n ? '，会接着填下一笔。' : '。'); },
+      draftSplit: function (what, total, groups) { return (what ? what + ' ' : '') + total + '：' + groups.join('；'); },
+      draftEach: function (names, m) { return names.join('、') + (names.length > 1 ? ' 各 ' : ' ') + m; },
+      without: function (names) { return '除 ' + names.join('、') + ' 外'; },
+      only: function (names) { return '仅 ' + names.join('、'); },
+      noPayer: '没看出是谁付的，请选一下付款人。',
+      unknown: function (names) { return '名单里没有：' + names.join('、') + '。先在上面加上，再识别一次。'; },
+      curDiff: function (c, cur) { return '金额是 ' + c + '，账本用的是 ' + cur + '：数字照原样填了，需要换算请自己改。'; },
+      tooMuch: '有一笔减掉的钱比总额还多，没法拆，请直接填表。',
+      claudeSays: function (t) { return 'Claude：' + t; },
       added: function (w, m) { return '记下了：' + w + ' ' + m; },
       saved: function (w, m) { return '改好了：' + w + ' ' + m; },
       badAmount: '金额写一个正数就行，最多两位小数，比如 88 或 35.5。',
@@ -438,6 +488,7 @@ footer .link-btn { margin-left: auto; }
         '<p><span class="k">平分</span><br>每一笔由付款人先垫上，再由勾选的人平分。金额按「分」计算；除不尽时，零头一人一分地分出去，付款人也在平分名单里的话先算付款人，所以每个人之间最多差一分钱，加起来和总额一分不差。</p>' +
         '<p><span class="k">结余</span><br>每个人的结余 = 自己垫付的钱 − 自己应摊的钱。正数等着收钱，负数要往外付，所有人加起来正好是零。</p>' +
         '<p><span class="k">最少转账</span><br>结余不为零的有 n 个人时，n − 1 笔转账一定够：每次让欠得最多的人还给被欠得最多的人，每笔至少结清一个人。想更少，只能把这 n 个人分成几组，每组的结余加起来恰好为零，各组内部自己结清：分得出 k 组，就只要 n − k 笔，任何方案都不可能更少。页面在所有分法里找组数最多的一种：先把结余正好相抵的两个人配成一对，剩下的人在 ' + EXACT + ' 个以内时用动态规划穷举所有子集，保证转账次数最少；超过 ' + EXACT + ' 个时改用逐对配平，可能多出几笔。</p>' +
+        '<p><span class="k">识别</span><br>「一句话或一张小票」里的文字和照片会发给 Claude（Anthropic 的模型）读取。它只读出谁付的、多少钱、谁来分，每人分多少还是页面自己算；填进表单后要你核对、点「记下这笔」才会记下。某人多付或少付一点、或者一部分只有几个人分，会拆成两笔：一笔大家平分，另一笔只有相关的人分。照片在手机上先缩小再发送，本站不保存。在中国大陆连不上。</p>' +
         '<p><span class="k">数据和分享</span><br>账本先只存在这台设备的浏览器里。点「复制分享链接」或「复制结果」后，账本存到同步服务器上，链接里只带一串随机编号。之后谁打开这个链接，看到的都是最新的账；开着页面的人，几秒内就能看到别人的修改；两个人同时记账也不会互相覆盖。有链接的人都能改账，所以别把链接发到群外。一年没人改的账会从服务器上删掉。同步服务器在中国大陆打不开：连不上时，分享会退回到快照链接，也就是把整本账写进链接本身，之后的修改不会同步。</p>',
       footSig: '两清', footNote: '亲兄弟，明算账。',
       reset: '清空重来', resetAsk: '清空所有名字和账目？清掉就找不回来了。',
@@ -472,6 +523,27 @@ footer .link-btn { margin-left: auto; }
       nobody: 'Nobody ticked yet',
       add: 'Add expense', save: 'Save changes', cancel: 'Cancel',
       editing: function (i, w) { return 'Editing expense ' + i + (w ? ': ' + w : ''); },
+      scanLabel: 'Describe it in a sentence or snap the receipt, and Claude fills in the form',
+      scanPh: function (a, b, n) { return 'e.g. Dinner last night, ' + a + ' paid 240, split ' + n + ' ways, ' + b + ' had no wine so 20 less'; },
+      scanPhoto: 'Receipt photo', scanClear: 'Remove the photo', scanGo: 'Read it', scanBusy: 'Claude is reading…',
+      scanNeed: 'Write a sentence or pick a receipt photo.',
+      scanBadImage: 'That image couldn’t be opened; try another photo or a screenshot.',
+      scanOff: 'Reading notes isn’t switched on for this site; fill in the form below.',
+      scanSlow: 'Too many tries in a row; wait a minute.',
+      scanFail: 'Couldn’t reach Claude (it can’t be reached from mainland China); fill in the form below.',
+      scanRefused: 'Claude couldn’t handle this one; fill in the form below.',
+      scanNone: 'No expense found; try rewording it or another photo.',
+      draftOne: 'Claude filled this in. Check it, then press Add expense.',
+      draftMany: function (i, n) { return 'Claude split this into ' + n + ' expenses; this is ' + i + ' of ' + n + '. Check it and press Add expense' + (i < n ? ' to get the next.' : '.'); },
+      draftSplit: function (what, total, groups) { return (what ? what + ' ' : '') + total + ': ' + groups.join('; '); },
+      draftEach: function (names, m) { return names.join(', ') + ' ' + m + (names.length > 1 ? ' each' : ''); },
+      without: function (names) { return 'without ' + names.join(', '); },
+      only: function (names) { return 'only ' + names.join(', '); },
+      noPayer: 'Couldn’t tell who paid; pick the payer.',
+      unknown: function (names) { return 'Not on the list: ' + names.join(', ') + '. Add them above and read it again.'; },
+      curDiff: function (c, cur) { return 'The amounts are in ' + c + ' and the ledger in ' + cur + '; the numbers are copied as they are, so convert them if needed.'; },
+      tooMuch: 'One expense takes off more than its total, so it couldn’t be split; fill in the form instead.',
+      claudeSays: function (t) { return 'Claude: ' + t; },
       added: function (w, m) { return 'Added: ' + w + ' ' + m; },
       saved: function (w, m) { return 'Saved: ' + w + ' ' + m; },
       badAmount: 'Enter a positive amount with at most two decimals, such as 88 or 35.5.',
@@ -506,6 +578,7 @@ footer .link-btn { margin-left: auto; }
         '<p><span class="k">Splitting</span><br>Whoever paid fronts the money, and the people ticked share it equally. Amounts are kept in cents; when they don’t divide evenly the leftover cents go out one each, to the payer first if they are sharing, so no two shares differ by more than a cent and they add up to the total exactly.</p>' +
         '<p><span class="k">Balances</span><br>Each person’s balance is what they paid minus their share. A positive balance is owed money, a negative one owes it, and together they sum to zero.</p>' +
         '<p><span class="k">Fewest transfers</span><br>With n people whose balances aren’t zero, n − 1 transfers always suffice: have the largest debtor pay the largest creditor, and every transfer settles at least one person. The only way to do better is to split the n people into groups whose balances each sum to zero and settle each group on its own: k groups need n − k transfers, and no plan can use fewer. The page looks for the split with the most groups. It first pairs off people whose balances cancel exactly, then, for up to ' + EXACT + ' people left, tries every subset by dynamic programming, which guarantees the minimum. Beyond ' + EXACT + ' it falls back to greedy matching, which may use a few more.</p>' +
+        '<p><span class="k">Reading notes and receipts</span><br>The sentence or receipt photo goes to Claude, Anthropic’s model, which only reads off who paid, how much and who shares it; the page still works out each share, and nothing is added until you check the form and press Add expense. When someone pays a set amount more or less, or only some people share part of the bill, it becomes two expenses: one everyone splits and one only those people split. Photos are shrunk on your phone before they’re sent, and this site doesn’t keep them. It can’t be reached from mainland China.</p>' +
         '<p><span class="k">Data and sharing</span><br>A ledger starts out only in this browser on this device. Copy share link or Copy summary saves it to the sync server, and the link carries just a random id. Whoever opens the link sees the latest ledger, anyone with the page open sees others’ changes within seconds, and two people adding expenses at once don’t overwrite each other. Anyone with the link can edit, so keep it within the group. A ledger nobody changes for a year is deleted from the server. The sync server can’t be reached from mainland China; when it can’t be reached, sharing falls back to a snapshot link that carries the whole ledger itself, and later changes won’t reach it.</p>',
       footSig: 'All Square', footNote: 'Short accounts make long friends.',
       reset: 'Start over', resetAsk: 'Clear every name and expense? This can’t be undone.',
@@ -528,7 +601,8 @@ footer .link-btn { margin-left: auto; }
     editing: null,   // id of the expense loaded into the form
     payer: null,     // the form's payer
     parts: null,     // the form's sharers, in list order; null means everyone
-    confirmDel: null
+    confirmDel: null,
+    drafts: null     // what Claude read, waiting in the form one expense at a time: {list, at, info}
   };
   /* A shared ledger also has its id on the server, the server's version this copy is built on, and the changes
      made here that the server hasn't taken yet. null while the ledger is only on this device. */
@@ -738,7 +812,7 @@ footer .link-btn { margin-left: auto; }
     if (l.cur) state.cur = l.cur;
   }
   function resetForm() {
-    state.editing = null; state.payer = null; state.parts = null; state.confirmDel = null;
+    state.editing = null; state.payer = null; state.parts = null; state.confirmDel = null; state.drafts = null;
     $('what-input').value = ''; $('amount-input').value = '';
   }
   function hasContent() { return state.people.length > 0 || state.expenses.length > 0; }
@@ -760,9 +834,9 @@ footer .link-btn { margin-left: auto; }
   }
 
   // ---------- sync ----------
-  function api(method, path, body) {
+  function api(method, path, body, ms) {
     var ctl = window.AbortController ? new AbortController() : null;
-    var timer = ctl && setTimeout(function () { ctl.abort(); }, TIMEOUT_MS);
+    var timer = ctl && setTimeout(function () { ctl.abort(); }, ms || TIMEOUT_MS);
     return fetch(API + path, {
       method: method, cache: 'no-store', signal: ctl ? ctl.signal : undefined,
       headers: body ? { 'Content-Type': 'application/json' } : undefined,
@@ -973,6 +1047,11 @@ footer .link-btn { margin-left: auto; }
     $('cur').innerHTML = CURRENCIES.map(function (c) { return '<option' + (c === state.cur ? ' selected' : '') + '>' + c + '</option>'; }).join('');
     setText('payer-label', T.payerLabel); setText('parts-label', T.partsLabel);
     setText('spend-cancel', T.cancel);
+    $('scan').hidden = !API;
+    setText('scan-label', T.scanLabel);
+    if (state.people.length >= 2) $('scan-text').placeholder = T.scanPh(state.people[0].name, state.people[1].name, state.people.length);
+    setText('scan-photo-label', T.scanPhoto); $('scan-clear').setAttribute('aria-label', T.scanClear);
+    setText('scan-go', scanning ? T.scanBusy : T.scanGo);
     setText('settle-locked', T.settleLocked);
     setText('copy-text', T.copyText); setText('copy-link', T.copyLink);
     setText('tally-h', T.tallyH);
@@ -1016,7 +1095,9 @@ footer .link-btn { margin-left: auto; }
     $('editing-note').hidden = !state.editing;
     if (state.editing) setText('editing-note', T.editing(e ? state.expenses.indexOf(e) + 1 : state.expenses.length + 1, $('what-input').value.trim()));
     setText('spend-submit', state.editing ? T.save : T.add);
-    $('spend-cancel').hidden = !state.editing;
+    $('spend-cancel').hidden = !state.editing && !state.drafts;
+    $('spend-form').classList.toggle('drafting', !!state.drafts);
+    renderDraftNote();
     renderPreview();
   }
   // the line under the sharers: how many split it and, once there is an amount, what each pays
@@ -1165,12 +1246,16 @@ footer .link-btn { margin-left: auto; }
     var what = $('what-input').value.replace(/\s+/g, ' ').trim().slice(0, MAX_WHAT);
     var msg = (state.editing ? T.saved : T.added)(what || T.untitled, money(cents));
     var e = { id: state.editing || newId(), what: what, cents: cents, payer: state.payer, parts: parts.slice() };
-    var payer = state.payer;
+    var payer = state.payer, drafts = state.drafts;
     resetForm();
     state.payer = payer;   // the next expense is often paid by the same person
     act({ t: 'put-expense', e: e });
     say('spend-msg', msg, false, 4000);
-    $('what-input').focus();
+    if (drafts && drafts.at + 1 < drafts.list.length) {
+      drafts.at++;
+      state.drafts = drafts;
+      fillDraft();
+    } else $('what-input').focus();
   });
   $('spend-cancel').addEventListener('click', function () {
     var payer = state.payer;
@@ -1181,6 +1266,182 @@ footer .link-btn { margin-left: auto; }
     $('what-input').focus();
   });
 
+  // ---------- reading a note or a receipt ----------
+  /* Claude (POST /scan on the sync server) reads off who paid, how much and who shares it. Here that becomes
+     ordinary equal-split expenses, loaded into the form one at a time, so nothing is added until the person
+     checks each and presses the add button. Someone paying a set amount more or less, or a part only some
+     people shared, becomes a second expense that only those people split: "Bob 少算 20" on 240 among four is
+     180 split four ways and 60 split among the other three, so Bob pays 45 and the others 65. */
+  var scanning = false, scanImage = null;   // the receipt photo as a JPEG data URL, shrunk on the device
+  function shrink(file) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        URL.revokeObjectURL(url);
+        // a little under the most the model reads (2576 px, 3.75 megapixels), at a few hundred kB
+        var w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, 2000 / Math.max(w, h), Math.sqrt(3.6e6 / (w * h)));
+        var c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(w * k)); c.height = Math.max(1, Math.round(h * k));
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        var data = c.toDataURL('image/jpeg', 0.85);
+        resolve(data.length > 1500000 ? c.toDataURL('image/jpeg', 0.6) : data);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('unreadable image')); };
+      img.src = url;
+    });
+  }
+  function clearPhoto() {
+    scanImage = null;
+    $('scan-file').hidden = true;
+    $('scan-thumb').removeAttribute('src');
+  }
+
+  // Claude's answer -> {list: [{what, cents, payer, parts}], info} for the form; its fields are checked, as it is outside input
+  function toDrafts(r) {
+    var byName = {}, unknown = [], list = [], info = { splits: [], unknown: unknown, noPayer: false, tooMuch: false, cur: null, note: '' };
+    state.people.forEach(function (p) { byName['~' + p.name.toLowerCase()] = p.id; });
+    var who = function (name) {
+      if (typeof name !== 'string' || !name.trim()) return null;
+      var id = byName['~' + name.trim().toLowerCase()];
+      if (!id && unknown.indexOf(name.trim()) < 0) unknown.push(name.trim().slice(0, MAX_NAME));
+      return id || null;
+    };
+    var ids = function (names) {   // listed people, in list order
+      var on = {};
+      (Array.isArray(names) ? names : []).forEach(function (n) { var id = who(n); if (id) on[id] = true; });
+      return state.people.filter(function (p) { return on[p.id]; }).map(function (p) { return p.id; });
+    };
+    var names = function (list) { return list.map(nameOf); };
+    var cents = function (x) { return typeof x === 'number' && isFinite(x) ? Math.round(x * 100) : NaN; };
+    var label = function (s) { return typeof s === 'string' ? s.replace(/\s+/g, ' ').trim() : ''; };
+    var everyone = state.people.map(function (p) { return p.id; });
+    (Array.isArray(r.unknown_names) ? r.unknown_names : []).forEach(who);
+    if (CURRENCIES.indexOf(r.currency) >= 0 && r.currency !== state.cur) info.cur = r.currency;
+    info.note = label(r.note).slice(0, 300);
+
+    r.expenses.forEach(function (x) {
+      if (!x || typeof x !== 'object') return;
+      var total = cents(x.total), what = label(x.what);
+      if (!(total > 0 && total <= MAX_CENTS)) return;
+      var payer = who(x.payer);
+      if (!payer) { info.noPayer = true; payer = person(state.payer) ? state.payer : everyone[0]; }
+      var all = x.sharers == null ? everyone : ids(x.sharers);
+      if (!all.length) all = everyone;
+      var parts = [], rest = total, adj = {};
+      // what each person pays more (+) or less (−) than the others, in cents
+      (Array.isArray(x.adjustments) ? x.adjustments : []).forEach(function (a) {
+        var id = a && who(a.person), c = a && cents(a.amount);
+        if (id && all.indexOf(id) >= 0 && isFinite(c)) adj[id] = (adj[id] || 0) + c;
+      });
+      // one part for each step up in what people pay extra, split by those who pay at least that much
+      var levels = [];
+      all.forEach(function (id) { var v = adj[id] || 0; if (levels.indexOf(v) < 0) levels.push(v); });
+      levels.sort(function (a, b) { return a - b; });
+      for (var j = 1; j < levels.length; j++) {
+        var up = all.filter(function (id) { return (adj[id] || 0) >= levels[j]; });
+        var out = all.filter(function (id) { return up.indexOf(id) < 0; });
+        parts.push({ label: out.length <= up.length ? I18N[state.lang].without(names(out)) : I18N[state.lang].only(names(up)), cents: (levels[j] - levels[j - 1]) * up.length, ids: up });
+      }
+      (Array.isArray(x.items) ? x.items : []).forEach(function (it) {
+        var c = it && cents(it.amount), s = it ? ids(it.sharers) : [];
+        if (c > 0 && s.length) parts.push({ label: label(it.label), cents: c, ids: s });
+      });
+      parts.forEach(function (p) { rest -= p.cents; });
+      if (rest < 0) { info.tooMuch = true; return; }
+      if (rest > 0) parts.unshift({ label: '', cents: rest, ids: all });   // the part everyone shares equally
+      // parts split by the same people become one
+      var merged = [];
+      parts.forEach(function (p) {
+        var same = merged.filter(function (q) { return q.ids.join() === p.ids.join(); })[0];
+        if (same) { same.cents += p.cents; if (p.label && same.label) same.label += ' + ' + p.label; }
+        else merged.push({ label: p.label, cents: p.cents, ids: p.ids });
+      });
+      merged.forEach(function (p) {
+        list.push({ what: (p.label ? (what ? what + ' · ' : '') + p.label : what).slice(0, MAX_WHAT), cents: p.cents, payer: payer, parts: p.ids });
+      });
+      // for an uneven split, what each person ends up paying, to check against the bill
+      if (merged.length > 1) {
+        var owed = {};
+        merged.forEach(function (p) { p.ids.forEach(function (id) { owed[id] = (owed[id] || 0) + p.cents / p.ids.length; }); });
+        var groups = [];
+        all.concat(merged.reduce(function (a, p) { return a.concat(p.ids); }, [])).forEach(function (id) {
+          var c = Math.round(owed[id]), g = groups.filter(function (g) { return g.cents === c; })[0];
+          if (g) { if (g.ids.indexOf(id) < 0) g.ids.push(id); } else groups.push({ cents: c, ids: [id] });
+        });
+        info.splits.push({ what: what, total: total, groups: groups });
+      }
+    });
+    return { list: list, info: info };
+  }
+  function fillDraft() {
+    var d = state.drafts.list[state.drafts.at];
+    state.editing = null; state.confirmDel = null;
+    state.payer = d.payer; state.parts = d.parts.slice();
+    $('what-input').value = d.what; $('amount-input').value = plain(d.cents);
+    say('spend-msg', '');
+    renderForm(); renderLedger();
+    $('spend-form').scrollIntoView({ block: 'start' });
+  }
+  function renderDraftNote() {
+    var el = $('draft-note'), D = state.drafts;
+    el.hidden = !D;
+    if (!D) { el.innerHTML = ''; return; }
+    var T = I18N[state.lang], i = D.info, lines = [[D.list.length > 1 ? T.draftMany(D.at + 1, D.list.length) : T.draftOne, '']];
+    i.splits.forEach(function (s) {
+      lines.push([T.draftSplit(s.what, money(s.total), s.groups.map(function (g) { return T.draftEach(g.ids.map(nameOf), money(g.cents)); })), '']);
+    });
+    if (i.unknown.length) lines.push([T.unknown(i.unknown), 'warn']);
+    if (i.noPayer) lines.push([T.noPayer, 'warn']);
+    if (i.cur) lines.push([T.curDiff(i.cur, state.cur), 'warn']);
+    if (i.tooMuch) lines.push([T.tooMuch, 'warn']);
+    if (i.note) lines.push([T.claudeSays(i.note), '']);
+    el.innerHTML = lines.map(function (l) { return '<p' + (l[1] ? ' class="' + l[1] + '"' : '') + '>' + esc(l[0]) + '</p>'; }).join('');
+  }
+
+  $('scan-photo').addEventListener('change', function () {
+    var f = this.files && this.files[0];
+    this.value = '';   // so picking the same photo again still counts as a change
+    if (!f) return;
+    shrink(f).then(function (data) {
+      scanImage = data;
+      $('scan-thumb').src = data;
+      $('scan-file').hidden = false;
+      say('scan-msg', '');
+    }, function () {
+      clearPhoto();
+      say('scan-msg', I18N[state.lang].scanBadImage, true);
+    });
+  });
+  $('scan-clear').addEventListener('click', clearPhoto);
+  $('scan-go').addEventListener('click', function () {
+    var T = I18N[state.lang], text = $('scan-text').value.trim();
+    if (scanning) return;
+    if (!text && !scanImage) { say('scan-msg', T.scanNeed, true); $('scan-text').focus(); return; }
+    var body = { lang: state.lang, people: state.people.map(function (p) { return p.name; }), currency: state.cur };
+    if (text) body.text = text.slice(0, 500);
+    if (scanImage) body.image = scanImage.slice(scanImage.indexOf(',') + 1);
+    scanning = true;
+    $('scan-go').disabled = true; setText('scan-go', T.scanBusy); say('scan-msg', '');
+    api('POST', '/scan', body, 90000).then(function (res) {
+      var T = I18N[state.lang], r = res.body && res.body.result;
+      if (res.status !== 200) {
+        return say('scan-msg', res.status === 503 ? T.scanOff : res.status === 429 ? T.scanSlow : res.status === 422 ? T.scanRefused : T.scanFail, true);
+      }
+      var d = r && Array.isArray(r.expenses) ? toDrafts(r) : null;
+      if (!d) return say('scan-msg', T.scanFail, true);
+      if (!d.list.length) return say('scan-msg', d.info.unknown.length ? T.unknown(d.info.unknown) : d.info.tooMuch ? T.tooMuch : d.info.note || T.scanNone, true);
+      $('scan-text').value = '';
+      clearPhoto();
+      state.drafts = { list: d.list, at: 0, info: d.info };
+      fillDraft();
+    }, function () {
+      say('scan-msg', I18N[state.lang].scanFail, true);
+    }).then(function () {
+      scanning = false;
+      $('scan-go').disabled = false; setText('scan-go', I18N[state.lang].scanGo);
+    });
+  });
+
   // edit loads an expense into the form; delete asks once more on the same button
   var delTimer;
   $('ledger').addEventListener('click', function (ev) {
@@ -1189,7 +1450,7 @@ footer .link-btn { margin-left: auto; }
     if (b.hasAttribute('data-edit')) {
       var e = expense(b.getAttribute('data-edit'));
       if (!e) return;
-      state.editing = e.id; state.payer = e.payer; state.parts = e.parts.slice(); state.confirmDel = null;
+      state.editing = e.id; state.payer = e.payer; state.parts = e.parts.slice(); state.confirmDel = null; state.drafts = null;
       $('what-input').value = e.what; $('amount-input').value = plain(e.cents);
       say('spend-msg', '');
       renderForm(); renderLedger();

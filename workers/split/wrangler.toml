@@ -12,3 +12,13 @@ class_name = "Ledger"
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["Ledger"]   # SQLite-backed, the kind the free plan offers
+
+# At most 10 note or receipt readings per minute from one IP address, counted per Cloudflare location.
+# Each one is a Claude call on the site's key; this only slows down a script hammering /scan.
+[[ratelimits]]
+name = "SCAN_LIMIT"
+namespace_id = "1002"   # the golf coach counts under 1001
+
+  [ratelimits.simple]
+  limit = 10
+  period = 60
