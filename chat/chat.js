@@ -2,7 +2,7 @@
 // both import this file. The page uses it to check a conversation before sending it; the Worker uses
 // it to check it again, to shape the Claude request, and to check a conversation before storing it,
 // so the models, the prompt and the limits live in one place and the Worker can only ever send
-// requests shaped here.
+// requests shaped here. The rules for account names and passwords are here too.
 
 // The models a conversation can use, most capable first. Effort is how long each thinks before
 // answering: low keeps replies quick, and Fable's own guidance puts chat at medium. Opus and Fable
@@ -57,6 +57,16 @@ export const FILE_KINDS = { 'image/jpeg': 'image', 'image/png': 'image', 'image/
 export const MAX_FILE = { image: 5 * 1024 * 1024, pdf: 30 * 1024 * 1024, text: 1024 * 1024 };   // bytes
 export const MAX_FILES = 10;          // on one message
 export const FILE_ID = /^file_[A-Za-z0-9_-]{1,80}$/;
+
+// Accounts: a name of 2 to 24 letters, digits, '.', '_' or '-' (Chinese included), told apart without
+// regard to case, and a password of at least 8 characters. '' when they will do, else why not.
+export const NAME = /^[\p{L}\p{N}._-]{2,24}$/u;
+export const MIN_PASSWORD = 8;
+export function checkAccount(name, password) {
+  if (typeof name !== 'string' || !NAME.test(name)) return 'bad_name';
+  if (typeof password !== 'string' || password.length < MIN_PASSWORD || password.length > 200) return 'weak_password';
+  return '';
+}
 
 // For an upload: '' when it can go, else why not
 export function checkUpload(type, size) {

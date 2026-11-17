@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
-<!-- A private page: linked from nowhere on the site and kept out of search engines. The passcode the
-     Worker checks is what keeps others from using it, since anyone can read this repository. -->
+<!-- A private page: linked from nowhere on the site and kept out of search engines. The accounts the
+     Worker checks are what keep others from using it, since anyone can read this repository. -->
 <meta name="robots" content="noindex, nofollow">
 <title>闲聊 Small Talk</title>
 <script>
@@ -111,7 +111,9 @@ button:disabled { cursor: default; }
 @media (pointer: coarse) { .list .del { visibility: visible; } }
 .side.busy .list, .side.busy .new { pointer-events: none; opacity: 0.6; }   /* while a reply comes */
 .none { margin: 0; padding: 20px 18px; color: var(--ink-2); font-size: 14px; }
-.side-foot { padding: 10px 18px calc(12px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--rule); }
+.side-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 18px calc(12px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--rule); }
+.who { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 14px; font-weight: 600; }
+.side-foot .link { flex: none; }
 .link { background: none; border: 0; padding: 0; font-size: 13px; color: var(--ink-2); text-decoration: underline; text-underline-offset: 0.2em; text-align: left; }
 .link:hover { color: var(--ink); }
 .scrim { position: fixed; inset: 0; z-index: 3; background: rgb(12 18 24 / 0.45); }
@@ -202,7 +204,7 @@ button:disabled { cursor: default; }
 @keyframes blink { 0%, 80%, 100% { opacity: 0.25; transform: none; } 40% { opacity: 0.9; transform: translateY(-2px); } }
 @media (prefers-reduced-motion: reduce) { .dots i { animation: none; opacity: 0.6; } }
 
-/* the box you type in, and the passcode */
+/* the box you type in, and signing in */
 .dock {
   position: sticky; bottom: 0; z-index: 1;
   padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
@@ -220,17 +222,16 @@ button:disabled { cursor: default; }
   border: 1px solid var(--rule); border-radius: 8px;
 }
 @media (pointer: coarse) { .opts select { font-size: 16px; } }   /* below 16px, iOS zooms in on it */
-.composer, .lock-row {
+.composer, .fields {
   background: var(--bg);
   border: 1px solid var(--rule); border-radius: 14px;
   box-shadow: 0 1px 2px rgb(15 23 32 / 0.05), 0 6px 20px rgb(15 23 32 / 0.06);
 }
 .composer { padding: 6px; }
-.composer:focus-within, .lock-row:focus-within, .composer.drop { border-color: var(--film); }
+.composer:focus-within, .fields:focus-within, .composer.drop { border-color: var(--film); }
 .composer.drop { background: color-mix(in srgb, var(--film) 6%, var(--bg)); }
-.row, .lock-row { display: flex; align-items: flex-end; gap: 6px; }
-.lock-row { padding: 6px 6px 6px 14px; }
-.composer textarea, .lock-row input {
+.row { display: flex; align-items: flex-end; gap: 6px; }
+.composer textarea, .fields input {
   flex: 1; min-width: 0;
   border: 0; outline: 0; background: none; resize: none;
   font-size: 16px; line-height: 1.5;      /* 16px keeps iOS from zooming in on focus */
@@ -261,11 +262,16 @@ button:disabled { cursor: default; }
 .chip.up { opacity: 0.65; }
 .chip .rm { position: absolute; top: 3px; right: 3px; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--ink-2); font-size: 15px; line-height: 1; }
 .chip .rm:hover { background: var(--bg); color: var(--ink); }
-.lock label { display: block; margin: 0 0 6px; font-weight: 600; }
-.lock-row button { flex: none; border: 0; border-radius: 10px; padding: 6px 16px; background: var(--film); color: #FFFFFF; font-weight: 600; }
-.lock-row button:disabled { opacity: 0.5; }
-.lock .fine { margin: 8px 0 0; font-size: 13px; color: var(--ink-2); }
-.lock .msg-line { margin: 8px 0 0; font-size: 14px; color: var(--alert); }
+.lock { display: grid; gap: 10px; }
+.lock-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0; }
+.lock-head b { font-size: 17px; font-weight: 600; }
+.fields { display: grid; overflow: hidden; }
+.fields input { padding: 10px 14px; }
+.fields input + input { border-top: 1px solid var(--rule); }
+.lock-go { justify-self: start; border: 0; border-radius: 10px; padding: 7px 22px; background: var(--film); color: #FFFFFF; font-weight: 600; }
+.lock-go:disabled { opacity: 0.5; }
+.lock .fine { margin: 0; font-size: 13px; color: var(--ink-2); }
+.lock .msg-line { margin: 0; font-size: 14px; color: var(--alert); }
 .lock .msg-line:empty { display: none; }
 </style>
 </head>
@@ -282,7 +288,10 @@ button:disabled { cursor: default; }
   </button>
   <ul class="list" id="chat-list"></ul>
   <p class="none" id="chat-none">还没有对话。</p>
-  <div class="side-foot"><button type="button" class="link" id="forget" title="忘掉口令，清掉这台设备上存的对话；云端的还在">在这台设备上退出</button></div>
+  <div class="side-foot" id="side-foot" hidden>
+    <span class="who" id="who"></span>
+    <button type="button" class="link" id="forget" title="退出这个账号，并清掉这台设备上存的对话；云端的还在">退出登录</button>
+  </div>
 </aside>
 <div class="scrim" id="scrim" hidden></div>
 
@@ -310,13 +319,15 @@ button:disabled { cursor: default; }
   <footer class="dock">
     <p class="notice" id="notice" role="status" hidden></p>
     <form class="lock" id="lock" hidden>
-      <label for="pass">口令</label>
-      <div class="lock-row">
-        <input id="pass" type="password" autocomplete="current-password" enterkeyhint="go" required>
-        <button type="submit" id="lock-go">进入</button>
+      <p class="lock-head"><b id="lock-title">登录</b><button type="button" class="link" id="lock-switch">没有账号？注册</button></p>
+      <div class="fields">
+        <input id="acct-name" name="username" aria-label="用户名" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required>
+        <input id="acct-pass" name="password" type="password" aria-label="密码" autocomplete="current-password" required>
+        <input id="acct-invite" name="invite" type="password" aria-label="邀请码" placeholder="邀请码" autocomplete="off" hidden>
       </div>
+      <button type="submit" class="lock-go" id="lock-go">登录</button>
       <p class="msg-line" id="lock-msg" role="status"></p>
-      <p class="fine">这是私人页面，要口令才能用。口令只存在这台设备的浏览器里。</p>
+      <p class="fine" id="lock-fine"></p>
     </form>
     <div class="opts" id="opts">
       <span class="opt"><label for="model">模型</label><select id="model"></select></span>
@@ -339,11 +350,11 @@ button:disabled { cursor: default; }
 </div>
 
 <script type="module">
-import { MODELS, EFFORTS, FILE_KINDS, MAX_FILE, MAX_FILES, modelInfo, effortOf, costOf, MAX_TEXT, checkChatInput } from './chat.js';
+import { MODELS, EFFORTS, FILE_KINDS, MAX_FILE, MAX_FILES, MIN_PASSWORD, modelInfo, effortOf, costOf, MAX_TEXT, checkChatInput, checkAccount } from './chat.js';
 
 // ---------- settings ----------
-// The Worker in workers/claude-chat: it holds the Anthropic API key, keeps the conversations and the
-// files, and answers only with the passcode
+// The Worker in workers/claude-chat: it holds the Anthropic API key, keeps each user's conversations
+// and files, and answers only someone signed in
 const CHAT_ENDPOINT = 'https://claude-chat.wentaozhang1997.workers.dev';
 const SDK = 'https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.133.0';
 const MARKED = 'https://cdn.jsdelivr.net/npm/marked@18.1.3/+esm';
@@ -351,10 +362,15 @@ const PURIFY = 'https://cdn.jsdelivr.net/npm/dompurify@3.4.17/+esm';
 const NOTE_EVERY = 60 * 60 * 1000;   // a new time note for Claude after an hour, or on a new day
 const LOOK_EVERY = 15 * 1000;        // at most this often, a page coming back into view checks the cloud
 const IMAGE_EDGE = 2048;             // pixels on an image's long side, at most, as it is uploaded
-// localStorage: the passcode; the model and effort picked last, for new conversations; the list of
-// conversations and a copy of each, the originals being in the cloud; the one open; the unsent draft;
-// and a message sent but not yet answered, which comes back to the box if the page reloads
-const KEY = { pass: 'chat.passcode', model: 'chat.model', effort: 'chat.effort', index: 'chat.index', conv: 'chat.c.', current: 'chat.current', draft: 'chat.draft', sent: 'chat.sent' };
+// localStorage: who is signed in on this browser, as the token the Worker gave and the account's id
+// and name. Then, for each account under a prefix of its own: the model and effort picked last, for
+// new conversations; the list of conversations and a copy of each, the originals being in the cloud;
+// the one open; the unsent draft; and a message sent but not yet answered, which comes back to the
+// box if the page reloads. Before there were accounts these had no prefix but 'chat.', and the
+// passcode was kept too.
+const AUTH = { token: 'chat.token', me: 'chat.me', flash: 'chat.flash', passcode: 'chat.passcode' };
+const keysOf = (p) => ({ model: p + 'model', effort: p + 'effort', index: p + 'index', conv: p + 'c.', current: p + 'current', draft: p + 'draft', sent: p + 'sent' });
+const prefixOf = (id) => `chat.u.${id}:`;   // ':' can't be in a name, so no account's keys start with another's
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -371,8 +387,12 @@ const ICON = {
   stop: '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2.5" fill="currentColor"/></svg>',
 };
 let busy = null;   // the request in flight: { ctrl, stream, stopped, view }, view being the messages it shows
-let passcode = store.get(KEY.pass) || '';
-const auth = (p = passcode) => 'Bearer ' + encodeURIComponent(p);
+let token = store.get(AUTH.token) || '', me = null;
+try { me = JSON.parse(store.get(AUTH.me)); } catch (e) {}
+if (!token || !me || typeof me.id !== 'string' || typeof me.name !== 'string') { token = ''; me = null; }
+// Signed out, the page works on keys nothing else uses, and shows nobody's conversations
+const KEY = keysOf(me ? prefixOf(me.id) : 'chat.out:');
+const auth = () => 'Bearer ' + token;
 picker.innerHTML = MODELS.map((m) => `<option value="${m.id}">${esc(m.name)}</option>`).join('');
 const nameOf = (id) => (MODELS.find((m) => m.id === id) || { name: id }).name;
 const anEffort = (e) => (EFFORTS.includes(e) ? e : '');   // '' is the model's own
@@ -475,7 +495,9 @@ function inOrder(fn) {
   queue = p.catch(() => {});
   return p;
 }
-// A request to the Worker other than the chat itself. A wrong passcode asks for it again.
+// A request to the Worker other than the chat itself. A session that has ended asks to sign in again.
+const ended = async (res) => res.status === 401 && (await res.clone().json().catch(() => ({}))).error === 'bad_session';
+const EXPIRED = '登录过期了，请重新登录。';
 async function api(method, path, body) {
   const res = await fetch(CHAT_ENDPOINT + path, {
     method,
@@ -483,13 +505,13 @@ async function api(method, path, body) {
     body: body ? JSON.stringify(body) : undefined,
     signal: AbortSignal.timeout(20000),
   });
-  if (res.status === 401 && (await res.clone().json().catch(() => ({}))).error === 'bad_passcode') lock('口令不对，或者已经换了。请重新输入。');
+  if (await ended(res)) signOut(EXPIRED, false);
   return res;
 }
 
 const upload = (c) => inOrder(() => push(c));
 async function push(c) {
-  if (!c.dirty || !passcode || !index.some((e) => e.id === c.id)) return;   // nothing new, signed out, or deleted
+  if (!c.dirty || !token || !index.some((e) => e.id === c.id)) return;   // nothing new, signed out, or deleted
   const sent = c.messages, keep = Math.min(c.synced, sent.length), title = c.title, model = c.model, effort = c.effort;
   let res;
   try { res = await api('PUT', '/chats/' + c.id, { base: c.version, keep, append: sent.slice(keep), title, model, effort }); }
@@ -531,7 +553,7 @@ async function pull(id) {
 // What changed elsewhere: conversations added or deleted on other devices, and new turns in the open
 // one. What this browser has and the cloud doesn't, it uploads.
 const look = () => inOrder(async () => {
-  if (!passcode) return;
+  if (!token) return;
   lastLook = Date.now();
   let chats;
   try {
@@ -645,7 +667,7 @@ function addFiles(list) {
         body: blob,
       });
       const r = await res.json().catch(() => ({}));
-      if (res.status === 401 && r.error === 'bad_passcode') { lock('口令不对，或者已经换了。请重新输入。'); throw new Error('口令不对'); }
+      if (res.status === 401 && r.error === 'bad_session') { signOut(EXPIRED, false); throw new Error(EXPIRED); }
       if (!res.ok) throw new Error(r.error === 'too_big' ? '文件太大了' : r.error === 'rate_limited' ? '传得太快了，等一分钟' : r.error || res.status);
       if (!tray.includes(item)) return forgetFile(r.id);   // taken off while it went up
       Object.assign(item, { id: r.id, name: r.name || name, size: r.size || blob.size, ready: true });
@@ -686,10 +708,10 @@ input.addEventListener('paste', (e) => {
   if (files.length) { e.preventDefault(); addFiles(files); }
 });
 // Files dragged anywhere onto the page land in the box. A file dropped while the box is hidden
-// (before the passcode) is caught all the same, so the browser doesn't leave the page to show it.
+// (signed out) is caught all the same, so the browser doesn't leave the page to show it.
 const composer = $('composer');
 const hasFiles = (e) => e.dataTransfer && [...e.dataTransfer.types].includes('Files');
-const usable = () => passcode && !composer.hidden;
+const usable = () => token && !composer.hidden;
 document.addEventListener('dragover', (e) => { if (!hasFiles(e)) return; e.preventDefault(); composer.classList.toggle('drop', !!usable()); });
 document.addEventListener('dragleave', (e) => { if (!e.relatedTarget) composer.classList.remove('drop'); });
 document.addEventListener('drop', (e) => {
@@ -824,19 +846,14 @@ function newChat() {
   if (busy) return;
   closeSide();
   show(fresh());
-  if (!coarse && passcode) input.focus();
+  if (!coarse && token) input.focus();
 }
 $('new-btn').addEventListener('click', newChat);
 $('new-top').addEventListener('click', newChat);
-// Signing out also clears this browser's copies of what the cloud has; anything not uploaded yet
-// stays, and goes up after the next sign-in
 $('forget').addEventListener('click', () => {
+  if (busy) return;
   closeSide();
-  for (const e of index) if (e.version && !e.dirty) store.del(KEY.conv + e.id);
-  index = index.filter((e) => !e.version || e.dirty);
-  saveIndex();
-  if (conv.version && !conv.dirty) show(fresh());
-  lock('已退出。这台设备上存的对话也清掉了，云端的还在。');
+  signOut('已退出。这台设备上存的对话也清掉了，云端的还在。');
 });
 
 // ---------- talking to Claude ----------
@@ -867,6 +884,7 @@ function keepable(content) {
 function problemText(err) {
   const st = err && err.status, why = String((err && err.message) || err);
   if (st === 429) return why === 'rate_limited' ? '发得太快了，等一分钟再试。' : 'Claude 那边限流了，稍后再试。';
+  if (st === 403 && why === 'not_your_file') return '有个附件已经失效了，去掉它，重新传一次。';
   if (st === 503 && why === 'not_configured') return '服务器还没配置好：Worker 缺 ANTHROPIC_API_KEY 或 CHAT_PASSCODE。';
   if (st === 400 && why === 'too_long') return '这段对话太长了，开一个新对话吧。';
   if (st === 400 && /credit|balance|billing|spend/i.test(why)) return 'Anthropic API 的余额或花费上限用完了。';
@@ -936,9 +954,9 @@ async function run(base, extra, typed) {
       truncated: msg.stop_reason === 'max_tokens' || undefined,
     }]));
   } catch (err) {
-    if (err.status === 401 && err.message === 'bad_passcode') {
+    if (err.status === 401 && err.message === 'bad_session') {
       giveBack(typed, '');
-      lock('口令不对，或者已经换了。请重新输入。');
+      signOut(EXPIRED, false);
     } else if (text.trim()) {
       // Stopped, or cut off partway: what came is kept, without its thinking, and 重新生成 asks again
       commit(view.concat([{ role: 'assistant', content: [{ type: 'text', text: text.trimEnd() }], at: Date.now(), model, effort, stopped: true }]));
@@ -960,7 +978,7 @@ function sendTyped() {
   if (busy || tray.some((f) => !f.ready)) return;
   const files = tray.slice();
   if (!text && !files.length) return;
-  if (!passcode) return lock('');
+  if (!token) return;
   if (text.length > MAX_TEXT) return notice(`一条消息最多 ${MAX_TEXT} 个字符，这条有 ${text.length} 个。`);
   const now = Date.now(), user = { role: 'user', content: contentOf(text, files), at: now };
   if (files.length) user.files = files.map(({ id, name, size, kind, thumb }) => ({ id, name, size, kind, ...(thumb ? { thumb } : {}) }));
@@ -1040,43 +1058,122 @@ log.addEventListener('click', async (e) => {
   } catch (err) {}
 });
 
-// ---------- passcode ----------
+// ---------- accounts ----------
+// Each user signs in with their own name and password, and anyone with the invite code can open an
+// account. Signing in or out reloads the page, which then reads that account's own keys.
+let joining = false;   // the form opens an account rather than signing in
+const legacy = store.get(AUTH.passcode);   // a browser that used the passcode, from before there were accounts
+function drawLock() {
+  $('lock-title').textContent = $('lock-go').textContent = joining ? '注册' : '登录';
+  $('lock-switch').textContent = joining ? '已有账号？登录' : '没有账号？注册';
+  $('acct-invite').hidden = !joining;
+  $('acct-invite').required = joining;
+  $('acct-pass').setAttribute('autocomplete', joining ? 'new-password' : 'current-password');
+  $('acct-name').placeholder = joining ? '用户名：2 到 24 个字，不分大小写' : '用户名';
+  $('acct-pass').placeholder = joining ? `密码：至少 ${MIN_PASSWORD} 个字符` : '密码';
+  $('lock-fine').textContent = !joining ? '这是私人页面，登录后才能用。'
+    : legacy && $('acct-invite').value === legacy ? '现在要用账号了。邀请码就是原来的口令，已经替你填好；原来的对话归第一个注册的账号。'
+    : '注册要邀请码，找网站的主人要。';
+}
 function lock(msg) {
-  passcode = '';
-  store.del(KEY.pass);
   composer.hidden = true;
   $('opts').hidden = true;
   $('lock').hidden = false;
   $('lock-msg').textContent = msg;
-  $('pass').value = '';
-  if (!coarse || msg) $('pass').focus();
+  drawLock();
+  if (!coarse) $(joining || !$('acct-name').value ? 'acct-name' : 'acct-pass').focus();
 }
 function unlock() {
   $('lock').hidden = true;
   composer.hidden = false;
   $('opts').hidden = false;
+  $('who').textContent = me.name;
+  $('side-foot').hidden = false;
   if (!coarse) input.focus();
 }
+$('lock-switch').addEventListener('click', () => {
+  joining = !joining;
+  $('lock-msg').textContent = '';
+  drawLock();
+  if (!coarse) $('acct-name').focus();
+});
+
+// The copies from before there were accounts belong to the first account, which took over their
+// originals in the cloud
+function adopt(p) {
+  const from = keysOf('chat.'), to = keysOf(p), moves = [];
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(from.conv)) moves.push([k, to.conv + k.slice(from.conv.length)]);
+    }
+  } catch (e) { return; }
+  for (const k of ['model', 'effort', 'index', 'current', 'draft', 'sent']) moves.push([from[k], to[k]]);
+  for (const [a, b] of moves) {
+    const v = store.get(a);
+    if (v == null) continue;
+    store.del(a);
+    if (store.get(b) == null && !store.set(b, v)) store.set(a, v);
+  }
+}
+
+const SIGN_IN = {
+  bad_login: '用户名或密码不对。',
+  bad_invite: '邀请码不对。',
+  name_taken: '这个用户名有人用了，换一个吧。',
+  bad_name: '用户名要 2 到 24 个字：字母、数字、汉字，或者 . _ -',
+  weak_password: `密码至少要 ${MIN_PASSWORD} 个字符。`,
+  rate_limited: '试得太快了，等一分钟再试。',
+  not_configured: '服务器还没配置好：Worker 缺 ANTHROPIC_API_KEY 或 CHAT_PASSCODE。',
+  bad_passcode: '服务器还没更新好，等一两分钟再试。',
+};
 $('lock').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const p = $('pass').value.trim();
-  if (!p) return;
+  const name = $('acct-name').value.trim(), password = $('acct-pass').value, invite = $('acct-invite').value.trim();
+  const say = (t) => { $('lock-msg').textContent = t; };
+  if (!name || !password || (joining && !invite)) return;
+  const problem = joining && checkAccount(name, password);
+  if (problem) return say(SIGN_IN[problem]);
   const go = $('lock-go');
   go.disabled = true;
-  $('lock-msg').textContent = '';
+  say('');
   try {
-    // The Worker answers a GET with 204 when the passcode is right, without calling Claude
-    const res = await fetch(CHAT_ENDPOINT, { headers: { Authorization: auth(p) } });
-    if (res.status === 204) { passcode = p; store.set(KEY.pass, p); notice(''); unlock(); look(); return; }
-    const why = (await res.json().catch(() => ({}))).error;
-    $('lock-msg').textContent = why === 'bad_passcode' ? '口令不对。' : why === 'rate_limited' ? '试得太快了，等一分钟再试。'
-      : why === 'not_configured' ? '服务器还没设好口令：在 GitHub 加上 CHAT_PASSCODE 后重新部署。' : `出错了：${why || res.status}`;
+    const res = await fetch(CHAT_ENDPOINT + (joining ? '/account' : '/login'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(joining ? { name, password, invite } : { name, password }),
+    });
+    const r = await res.json().catch(() => ({}));
+    if (!res.ok || !r.token) return say(SIGN_IN[r.error] || `出错了：${r.error || res.status}`);
+    if (!store.set(AUTH.token, r.token) || !store.set(AUTH.me, JSON.stringify({ id: r.id, name: r.name }))) {
+      store.del(AUTH.token);
+      return say('这个浏览器存不下登录状态：是不是关掉了网站数据？');
+    }
+    store.del(AUTH.passcode);
+    if (r.first) adopt(prefixOf(r.id));
+    location.reload();
   } catch (err) {
-    $('lock-msg').textContent = '连不上服务器。（Worker 部署了吗？在中国大陆，workers.dev 要翻墙才打得开。）';
+    say('连不上服务器。（Worker 部署了吗？在中国大陆，workers.dev 要翻墙才打得开。）');
   } finally {
     go.disabled = false;
   }
 });
+
+// Signing out ends the session in the cloud too, and clears this browser's copies of what the cloud
+// has; anything not uploaded yet stays, and goes up when the same account signs in again
+function signOut(msg, tell = true) {
+  if (!token) return;   // already on the way out
+  if (tell) fetch(CHAT_ENDPOINT + '/logout', { method: 'POST', headers: { Authorization: auth() }, keepalive: true }).catch(() => {});
+  for (const e of index) if (e.version && !e.dirty) store.del(KEY.conv + e.id);
+  store.set(KEY.index, JSON.stringify(index.filter((e) => !e.version || e.dirty)));
+  if (store.get(AUTH.token) === token) { store.del(AUTH.token); store.del(AUTH.me); }   // unless another tab signed in since
+  token = '';
+  try { sessionStorage.setItem(AUTH.flash, msg); } catch (e) {}
+  location.reload();
+}
+// Signing in or out in another tab: this one follows, unless a reply is still coming
+addEventListener('storage', (e) => { if (e.key === AUTH.token && (e.newValue || '') !== token && !busy) location.reload(); });
+
 // Coming back to the page, as after chatting on another device
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && Date.now() - lastLook > LOOK_EVERY) look();
@@ -1092,7 +1189,14 @@ grow();
 render();
 drawList();
 scrollDown();
-if (passcode) { unlock(); look(); } else lock('');
+if (token) { unlock(); look(); }
+else {
+  let flash = '';
+  try { flash = sessionStorage.getItem(AUTH.flash) || ''; sessionStorage.removeItem(AUTH.flash); } catch (e) {}
+  $('chat-none').textContent = '登录后，这里是你的对话。';
+  if (legacy) { joining = true; $('acct-invite').value = legacy; }
+  lock(flash);
+}
 </script>
 </body>
 </html>

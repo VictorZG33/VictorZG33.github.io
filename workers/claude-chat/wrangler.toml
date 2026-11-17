@@ -6,8 +6,8 @@ compatibility_date = "2026-10-01"
 workers_dev = true      # served at https://claude-chat.<your subdomain>.workers.dev
 
 # At most 20 requests per minute from one IP address, counted per Cloudflare location. A message and
-# its save take two; nobody types fast enough to reach it. It slows down anyone trying passcodes, and
-# caps what a leaked passcode can spend.
+# its save take two; nobody types fast enough to reach it. It slows down anyone guessing passwords or
+# the invite code, and caps what one account can spend in a minute.
 [[ratelimits]]
 name = "CHAT_LIMIT"
 namespace_id = "1003"   # unique in the account: the golf coach counts under 1001, All Square's reading under 1002
@@ -16,11 +16,20 @@ namespace_id = "1003"   # unique in the account: the golf coach counts under 100
   limit = 20
   period = 60
 
-# The saved conversations, in one SQLite-backed Durable Object (store.js), the kind the free plan offers
+# SQLite-backed Durable Objects, the kind the free plan offers: each user's saved conversations in
+# one of their own (store.js), and the accounts and their sessions in one for everybody (accounts.js)
 [[durable_objects.bindings]]
 name = "STORE"
 class_name = "ChatStore"
 
+[[durable_objects.bindings]]
+name = "ACCOUNTS"
+class_name = "Accounts"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["ChatStore"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["Accounts"]
