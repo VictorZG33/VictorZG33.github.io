@@ -9,7 +9,7 @@ workers_dev = true      # served at https://claude-chat.<your subdomain>.workers
 # that fast; it slows down anyone trying passcodes, and caps what a leaked passcode can spend.
 [[ratelimits]]
 name = "CHAT_LIMIT"
-namespace_id = "1002"   # unique in the account: the golf coach's limit is 1001
+namespace_id = "1003"   # unique in the account: the golf coach counts under 1001, All Square's reading under 1002
 
   [ratelimits.simple]
   limit = 20

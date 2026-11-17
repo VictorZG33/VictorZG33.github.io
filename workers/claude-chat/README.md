@@ -22,11 +22,11 @@ A `GET` with the right passcode gets `204` and no call to Claude, which is how t
 `.github/workflows/claude-chat.yml` deploys the Worker whenever this folder or `chat/chat.js` changes on `main`, with the same Cloudflare secrets as the golf coach and the All Square sync server.
 
 1. Pick a passcode. It is the only lock, so make it long: four or five random words, or 16 random characters. Any characters work, Chinese included.
-2. Store it as the repository secret `CHAT_PASSCODE` (Settings → Secrets and variables → Actions). `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` and `ANTHROPIC_API_KEY` should already be there, from the golf coach.
+2. Store it as the repository secret `CHAT_PASSCODE` (Settings → Secrets and variables → Actions). `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` and `ANTHROPIC_API_KEY` should already be there, from the golf coach and All Square.
 3. Actions → Claude chat server → Run workflow. The run's summary shows the Worker's address, `https://claude-chat.<subdomain>.workers.dev`, which should match `CHAT_ENDPOINT` in `chat/index.html`.
 4. Open `https://wentaoz.com/chat/` and type the passcode once on each device. The page keeps it in that browser's `localStorage`; *在这台设备上退出* in the conversation list forgets it.
 
-The chat uses the golf coach's key, and with it that key's workspace spend limit. To give the chat a key and a limit of its own, create another workspace and key in the [Anthropic Console](https://console.anthropic.com) and store the key as `CHAT_ANTHROPIC_API_KEY`; the workflow uses it in place of `ANTHROPIC_API_KEY`. The workflow uploads the key and the passcode with every deploy, so to change either, update the repository secret and run the workflow again. A changed passcode logs every device out.
+The chat uses the same key as the golf coach and All Square's receipt reading, and with it that key's workspace spend limit. To give the chat a key and a limit of its own, create another workspace and key in the [Anthropic Console](https://console.anthropic.com) and store the key as `CHAT_ANTHROPIC_API_KEY`; the workflow uses it in place of `ANTHROPIC_API_KEY`. The workflow uploads the key and the passcode with every deploy, so to change either, update the repository secret and run the workflow again. A changed passcode logs every device out.
 
 To deploy by hand instead, in this folder:
 
