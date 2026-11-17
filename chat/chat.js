@@ -33,14 +33,26 @@ const MAX_OUT = { low: 16000, medium: 32000, high: 32000, xhigh: 64000, max: 640
 export const effortOf = (x) => (EFFORTS.includes(x.effort) ? x.effort : modelInfo(x.model).effort);
 const isEffort = (e) => e == null || e === '' || EFFORTS.includes(e);
 
-// What a reply cost, from its usage
+// What a reply cost, from its usage: its tokens, and US$10 for every 1,000 web searches
+export const SEARCH_PRICE = 0.01;
 export function costOf(id, u) {
   if (!u) return undefined;
   const m = modelInfo(id);
   const read = u.cache_read_input_tokens || 0, write = u.cache_creation_input_tokens || 0, fresh = u.input_tokens || 0;
   const p = m.long && fresh + read + write > m.long.over ? m.long : m.price;
-  return (fresh * p.input + write * p.cacheWrite + read * p.cacheRead + (u.output_tokens || 0) * p.output) / 1e6;
+  const searches = (u.server_tool_use && u.server_tool_use.web_search_requests) || 0;
+  return (fresh * p.input + write * p.cacheWrite + read * p.cacheRead + (u.output_tokens || 0) * p.output) / 1e6 + searches * SEARCH_PRICE;
 }
+
+// Web search, which Anthropic runs while Claude answers: Claude decides when to search, at most
+// MAX_SEARCHES times a reply, and cites what it uses. The results come back as part of the reply,
+// encrypted, and go back with the conversation, unchanged, so Claude keeps them in later turns.
+// This is the basic tool, which Claude calls directly; the later versions filter results by running
+// code first, which suits long research better than a chat, and makes a reply carry its code too.
+// A conversation's tools must never change once it has begun (see buildChatRequest), so this stays
+// as it is: change it and every conversation so far loses the reasoning in its earlier turns.
+export const MAX_SEARCHES = 5;
+const WEB_SEARCH = { type: 'web_search_20250305', name: 'web_search', max_uses: MAX_SEARCHES };
 
 export const MAX_TEXT = 40000;        // characters in one message the user types
 const MAX_NOTE = 400;                 // characters in one of the page's time notes
@@ -81,7 +93,7 @@ const SYSTEM = `You are Claude, chatting with the user through a small private c
 - Talk like a thoughtful friend: warm, natural and direct. Match the length of what they write: a short reply to a short message, more only when they ask for it or the question needs it.
 - Reply in the language they write in. For Chinese, use Simplified Chinese unless they write Traditional.
 - Plain conversational prose suits a chat best. Use Markdown (a list, a table, a code block) only when it helps. The page does not render LaTeX, so write any formula in plain text with Unicode symbols (x², √, ≈, →).
-- You cannot browse the web, and this chat has no other tools. For recent events, say what you know and that it may be out of date. When you are unsure, say so rather than guessing.
+- You can search the web. Search when the answer depends on something current or specific you may not know well (news, prices, weather, schedules, recent releases, a particular person, place or product), or when the user asks you to look something up; otherwise answer from what you know. You can't open links, but you can search for what one points to. The page lists the sources you cite below your reply. When you are unsure, say so rather than guessing.
 - System messages in the conversation give the user's local date and time when they wrote.`;
 
 const ROLES = ['user', 'assistant', 'system'];
@@ -105,9 +117,12 @@ function checkMessage(msg) {
   return '';
 }
 
+// A reply the API paused in the middle of searching, which a request sends back to have it carry on
+const isPaused = (m) => m.role === 'assistant' && Array.isArray(m.content) && m.content.some((b) => b && b.type === 'server_tool_use');
+
 // Returns a short reason when the conversation can't be sent, or '' when it is fine.
-// The page sends { model, messages }: the conversation as the API sees it, ending with the user's new
-// message or with a time note after it.
+// The page sends { model, effort, messages }: the conversation as the API sees it, ending with the
+// user's new message, a time note after it, or a reply paused partway (stop reason pause_turn).
 export function checkChatInput(x) {
   if (!x || typeof x !== 'object' || !Array.isArray(x.messages)) return 'bad input';
   if (x.model != null && !MODELS.some((m) => m.id === x.model)) return 'bad model';
@@ -116,7 +131,7 @@ export function checkChatInput(x) {
   if (!m.length) return 'no messages';
   if (m.length > MAX_MESSAGES) return 'too_long';
   if (m[0].role !== 'user') return 'first message not the user’s';
-  if (m[m.length - 1].role === 'assistant') return 'nothing to answer';
+  if (m[m.length - 1].role === 'assistant' && !isPaused(m[m.length - 1])) return 'nothing to answer';
   for (let i = 0; i < m.length; i++) {
     const problem = checkMessage(m[i]);
     if (problem) return problem;
@@ -130,19 +145,27 @@ export function checkChatInput(x) {
 // The parameters for client.beta.messages.stream(). Every model here thinks adaptively; effort sets
 // how much. The top-level cache_control caches the conversation so far, so each turn re-reads the
 // earlier ones at a tenth to a fortieth of the price; a change of effort starts that cache over once.
+//
+// Each thinking block the models write is bound to everything before it: the system prompt, the
+// tools and the earlier messages. Change any of them and the block no longer fits, which on these
+// models is an error unless the request says to drop such blocks instead. The page only ever adds to
+// a conversation, so that happens only when this file's prompt or tools change, as when web search
+// came: conversations from before carry on, without the reasoning of their earlier turns.
 export function buildChatRequest(x) {
   const m = modelInfo(x.model), effort = effortOf(x);
   const req = {
     model: m.id,
     max_tokens: MAX_OUT[effort],
-    thinking: { type: 'adaptive' },
+    thinking: { type: 'adaptive', block_binding: { prefix_mismatch_behavior: 'drop_block' } },
     output_config: { effort },
     cache_control: { type: 'ephemeral' },
+    tools: [WEB_SEARCH],
     system: SYSTEM,
     messages: x.messages.map(({ role, content }) => ({ role, content })),
+    betas: ['thinking-binding-controls-2026-08-01'],
   };
   if (m.fallback) {
-    req.betas = ['server-side-fallback-2026-07-01'];
+    req.betas.push('server-side-fallback-2026-07-01');
     req.fallbacks = 'default';
   }
   return req;
