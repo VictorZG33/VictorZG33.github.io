@@ -12,13 +12,13 @@
 // Prices are US$ per million tokens, for the cost the page shows under each reply; Haiku's go up
 // fivefold for a prompt over 100,000 tokens.
 export const MODELS = [
-  { id: 'claude-fable-5-2', name: 'Fable 5.2', note: '最聪明，贵一倍', effort: 'medium', fallback: true,
+  { id: 'claude-fable-5-2', name: 'Fable 5.2', effort: 'medium', fallback: true,
     price: { input: 8, cacheWrite: 10, cacheRead: 0.2, output: 40 } },
-  { id: 'claude-opus-5-5', name: 'Opus 5.5', note: '默认', effort: 'low', fallback: true,
+  { id: 'claude-opus-5-5', name: 'Opus 5.5', effort: 'low', fallback: true,
     price: { input: 4, cacheWrite: 5, cacheRead: 0.2, output: 20 } },
-  { id: 'claude-sonnet-5-5', name: 'Sonnet 5.5', note: '便宜一半', effort: 'low', fallback: false,
+  { id: 'claude-sonnet-5-5', name: 'Sonnet 5.5', effort: 'low', fallback: false,
     price: { input: 2, cacheWrite: 2.5, cacheRead: 0.1, output: 10 } },
-  { id: 'claude-haiku-5-5', name: 'Haiku 5.5', note: '最快，几乎不花钱', effort: 'low', fallback: false,
+  { id: 'claude-haiku-5-5', name: 'Haiku 5.5', effort: 'low', fallback: false,
     price: { input: 0.1, cacheWrite: 0.125, cacheRead: 0.01, output: 0.5 },
     long: { over: 100000, input: 0.5, cacheWrite: 0.625, cacheRead: 0.05, output: 2.5 } },
 ];
@@ -49,6 +49,23 @@ const MAX_TOTAL = 3000000;            // characters of JSON in the whole convers
 const MAX_STORED = 1000000;           // characters of JSON in one stored message, well inside a row's 8 MB
 const MAX_TITLE = 100;
 
+// Files a message can carry: images, PDFs and plain text. The Worker uploads each to the Anthropic
+// Files API once, and messages refer to it by id, so a conversation never carries the bytes and the
+// thinking checks always see the same file. Images come already made smaller by the page, text as
+// plain text whatever its extension.
+export const FILE_KINDS = { 'image/jpeg': 'image', 'image/png': 'image', 'image/gif': 'image', 'image/webp': 'image', 'application/pdf': 'pdf', 'text/plain': 'text' };
+export const MAX_FILE = { image: 5 * 1024 * 1024, pdf: 30 * 1024 * 1024, text: 1024 * 1024 };   // bytes
+export const MAX_FILES = 10;          // on one message
+export const FILE_ID = /^file_[A-Za-z0-9_-]{1,80}$/;
+
+// For an upload: '' when it can go, else why not
+export function checkUpload(type, size) {
+  const kind = FILE_KINDS[type];
+  if (!kind) return 'unsupported type';
+  if (!(size > 0) || size > MAX_FILE[kind]) return 'too_big';
+  return '';
+}
+
 const SYSTEM = `You are Claude, chatting with the user through a small private chat page on their personal website.
 
 - Talk like a thoughtful friend: warm, natural and direct. Match the length of what they write: a short reply to a short message, more only when they ask for it or the question needs it.
@@ -60,11 +77,18 @@ const SYSTEM = `You are Claude, chatting with the user through a small private c
 const ROLES = ['user', 'assistant', 'system'];
 const isText = (s, max) => typeof s === 'string' && s.length > 0 && s.length <= max;
 
-// One message on its own: the user's messages and the time notes are plain text; Claude's replies
-// are lists of content blocks, kept exactly as they came, thinking included
+// A user's message: plain text, or the files it carries followed by its text, if any
+const isFile = (b) => (b.type === 'image' || b.type === 'document') && b.source && b.source.type === 'file' &&
+  FILE_ID.test(b.source.file_id) && (b.title == null || isText(b.title, 255));
+const isUserContent = (c) => typeof c === 'string' ? isText(c, MAX_TEXT)
+  : Array.isArray(c) && c.length > 0 && c.length <= MAX_FILES + 1 &&
+    c.every((b, i) => b && (b.type === 'text' ? i === c.length - 1 && isText(b.text, MAX_TEXT) : i < MAX_FILES && isFile(b)));
+
+// One message on its own: the time notes are plain text; Claude's replies are lists of content
+// blocks, kept exactly as they came, thinking included
 function checkMessage(msg) {
   if (!msg || !ROLES.includes(msg.role)) return 'bad role';
-  if (msg.role === 'user' && !isText(msg.content, MAX_TEXT)) return 'bad user message';
+  if (msg.role === 'user' && !isUserContent(msg.content)) return 'bad user message';
   if (msg.role === 'system' && !isText(msg.content, MAX_NOTE)) return 'bad note';
   if (msg.role === 'assistant' && !(Array.isArray(msg.content) && msg.content.length &&
     msg.content.every((b) => b && typeof b === 'object' && typeof b.type === 'string'))) return 'bad reply';
