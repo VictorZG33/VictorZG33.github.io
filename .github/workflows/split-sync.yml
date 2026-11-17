@@ -1,6 +1,8 @@
-# Deploys the sync server behind shared ledgers in 两清 All Square (wentaoz.com/split/): the Cloudflare Worker
-# in workers/split. Needs two repository secrets, CLOUDFLARE_API_TOKEN (a token made from the
-# "Edit Cloudflare Workers" template) and CLOUDFLARE_ACCOUNT_ID; until both are set it does nothing.
+# Deploys the server behind 两清 All Square (wentaoz.com/split/): the Cloudflare Worker in workers/split, which
+# syncs shared ledgers and reads notes and receipt photos with Claude. Needs two repository secrets,
+# CLOUDFLARE_API_TOKEN (a token made from the "Edit Cloudflare Workers" template) and CLOUDFLARE_ACCOUNT_ID;
+# until both are set it does nothing. ANTHROPIC_API_KEY, the key the golf coach uses, switches the reading on:
+# it is uploaded to the Worker as a secret on every deploy, and without it syncing still works.
 name: Split sync server
 
 on:
@@ -20,6 +22,7 @@ jobs:
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
     steps:
       - name: Wait for the Cloudflare secrets
         if: env.CLOUDFLARE_API_TOKEN == '' || env.CLOUDFLARE_ACCOUNT_ID == ''
@@ -28,11 +31,26 @@ jobs:
       - uses: actions/checkout@v4
         if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
 
+      - uses: actions/setup-node@v4
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        with:
+          node-version: 22
+
       - name: Deploy, and show the server's address in the run summary
         if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
         working-directory: workers/split
         shell: bash
         run: |
-          npx --yes wrangler@4.149.0 deploy | tee deploy.log
+          npm ci --no-audit --no-fund
+          args=()
+          if [ -n "$ANTHROPIC_API_KEY" ]; then
+            secrets="$RUNNER_TEMP/split-sync-secrets.json"
+            trap 'rm -f "$secrets"' EXIT
+            jq -n --arg key "$ANTHROPIC_API_KEY" '{ANTHROPIC_API_KEY: $key}' > "$secrets"
+            args=(--secrets-file "$secrets")
+          else
+            echo "::notice::Without the ANTHROPIC_API_KEY secret, reading notes and receipts stays off."
+          fi
+          npx wrangler deploy "${args[@]}" | tee deploy.log
           url=$(grep -o 'https://[a-z0-9.-]*\.workers\.dev' deploy.log | head -n 1)
           echo "::notice title=Sync server address (the API in split/index.html)::$url"
