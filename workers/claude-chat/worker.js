@@ -1,18 +1,26 @@
 // Cloudflare Worker behind 闲聊 Small Talk, the private chat page at wentaoz.com/chat/. It holds the
-// site's Anthropic API key and a passcode as secrets, and talks to Claude only for someone who sends
-// that passcode, so finding the page is not enough to use it.
+// site's Anthropic API key and a passcode as secrets, keeps the conversations, and answers only
+// someone who sends that passcode, so finding the page is not enough to use it.
 //
-//   GET  /  with the passcode                -> 204, so the page can check a passcode as it is typed in
-//   POST /  with the passcode, { messages }  -> Claude's reply, streamed as newline-delimited events
+//   GET    /             -> 204, so the page can check a passcode as it is typed in
+//   POST   /             { model, messages } -> Claude's reply, streamed as newline-delimited events
+//   GET    /chats        -> { chats: [{ id, title, model, updated, version, size }] }, the latest first
+//   GET    /chats/:id    -> { id, title, model, updated, version, size, messages } | 404
+//   PUT    /chats/:id    { base, keep, append, title, model } -> { version, updated } | 409 { version }
+//   DELETE /chats/:id    -> 204
 //
 // The passcode goes in "Authorization: Bearer <passcode>", URI-encoded so that any characters work.
-// The conversation is checked and the Claude request shaped by ../../chat/chat.js, so the model, the
-// prompt and the limits are fixed here, whatever the page sends. See README.md in this folder.
+// ../../chat/chat.js checks what the page sends and shapes the Claude request, so the models, the
+// prompt and the limits are fixed there, whatever the page sends. The conversations are stored by
+// the Durable Object in store.js. See README.md in this folder.
 
 import Anthropic from '@anthropic-ai/sdk';
-import { buildChatRequest, checkChatInput } from '../../chat/chat.js';
+import { buildChatRequest, checkChatInput, checkSave } from '../../chat/chat.js';
+
+export { ChatStore } from './store.js';
 
 const ORIGINS = ['https://wentaoz.com', 'https://www.wentaoz.com'];
+const CHATS = /^\/chats(?:\/([a-z0-9]{6,32}))?$/;
 
 // Compares hashes, so the time taken says nothing about how much of a guess was right
 async function samePasscode(given, expected) {
@@ -35,15 +43,18 @@ export default {
     const allowed = ORIGINS.includes(origin) || (env.DEV_ORIGINS || '').split(',').includes(origin);
     const cors = {
       'Access-Control-Allow-Origin': allowed ? origin : ORIGINS[0],
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Authorization, Content-Type',
       'Access-Control-Max-Age': '86400',
       'Vary': 'Origin',
     };
-    const fail = (status, error) => Response.json({ error }, { status, headers: { ...cors, 'Cache-Control': 'no-store' } });
+    const json = (status, body) => Response.json(body, { status, headers: { ...cors, 'Cache-Control': 'no-store' } });
+    const fail = (status, error) => json(status, { error });
+    const done = () => new Response(null, { status: 204, headers: cors });
 
-    if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
-    if (request.method !== 'GET' && request.method !== 'POST') return fail(405, 'GET or POST only');
+    const { method } = request;
+    if (method === 'OPTIONS') return done();
+    if (!['GET', 'POST', 'PUT', 'DELETE'].includes(method)) return fail(405, 'method not allowed');
     // Browsers send Origin on every cross-site request, so other websites can't use the Worker.
     // Scripts can fake it, which is what the passcode is for.
     if (!allowed) return fail(403, 'origin not allowed');
@@ -56,22 +67,53 @@ export default {
       if (!success) return fail(429, 'rate_limited');
     }
     if (!(await samePasscode(passcodeOf(request), expected))) return fail(401, 'bad_passcode');
-    if (request.method === 'GET') return new Response(null, { status: 204, headers: cors });
 
-    let input;
-    try { input = await request.json(); } catch { return fail(400, 'bad json'); }
-    const problem = checkChatInput(input);
-    if (problem) return fail(400, problem);
-
-    const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
-    const stream = client.beta.messages.stream(buildChatRequest(input));
-    try {
-      await stream.withResponse();   // surfaces an API error (bad key, overload) before any bytes go out
-    } catch (e) {
-      const api = e instanceof Anthropic.APIError;
-      return fail(api && e.status ? e.status : 502, api ? e.error?.error?.message || e.message : 'upstream error');
+    const { pathname } = new URL(request.url);
+    if (pathname === '/') {
+      if (method === 'GET') return done();
+      if (method !== 'POST') return fail(405, 'GET or POST only');
+      return chat(request, env, cors, fail);
     }
-    // Newline-delimited events, read on the page with BetaMessageStream.fromReadableStream()
-    return new Response(stream.toReadableStream(), { headers: { ...cors, 'Content-Type': 'application/x-ndjson', 'Cache-Control': 'no-store' } });
+
+    const m = pathname.match(CHATS);
+    if (!m) return fail(404, 'not found');
+    const store = env.STORE.get(env.STORE.idFromName('chats'));
+    const id = m[1];
+    if (!id) return method === 'GET' ? json(200, { chats: await store.list() }) : fail(405, 'GET only');
+    if (method === 'GET') {
+      const c = await store.read(id);
+      return c ? json(200, c) : fail(404, 'not_found');
+    }
+    if (method === 'DELETE') {
+      await store.remove(id);
+      return done();
+    }
+    if (method === 'PUT') {
+      let x;
+      try { x = await request.json(); } catch { return fail(400, 'bad json'); }
+      const problem = checkSave(x);
+      if (problem) return fail(400, problem);
+      const r = await store.save(id, x);
+      return r.status === 200 ? json(200, { version: r.version, updated: r.updated }) : json(r.status, { error: r.error, version: r.version });
+    }
+    return fail(405, 'method not allowed');
   },
 };
+
+async function chat(request, env, cors, fail) {
+  let input;
+  try { input = await request.json(); } catch { return fail(400, 'bad json'); }
+  const problem = checkChatInput(input);
+  if (problem) return fail(400, problem);
+
+  const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+  const stream = client.beta.messages.stream(buildChatRequest(input));
+  try {
+    await stream.withResponse();   // surfaces an API error (bad key, overload) before any bytes go out
+  } catch (e) {
+    const api = e instanceof Anthropic.APIError;
+    return fail(api && e.status ? e.status : 502, api ? e.error?.error?.message || e.message : 'upstream error');
+  }
+  // Newline-delimited events, read on the page with BetaMessageStream.fromReadableStream()
+  return new Response(stream.toReadableStream(), { headers: { ...cors, 'Content-Type': 'application/x-ndjson', 'Cache-Control': 'no-store' } });
+}
