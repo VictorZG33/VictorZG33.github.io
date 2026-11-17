@@ -143,6 +143,7 @@ button:disabled { cursor: default; }
 .dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-2); opacity: 0.3; animation: blink 1.2s infinite ease-in-out; }
 .dots i:nth-child(2) { animation-delay: 0.2s; }
 .dots i:nth-child(3) { animation-delay: 0.4s; }
+.wait { margin-left: 8px; font-size: 13px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
 @keyframes blink { 0%, 80%, 100% { opacity: 0.25; transform: none; } 40% { opacity: 0.9; transform: translateY(-2px); } }
 @media (prefers-reduced-motion: reduce) { .dots i { animation: none; opacity: 0.6; } }
 
@@ -154,7 +155,8 @@ button:disabled { cursor: default; }
 }
 .dock > * { max-width: var(--col); margin-left: auto; margin-right: auto; }
 .notice { margin-bottom: 8px; font-size: 14px; color: var(--alert); }
-.opts { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 13px; color: var(--ink-2); }
+.opts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; margin-bottom: 8px; font-size: 13px; color: var(--ink-2); }
+.opt { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }   /* a label and its menu wrap together */
 .opts select {
   min-width: 0; max-width: 100%;
   padding: 4px 8px;
@@ -259,8 +261,8 @@ dialog::backdrop { background: rgb(12 18 24 / 0.45); }
       <p class="fine">这是私人页面，要口令才能用。口令只存在这台设备的浏览器里。</p>
     </form>
     <div class="opts" id="opts">
-      <label for="model">模型</label>
-      <select id="model"></select>
+      <span class="opt"><label for="model">模型</label><select id="model"></select></span>
+      <span class="opt"><label for="effort">思考</label><select id="effort" title="想得越多，回答越仔细，也越慢、越贵"></select></span>
     </div>
     <form class="composer" id="composer">
       <label class="sr" for="input">消息</label>
@@ -281,7 +283,7 @@ dialog::backdrop { background: rgb(12 18 24 / 0.45); }
 </dialog>
 
 <script type="module">
-import { MODELS, modelInfo, costOf, MAX_TEXT, checkChatInput } from './chat.js';
+import { MODELS, EFFORTS, modelInfo, effortOf, costOf, MAX_TEXT, checkChatInput } from './chat.js';
 
 // ---------- settings ----------
 // The Worker in workers/claude-chat: it holds the Anthropic API key, keeps the conversations, and
@@ -292,10 +294,10 @@ const MARKED = 'https://cdn.jsdelivr.net/npm/marked@18.1.3/+esm';
 const PURIFY = 'https://cdn.jsdelivr.net/npm/dompurify@3.4.17/+esm';
 const NOTE_EVERY = 60 * 60 * 1000;   // a new time note for Claude after an hour, or on a new day
 const LOOK_EVERY = 15 * 1000;        // at most this often, a page coming back into view checks the cloud
-// localStorage: the passcode; the model picked last, for new conversations; the list of conversations
+// localStorage: the passcode; the model and effort picked last, for new conversations; the list of conversations
 // and a copy of each, the originals being in the cloud; the one open; the unsent draft; and a message
 // sent but not yet answered, which comes back to the box if the page reloads
-const KEY = { pass: 'chat.passcode', model: 'chat.model', index: 'chat.index', conv: 'chat.c.', current: 'chat.current', draft: 'chat.draft', sent: 'chat.sent' };
+const KEY = { pass: 'chat.passcode', model: 'chat.model', effort: 'chat.effort', index: 'chat.index', conv: 'chat.c.', current: 'chat.current', draft: 'chat.draft', sent: 'chat.sent' };
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -304,7 +306,7 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } },
   del(k) { try { localStorage.removeItem(k); } catch (e) {} },
 };
-const log = $('log'), input = $('input'), sendBtn = $('send'), picker = $('model'), dialog = $('history');
+const log = $('log'), input = $('input'), sendBtn = $('send'), picker = $('model'), thinker = $('effort'), dialog = $('history');
 const coarse = matchMedia('(pointer: coarse)').matches;   // a phone or tablet: Enter makes a new line
 const ICON = {
   send: '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 19V5M5.5 11.5 12 5l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
@@ -314,12 +316,21 @@ let busy = null;   // the request in flight: { ctrl, stream, stopped, view }, vi
 let passcode = store.get(KEY.pass) || '';
 picker.innerHTML = MODELS.map((m) => `<option value="${m.id}">${esc(m.name)} · ${esc(m.note)}</option>`).join('');
 const nameOf = (id) => (MODELS.find((m) => m.id === id) || { name: id }).name;
+const EFFORT = { low: '低', medium: '中', high: '高', xhigh: '很高', max: '最高' };
+const EFFORT_NOTE = { low: ' · 最快', max: ' · 最慢最贵' };
+const anEffort = (e) => (EFFORTS.includes(e) ? e : '');   // '' is the model's own
+// The first choice is the model's own effort, named for the model in use
+function drawEffort() {
+  thinker.innerHTML = `<option value="">默认（${EFFORT[modelInfo(conv.model).effort]}）</option>` +
+    EFFORTS.map((e) => `<option value="${e}">${EFFORT[e]}${EFFORT_NOTE[e] || ''}</option>`).join('');
+  thinker.value = conv.effort;
+}
 
 // ---------- conversations ----------
-// A conversation is { id, title, model, updated, version, synced, dirty, messages }. Its messages are
-// what the API sees ({ role, content }), in order, plus a few fields of the page's own that are left
-// out when sending: at (when), model (the one asked), by (a fallback model that answered instead),
-// cost, stopped and truncated. Claude's replies keep every block as it came, thinking included: the
+// A conversation is { id, title, model, effort, updated, version, synced, dirty, messages }, effort
+// being '' for the model's own. Its messages are what the API sees ({ role, content }), in order, plus
+// a few fields of the page's own that are left out when sending: at (when), model and effort (the
+// ones asked), by (a fallback model that answered instead), cost, stopped and truncated. Claude's replies keep every block as it came, thinking included: the
 // models check that the conversation behind each thinking block is unchanged, so a conversation only
 // ever gains turns at the end or loses them from the end, and its messages array is never changed in
 // place. A turn that brings an answer replaces it with a new one; a turn that doesn't leaves it be.
@@ -329,15 +340,15 @@ const nameOf = (id) => (MODELS.find((m) => m.id === id) || { name: id }).name;
 // cloud has, and dirty marks a change the cloud doesn't have yet. A save sends only what changed.
 // If another device saved first, the cloud refuses the save, and this device's version is kept as a
 // new conversation rather than written over the other device's turns.
-let index = [];   // { id, title, model, updated, version, dirty }, the latest first
+let index = [];   // { id, title, model, effort, updated, version, dirty }, the latest first
 try { index = (JSON.parse(store.get(KEY.index)) || []).map((e) => ({ ...e, version: e.version || 0 })); } catch (e) {}
 const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-const fresh = () => ({ id: newId(), title: '', model: modelInfo(store.get(KEY.model)).id, updated: 0, version: 0, synced: 0, dirty: false, messages: [] });
+const fresh = () => ({ id: newId(), title: '', model: modelInfo(store.get(KEY.model)).id, effort: anEffort(store.get(KEY.effort)), updated: 0, version: 0, synced: 0, dirty: false, messages: [] });
 function load(id) {
   try {
     const c = JSON.parse(store.get(KEY.conv + id));
     // A conversation from before the cloud has no version; it goes up at the first chance
-    if (c && Array.isArray(c.messages)) return { ...c, model: modelInfo(c.model).id, version: c.version || 0, synced: c.synced || 0, dirty: c.dirty ?? !c.version };
+    if (c && Array.isArray(c.messages)) return { ...c, model: modelInfo(c.model).id, effort: anEffort(c.effort), version: c.version || 0, synced: c.synced || 0, dirty: c.dirty ?? !c.version };
   } catch (e) {}
   return null;
 }
@@ -355,7 +366,7 @@ function stash(c) {
   }
 }
 function enlist(c) {
-  index = [{ id: c.id, title: c.title, model: c.model, updated: c.updated, version: c.version, dirty: c.dirty },
+  index = [{ id: c.id, title: c.title, model: c.model, effort: c.effort, updated: c.updated, version: c.version, dirty: c.dirty },
     ...index.filter((e) => e.id !== c.id)].sort((a, b) => b.updated - a.updated);
   store.set(KEY.index, JSON.stringify(index));
 }
@@ -368,6 +379,7 @@ function show(c) {
   conv = c;
   store.set(KEY.current, c.id);
   picker.value = c.model;
+  drawEffort();
   notice('');
   render();
   scrollDown();
@@ -412,15 +424,15 @@ async function api(method, path, body) {
 const upload = (c) => inOrder(() => push(c));
 async function push(c) {
   if (!c.dirty || !passcode || !index.some((e) => e.id === c.id)) return;   // nothing new, signed out, or deleted
-  const sent = c.messages, keep = Math.min(c.synced, sent.length), title = c.title, model = c.model;
+  const sent = c.messages, keep = Math.min(c.synced, sent.length), title = c.title, model = c.model, effort = c.effort;
   let res;
-  try { res = await api('PUT', '/chats/' + c.id, { base: c.version, keep, append: sent.slice(keep), title, model }); }
+  try { res = await api('PUT', '/chats/' + c.id, { base: c.version, keep, append: sent.slice(keep), title, model, effort }); }
   catch (e) { return; }   // offline: it goes up with the next save, or the next look at the cloud
   if (res.status === 409) return fork(c, (await res.json().catch(() => ({}))).version || 0);
   if (!res.ok) return;
   c.version = (await res.json()).version;
   c.synced = common(c.messages, sent);
-  c.dirty = c.synced < c.messages.length || c.title !== title || c.model !== model;   // changed again meanwhile
+  c.dirty = c.synced < c.messages.length || c.title !== title || c.model !== model || c.effort !== effort;   // changed again meanwhile
   stash(c);
   enlist(c);
 }
@@ -443,7 +455,7 @@ async function pull(id) {
     const res = await api('GET', '/chats/' + id);
     if (!res.ok) return null;
     const s = await res.json();
-    const c = { id: s.id, title: s.title, model: modelInfo(s.model).id, updated: s.updated, version: s.version, synced: s.messages.length, dirty: false, messages: s.messages };
+    const c = { id: s.id, title: s.title, model: modelInfo(s.model).id, effort: anEffort(s.effort), updated: s.updated, version: s.version, synced: s.messages.length, dirty: false, messages: s.messages };
     stash(c);
     enlist(c);
     return c;
@@ -463,7 +475,7 @@ const look = () => inOrder(async () => {
   } catch (e) { return; }   // offline: the copies here will do
   const cloud = new Map(chats.map((s) => [s.id, s])), mine = new Map(index.map((e) => [e.id, e]));
   const next = chats.map((s) => (mine.get(s.id) || {}).dirty ? mine.get(s.id)
-    : { id: s.id, title: s.title, model: modelInfo(s.model).id, updated: s.updated, version: s.version, dirty: false });
+    : { id: s.id, title: s.title, model: modelInfo(s.model).id, effort: anEffort(s.effort), updated: s.updated, version: s.version, dirty: false });
   for (const e of index) {
     if (cloud.has(e.id)) continue;
     const c = e.id === conv.id ? conv : load(e.id);
@@ -550,12 +562,12 @@ function replyHtml(m, i, last) {
   let html = drawn.get(m);
   if (!html) { html = md(textOf(m)); if (toHtml) drawn.set(m, html); }
   const flags = [m.stopped && '回复中断了', m.truncated && '回复太长，被截断了', m.by && `由 ${m.by} 回答`].filter(Boolean);
-  const meta = [m.model && nameOf(m.model), m.cost != null && money(m.cost)].filter(Boolean).join(' · ');
+  const meta = [m.model && nameOf(m.model), EFFORT[m.effort], m.cost != null && money(m.cost)].filter(Boolean).join(' · ');
   return `<article class="msg claude" data-i="${i}"><div class="md">${html}</div>` +
     (flags.length ? `<p class="flag">（${esc(flags.join('；'))}）</p>` : '') +
     '<div class="acts"><button type="button" data-act="copy">复制</button>' +
     (last ? '<button type="button" data-act="again">重新生成</button>' : '') +
-    (meta ? `<span class="meta" title="回答的模型，和这条回复大约花了多少钱">${esc(meta)}</span>` : '') +
+    (meta ? `<span class="meta" title="回答的模型、它想了多少，和这条回复大约花了多少钱">${esc(meta)}</span>` : '') +
     '</div></article>';
 }
 
@@ -585,6 +597,7 @@ function setBusy(on) {
   sendBtn.innerHTML = on ? ICON.stop : ICON.send;
   sendBtn.disabled = !on && !input.value.trim();
   picker.disabled = on;
+  thinker.disabled = on;
   $('history-btn').disabled = on;
   $('new-btn').disabled = on || !conv.messages.length;
 }
@@ -621,8 +634,8 @@ function giveBack(typed, why) {
 // changes only when an answer comes.
 async function run(base, extra, typed) {
   notice('');
-  const model = conv.model, view = base.concat(extra);
-  const body = { model, messages: view.map(({ role, content }) => ({ role, content })) };
+  const model = conv.model, effort = effortOf({ model, effort: conv.effort }), view = base.concat(extra);
+  const body = { model, effort, messages: view.map(({ role, content }) => ({ role, content })) };
   const problem = checkChatInput(body);
   if (problem) return giveBack(typed, problem === 'too_long' ? '这段对话太长了，开一个新对话吧。' : `发不出去（${problem}）。`);
 
@@ -632,12 +645,18 @@ async function run(base, extra, typed) {
   const node = document.createElement('article');
   node.className = 'msg claude';
   node.setAttribute('aria-busy', 'true');
-  node.innerHTML = '<div class="md"><span class="dots" role="img" aria-label="Claude 在想"><i></i><i></i><i></i></span></div>';
+  node.innerHTML = '<div class="md"><span class="dots" role="img" aria-label="Claude 在想"><i></i><i></i><i></i></span><span class="wait"></span></div>';
   log.append(node);
   scrollDown();
   const out = node.firstChild;
+  // At high effort the thinking can go on for minutes: after a few seconds, count them
+  const t0 = Date.now(), wait = out.querySelector('.wait');
+  const tick = setInterval(() => {
+    const sec = Math.round((Date.now() - t0) / 1000);
+    if (sec >= 3) wait.textContent = sec < 60 ? `想了 ${sec} 秒` : `想了 ${Math.floor(sec / 60)} 分 ${String(sec % 60).padStart(2, '0')} 秒`;
+  }, 1000);
   let text = '', queued = false;
-  const paint = () => { queued = false; const stick = nearBottom(); out.innerHTML = md(text); if (stick) scrollDown(); };
+  const paint = () => { clearInterval(tick); queued = false; const stick = nearBottom(); out.innerHTML = md(text); if (stick) scrollDown(); };
   try {
     const res = await fetch(CHAT_ENDPOINT, {
       method: 'POST',
@@ -656,7 +675,7 @@ async function run(base, extra, typed) {
     const content = keepable(msg.content);
     if (!content.some((b) => b.type === 'text')) return giveBack(typed, 'Claude 这次没说话，再试一次？');
     commit(view.concat([{
-      role: 'assistant', content, at: Date.now(), model, cost: costOf(model, msg.usage),
+      role: 'assistant', content, at: Date.now(), model, effort, cost: costOf(model, msg.usage),
       by: msg.model && !msg.model.startsWith(model) ? msg.model : undefined,
       truncated: msg.stop_reason === 'max_tokens' || undefined,
     }]));
@@ -666,10 +685,11 @@ async function run(base, extra, typed) {
       lock('口令不对，或者已经换了。请重新输入。');
     } else if (text.trim()) {
       // Stopped, or cut off partway: what came is kept, without its thinking, and 重新生成 asks again
-      commit(view.concat([{ role: 'assistant', content: [{ type: 'text', text: text.trimEnd() }], at: Date.now(), model, stopped: true }]));
+      commit(view.concat([{ role: 'assistant', content: [{ type: 'text', text: text.trimEnd() }], at: Date.now(), model, effort, stopped: true }]));
       if (!job.stopped) notice('回复中途断了，点「重新生成」可以重来。');
     } else giveBack(typed, job.stopped ? '' : problemText(err));
   } finally {
+    clearInterval(tick);
     store.del(KEY.sent);
     busy = null;
     const stick = nearBottom();
@@ -721,17 +741,29 @@ input.addEventListener('keydown', (e) => {
 });
 $('composer').addEventListener('submit', (e) => { e.preventDefault(); if (busy) stop(); else sendTyped(); });
 
-// The model answers this conversation from its next message on, and new conversations start with it
-picker.addEventListener('change', () => {
-  const id = modelInfo(picker.value).id;
-  store.set(KEY.model, id);
-  if (conv.model === id) return;
-  conv.model = id;
+// The model and the effort apply to this conversation from its next message on, and new conversations
+// start with them. A change goes up to the cloud with the conversation.
+function changed() {
   if (!conv.messages.length) return;
   conv.dirty = true;
   stash(conv);
   enlist(conv);
   upload(conv);
+}
+picker.addEventListener('change', () => {
+  const id = modelInfo(picker.value).id;
+  store.set(KEY.model, id);
+  if (conv.model === id) return;
+  conv.model = id;
+  drawEffort();   // the default names the new model's effort
+  changed();
+});
+thinker.addEventListener('change', () => {
+  const e = anEffort(thinker.value);
+  store.set(KEY.effort, e);
+  if (conv.effort === e) return;
+  conv.effort = e;
+  changed();
 });
 
 log.addEventListener('click', async (e) => {
@@ -788,7 +820,7 @@ $('lock').addEventListener('submit', async (e) => {
 function drawHistory() {
   $('history-list').innerHTML = index.map((e) =>
     `<li${e.id === conv.id ? ' class="on"' : ''}><button type="button" class="open" data-open="${esc(e.id)}"><span class="t">${esc(e.title)}</span>` +
-    `<span class="d">${esc(day(e.updated))}${e.model ? ' · ' + esc(nameOf(e.model)) : ''}${e.dirty || !e.version ? ' · <span class="tag">还没存到云端</span>' : ''}</span></button>` +
+    `<span class="d">${esc(day(e.updated))}${e.model ? ' · ' + esc(nameOf(e.model)) : ''}${EFFORT[e.effort] ? ' · ' + EFFORT[e.effort] : ''}${e.dirty || !e.version ? ' · <span class="tag">还没存到云端</span>' : ''}</span></button>` +
     `<button type="button" class="del" data-del="${esc(e.id)}" aria-label="删除「${esc(e.title)}」">×</button></li>`).join('');
   $('history-none').hidden = index.length > 0;
 }
@@ -835,6 +867,7 @@ document.addEventListener('visibilitychange', () => {
 input.value = store.get(KEY.draft) || store.get(KEY.sent) || '';
 store.del(KEY.sent);
 picker.value = conv.model;
+drawEffort();
 setBusy(false);
 grow();
 render();

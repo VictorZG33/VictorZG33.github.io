@@ -115,5 +115,38 @@ async function chat(request, env, cors, fail) {
     return fail(api && e.status ? e.status : 502, api ? e.error?.error?.message || e.message : 'upstream error');
   }
   // Newline-delimited events, read on the page with BetaMessageStream.fromReadableStream()
-  return new Response(stream.toReadableStream(), { headers: { ...cors, 'Content-Type': 'application/x-ndjson', 'Cache-Control': 'no-store' } });
+  return new Response(keepAlive(stream.toReadableStream()), { headers: { ...cors, 'Content-Type': 'application/x-ndjson', 'Cache-Control': 'no-store' } });
+}
+
+// At high effort Claude can think for minutes before it writes a word, and the stream carries nothing
+// meanwhile: the SDK drops the API's own pings. A connection that quiet can be cut on the way, so a
+// blank line goes out after every 15 seconds of silence; the page's reader skips blank lines. When
+// the page stops listening (its stop button), the request to Claude is cancelled too.
+function keepAlive(body) {
+  const reader = body.getReader(), blank = new TextEncoder().encode('\n');
+  let timer;
+  return new ReadableStream({
+    async start(controller) {
+      const beat = () => { timer = setTimeout(() => { controller.enqueue(blank); beat(); }, 15000); };
+      beat();
+      try {
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          clearTimeout(timer);
+          controller.enqueue(value);
+          beat();
+        }
+        controller.close();
+      } catch (e) {
+        controller.error(e);
+      } finally {
+        clearTimeout(timer);
+      }
+    },
+    cancel(reason) {
+      clearTimeout(timer);
+      return reader.cancel(reason);
+    },
+  });
 }
