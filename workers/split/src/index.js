@@ -4,11 +4,13 @@
    POST /ledgers        {data}        -> 200 {id, version}
    GET  /ledgers/:id                  -> 200 {version, data} | 404
    PUT  /ledgers/:id    {base, data}  -> 200 {version} | 409 {version, data} when someone saved first | 404
+   POST /scan           {lang, people, currency, text?, image?}  -> 200 {result}: see scan.js
 
    The page sends the whole ledger with the version it started from. A Durable Object handles one request
    at a time, so two saves from the same version can't both land: the second gets 409 and the current copy,
    replays its own changes on top and tries again. */
 import { DurableObject } from 'cloudflare:workers';
+import { scan } from './scan.js';
 
 const ORIGINS = ['https://wentaoz.com', 'https://www.wentaoz.com', 'https://victorzg33.github.io'];
 const MAX_BYTES = 200000;                     // the largest ledger the page allows, all in Chinese, is about 130 kB
@@ -75,7 +77,9 @@ export default {
       return new Response(null, { status: 204, headers: { ...cors, 'Access-Control-Allow-Methods': 'GET, POST, PUT', 'Access-Control-Allow-Headers': 'Content-Type', 'Access-Control-Max-Age': '86400' } });
     }
 
-    const m = new URL(request.url).pathname.match(/^\/ledgers(?:\/([A-Za-z0-9_-]{16}))?$/);
+    const path = new URL(request.url).pathname;
+    if (path === '/scan') return request.method === 'POST' ? scan(request, env, allowed, reply) : reply(405, { error: 'method not allowed' });
+    const m = path.match(/^\/ledgers(?:\/([A-Za-z0-9_-]{16}))?$/);
     if (!m) return reply(404, { error: 'not found' });
     const stub = (id) => env.LEDGER.get(env.LEDGER.idFromName(id));
 
