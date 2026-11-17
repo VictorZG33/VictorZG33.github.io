@@ -1,6 +1,7 @@
-// The saved conversations of 闲聊 Small Talk, for the Worker in worker.js. They all live in one
-// SQLite-backed Durable Object, the kind the Workers free plan offers: a row per conversation in
-// `chats`, and a row per message in `messages`.
+// The saved conversations of 闲聊 Small Talk, for the Worker in worker.js. Each user's live in a
+// SQLite-backed Durable Object of their own, the kind the Workers free plan offers: a row per
+// conversation in `chats`, a row per message in `messages`, and a row per file they uploaded in
+// `files`, which is how the Worker tells their files from anyone else's.
 //
 // A conversation only ever grows at the end or loses turns from the end (see chat/index.html), so a
 // save says how many of the stored messages stay and which follow them. Each save also names the
@@ -19,6 +20,7 @@ export class ChatStore extends DurableObject {
     // Added after the first deploy: a conversation's own effort, '' for its model's. SQLite has no
     // ADD COLUMN IF NOT EXISTS, so this fails, harmlessly, once the column is there.
     try { this.sql.exec("ALTER TABLE chats ADD COLUMN effort TEXT NOT NULL DEFAULT ''"); } catch {}
+    this.sql.exec('CREATE TABLE IF NOT EXISTS files (id TEXT PRIMARY KEY, added INTEGER NOT NULL)');
   }
 
   // Every conversation without its messages, the latest first
@@ -64,11 +66,37 @@ export class ChatStore extends DurableObject {
       this.sql.exec('DELETE FROM messages WHERE chat = ?', id);
       this.sql.exec('DELETE FROM chats WHERE id = ?', id);
     });
-    return [...files].filter((f) => !this.uses(f));
+    const gone = [...files].filter((f) => !this.uses(f));
+    for (const f of gone) this.sql.exec('DELETE FROM files WHERE id = ?', f);
+    return gone;
   }
 
   // Whether any stored message carries this file
   uses(fileId) {
     return this.sql.exec('SELECT 1 FROM messages WHERE instr(data, ?) > 0 LIMIT 1', fileId).toArray().length > 0;
+  }
+
+  // A file this user just uploaded
+  own(fileId) {
+    this.sql.exec('INSERT OR IGNORE INTO files (id, added) VALUES (?, ?)', fileId, Date.now());
+  }
+
+  // Whether every one of these files is this user's: one they uploaded, or one their own messages
+  // carry, as files uploaded before there were accounts are. Those are written down here once found.
+  owns(ids) {
+    for (const f of ids) {
+      if (this.sql.exec('SELECT 1 FROM files WHERE id = ?', f).toArray().length) continue;
+      if (!this.uses(f)) return false;
+      this.own(f);
+    }
+    return true;
+  }
+
+  // Lets go of a file this user uploaded and no message carries, for the Worker to delete; false if
+  // the file isn't theirs or a message carries it
+  release(fileId) {
+    if (!this.sql.exec('SELECT 1 FROM files WHERE id = ?', fileId).toArray().length || this.uses(fileId)) return false;
+    this.sql.exec('DELETE FROM files WHERE id = ?', fileId);
+    return true;
   }
 }
