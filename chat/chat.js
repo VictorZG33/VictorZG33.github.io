@@ -25,6 +25,14 @@ export const MODELS = [
 export const DEFAULT_MODEL = 'claude-opus-5-5';
 export const modelInfo = (id) => MODELS.find((m) => m.id === id) || MODELS.find((m) => m.id === DEFAULT_MODEL);
 
+// How long Claude thinks before answering, which a conversation can also set itself; '' leaves it to
+// the model's own effort above. Thinking counts towards max_tokens, so the higher levels get more
+// room: at xhigh and max a reply can think for minutes.
+export const EFFORTS = ['low', 'medium', 'high', 'xhigh', 'max'];
+const MAX_OUT = { low: 16000, medium: 32000, high: 32000, xhigh: 64000, max: 64000 };
+export const effortOf = (x) => (EFFORTS.includes(x.effort) ? x.effort : modelInfo(x.model).effort);
+const isEffort = (e) => e == null || e === '' || EFFORTS.includes(e);
+
 // What a reply cost, from its usage
 export function costOf(id, u) {
   if (!u) return undefined;
@@ -69,6 +77,7 @@ function checkMessage(msg) {
 export function checkChatInput(x) {
   if (!x || typeof x !== 'object' || !Array.isArray(x.messages)) return 'bad input';
   if (x.model != null && !MODELS.some((m) => m.id === x.model)) return 'bad model';
+  if (!isEffort(x.effort)) return 'bad effort';
   const m = x.messages;
   if (!m.length) return 'no messages';
   if (m.length > MAX_MESSAGES) return 'too_long';
@@ -86,14 +95,14 @@ export function checkChatInput(x) {
 
 // The parameters for client.beta.messages.stream(). Every model here thinks adaptively; effort sets
 // how much. The top-level cache_control caches the conversation so far, so each turn re-reads the
-// earlier ones at a tenth to a fortieth of the price.
+// earlier ones at a tenth to a fortieth of the price; a change of effort starts that cache over once.
 export function buildChatRequest(x) {
-  const m = modelInfo(x.model);
+  const m = modelInfo(x.model), effort = effortOf(x);
   const req = {
     model: m.id,
-    max_tokens: 16000,
+    max_tokens: MAX_OUT[effort],
     thinking: { type: 'adaptive' },
-    output_config: { effort: m.effort },
+    output_config: { effort },
     cache_control: { type: 'ephemeral' },
     system: SYSTEM,
     messages: x.messages.map(({ role, content }) => ({ role, content })),
@@ -105,14 +114,15 @@ export function buildChatRequest(x) {
   return req;
 }
 
-// A save the page sends to store a conversation: { base, keep, append, title, model }, the version it
-// builds on, how many of the stored messages stay, and the messages that follow them. The messages
+// A save the page sends to store a conversation: { base, keep, append, title, model, effort }, the
+// version it builds on, how many of the stored messages stay, and the messages that follow them. The messages
 // keep the page's own fields (when, which model, what it cost), so another device draws them the same.
 export function checkSave(x) {
   if (!x || typeof x !== 'object' || !Array.isArray(x.append)) return 'bad input';
   if (!Number.isInteger(x.base) || x.base < 0 || !Number.isInteger(x.keep) || x.keep < 0) return 'bad version';
   if (typeof x.title !== 'string' || x.title.length > MAX_TITLE) return 'bad title';
   if (!MODELS.some((m) => m.id === x.model)) return 'bad model';
+  if (!isEffort(x.effort)) return 'bad effort';
   if (x.keep + x.append.length > MAX_MESSAGES) return 'too_long';
   for (const msg of x.append) {
     const problem = checkMessage(msg);
