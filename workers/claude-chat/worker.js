@@ -7,20 +7,23 @@
 //   GET    /chats        -> { chats: [{ id, title, model, updated, version, size }] }, the latest first
 //   GET    /chats/:id    -> { id, title, model, updated, version, size, messages } | 404
 //   PUT    /chats/:id    { base, keep, append, title, model } -> { version, updated } | 409 { version }
-//   DELETE /chats/:id    -> 204
+//   DELETE /chats/:id    -> 204, and the files only it carried are deleted from the Files API
+//   POST   /files        a file's bytes, with Content-Type and X-File-Name -> { id, name, size, type }
+//   DELETE /files/:id    -> 204, for a file no saved conversation carries (one taken off before sending)
 //
 // The passcode goes in "Authorization: Bearer <passcode>", URI-encoded so that any characters work.
 // ../../chat/chat.js checks what the page sends and shapes the Claude request, so the models, the
 // prompt and the limits are fixed there, whatever the page sends. The conversations are stored by
 // the Durable Object in store.js. See README.md in this folder.
 
-import Anthropic from '@anthropic-ai/sdk';
-import { buildChatRequest, checkChatInput, checkSave } from '../../chat/chat.js';
+import Anthropic, { toFile } from '@anthropic-ai/sdk';
+import { buildChatRequest, checkChatInput, checkSave, checkUpload, FILE_ID } from '../../chat/chat.js';
 
 export { ChatStore } from './store.js';
 
 const ORIGINS = ['https://wentaoz.com', 'https://www.wentaoz.com'];
 const CHATS = /^\/chats(?:\/([a-z0-9]{6,32}))?$/;
+const FILES = /^\/files(?:\/([^/]+))?$/;
 
 // Compares hashes, so the time taken says nothing about how much of a guess was right
 async function samePasscode(given, expected) {
@@ -37,14 +40,14 @@ function passcodeOf(request) {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const origin = request.headers.get('Origin') || '';
     // DEV_ORIGINS (comma-separated) lets a local copy of the page talk to `wrangler dev`
     const allowed = ORIGINS.includes(origin) || (env.DEV_ORIGINS || '').split(',').includes(origin);
     const cors = {
       'Access-Control-Allow-Origin': allowed ? origin : ORIGINS[0],
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+      'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-File-Name',
       'Access-Control-Max-Age': '86400',
       'Vary': 'Origin',
     };
@@ -75,9 +78,11 @@ export default {
       return chat(request, env, cors, fail);
     }
 
+    const store = env.STORE.get(env.STORE.idFromName('chats'));
+    const f = pathname.match(FILES);
+    if (f) return files(request, env, store, f[1], json, fail, done);
     const m = pathname.match(CHATS);
     if (!m) return fail(404, 'not found');
-    const store = env.STORE.get(env.STORE.idFromName('chats'));
     const id = m[1];
     if (!id) return method === 'GET' ? json(200, { chats: await store.list() }) : fail(405, 'GET only');
     if (method === 'GET') {
@@ -85,7 +90,11 @@ export default {
       return c ? json(200, c) : fail(404, 'not_found');
     }
     if (method === 'DELETE') {
-      await store.remove(id);
+      const gone = await store.remove(id);
+      if (gone.length) {
+        const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+        ctx.waitUntil(Promise.allSettled(gone.map((fid) => client.files.delete(fid))));
+      }
       return done();
     }
     if (method === 'PUT') {
@@ -100,6 +109,45 @@ export default {
   },
 };
 
+// An API error goes back with its status and the API's own words
+const apiFail = (e, fail) => {
+  const api = e instanceof Anthropic.APIError;
+  return fail(api && e.status ? e.status : 502, api ? e.error?.error?.message || e.message : 'upstream error');
+};
+
+async function files(request, env, store, id, json, fail, done) {
+  const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+  if (!id && request.method === 'POST') {
+    const type = (request.headers.get('Content-Type') || '').split(';')[0].trim().toLowerCase();
+    let name = '';
+    try { name = decodeURIComponent(request.headers.get('X-File-Name') || ''); } catch {}
+    name = name.replace(/[\\/\u0000-\u001f]/g, '_').slice(-200) || 'file';
+    // The size it says first, so a file too big is turned away before it is read
+    let problem = checkUpload(type, Number(request.headers.get('Content-Length')) || 1);
+    if (problem) return fail(problem === 'too_big' ? 413 : 415, problem);
+    const bytes = await request.arrayBuffer();
+    problem = checkUpload(type, bytes.byteLength);
+    if (problem) return fail(problem === 'too_big' ? 413 : 400, problem);
+    try {
+      const up = await client.files.upload({ file: await toFile(bytes, name, { type }) });
+      return json(200, { id: up.id, name: up.filename, size: up.size_bytes, type: up.mime_type });
+    } catch (e) {
+      return apiFail(e, fail);
+    }
+  }
+  if (id && request.method === 'DELETE') {
+    if (!FILE_ID.test(id)) return fail(404, 'not found');
+    if (await store.uses(id)) return fail(409, 'in_use');
+    try {
+      await client.files.delete(id);
+    } catch (e) {
+      if (!(e instanceof Anthropic.NotFoundError)) return apiFail(e, fail);
+    }
+    return done();
+  }
+  return fail(405, 'method not allowed');
+}
+
 async function chat(request, env, cors, fail) {
   let input;
   try { input = await request.json(); } catch { return fail(400, 'bad json'); }
@@ -111,8 +159,7 @@ async function chat(request, env, cors, fail) {
   try {
     await stream.withResponse();   // surfaces an API error (bad key, overload) before any bytes go out
   } catch (e) {
-    const api = e instanceof Anthropic.APIError;
-    return fail(api && e.status ? e.status : 502, api ? e.error?.error?.message || e.message : 'upstream error');
+    return apiFail(e, fail);
   }
   // Newline-delimited events, read on the page with BetaMessageStream.fromReadableStream()
   return new Response(keepAlive(stream.toReadableStream()), { headers: { ...cors, 'Content-Type': 'application/x-ndjson', 'Cache-Control': 'no-store' } });

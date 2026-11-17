@@ -1,8 +1,8 @@
 # claude-chat
 
-A Cloudflare Worker that lets [wentaoz.com/chat/](https://wentaoz.com/chat/), 闲聊 Small Talk, chat with Claude on the site's own Anthropic API key, for whoever knows the passcode, and keeps the conversations so that every device sees the same ones.
+A Cloudflare Worker that lets [wentaoz.com/chat/](https://wentaoz.com/chat/), 闲聊 Small Talk, chat with Claude on the site's own Anthropic API key, for whoever knows the passcode. It keeps the conversations so that every device sees the same ones, and takes the files a message carries to the Anthropic Files API.
 
-The page is linked from nowhere on the site and tells search engines to leave it out, but the repository is public, so anyone can find it. Keeping it private is this Worker's job: without the passcode it won't call Claude or show a single conversation. The passcode therefore guards everything said in the chat, not only the bill.
+The page is linked from nowhere on the site and tells search engines to leave it out, but the repository is public, so anyone can find it. Keeping it private is this Worker's job: without the passcode it won't call Claude, take a file or show a single conversation. The passcode therefore guards everything said and sent in the chat, not only the bill.
 
 ## What it does
 
@@ -20,7 +20,9 @@ Every request carries the passcode in the `Authorization` header. The Worker:
 | `GET /chats` | every conversation, latest first, without its messages |
 | `GET /chats/:id` | one conversation with its messages |
 | `PUT /chats/:id` `{ base, keep, append, title, model, effort }` | saves a conversation (checked by `checkSave` in `chat/chat.js`) |
-| `DELETE /chats/:id` | deletes one |
+| `DELETE /chats/:id` | deletes one, and the files only it carried |
+| `POST /files` | uploads one file to the Files API: its bytes as the body, its type as `Content-Type`, its name URI-encoded in `X-File-Name`. Answers `{ id, name, size, type }` |
+| `DELETE /files/:id` | deletes an uploaded file, unless a saved conversation carries it: one taken off a message before sending |
 
 A wrong passcode gets `401 bad_passcode`, and the page asks again. Without `ANTHROPIC_API_KEY` or `CHAT_PASSCODE`, the Worker answers `503 not_configured`.
 
@@ -31,6 +33,12 @@ They are kept in one SQLite-backed Durable Object, `ChatStore` in `store.js`: a 
 The page keeps a copy of each conversation in the browser's `localStorage` too, so it opens at once and survives a dropped connection: a save that fails is marked in the conversation list and goes up at the next chance. When the page comes back into view, it looks for what changed on other devices. Signing out on a device (*在这台设备上退出*, in the conversation list) forgets the passcode there and clears the copies the cloud already has.
 
 The Workers free plan includes SQLite-backed Durable Objects: up to 5 GB stored across the account and 100,000 rows written a day, of which a turn takes three or four. Deploying creates the object; there is nothing to set up for it.
+
+## Files
+
+A message can carry up to ten files: images (JPEG, PNG, GIF, WebP, up to 5 MB), PDFs (up to 30 MB) and plain text (up to 1 MB). The paperclip in the box you type in picks them, and they can be pasted or dragged in as well. The page makes an image at most 2,048 pixels on its long side, as a JPEG, unless it is already that small in one of those four kinds, and sends text files of any extension (`.md`, `.csv`, `.py` …) as plain text. Word, Excel and other documents aren't taken: the API doesn't read them.
+
+Each file goes up as soon as it is picked, through `POST /files`, to the [Files API](https://platform.claude.com/docs/en/build-with-claude/files), which keeps it in the API key's workspace until it is deleted. The message then refers to it by id (`{ type: 'image' | 'document', source: { type: 'file', file_id } }`), so a conversation never carries the bytes, nothing is uploaded twice, and the file stays the same file for as long as the conversation lasts, which Claude's check on its thinking needs. The page keeps each file's name and size with the message, and a thumbnail of each image (a JPEG 240 pixels across) to draw it on any device; the full file never comes back. A file taken off before sending is deleted at once; deleting a conversation deletes the files it carried, unless a copy of it (「…（副本）」) carries them too. Storing files costs nothing; Claude reads them as input tokens, every message that has them in its conversation: a few thousand for an image (a cent or two on Opus), roughly 1,500 to 3,000 a page for a PDF. The prompt cache makes the messages that follow within a few minutes much cheaper, and the cost under each reply says what each one came to.
 
 ## Setting it up
 
@@ -57,7 +65,7 @@ To try it locally, put `ANTHROPIC_API_KEY=...` and `CHAT_PASSCODE=...` in a `.de
 
 ## Models, effort and cost
 
-Each conversation uses the model and the effort picked above the box you type in; a change applies from the next message, new conversations start with what was picked last, and the conversation keeps both, on every device. `MODELS` in `chat/chat.js` lists the models with their own effort for chat, which the effort menu offers as *默认*, and their prices, which the page uses for the cost under each reply:
+Each conversation uses the model and the effort picked above the box you type in; a change applies from the next message, new conversations start with what was picked last, and the conversation keeps both, on every device. `MODELS` in `chat/chat.js` lists the models with their own effort for chat, which the effort menu offers as *default*, and their prices, which the page uses for the cost under each reply:
 
 | Model | Its own effort | US$ per million tokens in / out | Refusal fallback |
 | --- | --- | --- | --- |
@@ -66,7 +74,7 @@ Each conversation uses the model and the effort picked above the box you type in
 | Claude Sonnet 5.5 | low | 2 / 10 | no |
 | Claude Haiku 5.5 | low | 0.10 / 0.50, five times that past 100,000 tokens of prompt | no |
 
-The effort menu also offers every level the models take: 低 (low), 中 (medium), 高 (high), 很高 (xhigh) and 最高 (max). A higher level thinks longer before answering, so it answers more carefully, more slowly and at more cost: the thinking is billed as output. Since thinking counts towards `max_tokens`, the request allows 16,000 tokens at low, 32,000 at medium and high, and 64,000 at xhigh and max (`MAX_OUT` in `chat/chat.js`). At xhigh and max a reply can think for minutes before writing a word; the page counts the seconds meanwhile, and the Worker sends a blank line every 15 seconds so that the quiet connection isn't cut on the way. Stopping a reply stops the request to Claude too.
+The effort menu also offers every level the models take: low, medium, high, xhigh and max. A higher level thinks longer before answering, so it answers more carefully, more slowly and at more cost: the thinking is billed as output. Since thinking counts towards `max_tokens`, the request allows 16,000 tokens at low, 32,000 at medium and high, and 64,000 at xhigh and max (`MAX_OUT` in `chat/chat.js`). At xhigh and max a reply can think for minutes before writing a word; the page counts the seconds meanwhile, and the Worker sends a blank line every 15 seconds so that the quiet connection isn't cut on the way. Stopping a reply stops the request to Claude too.
 
 Every message sends the conversation so far, but the request caches it, so once a conversation passes the 512 tokens the cache needs, its earlier turns are re-read at a tenth to a fortieth of the price. Changing the effort starts that cache over once, for the next message. On Opus 5.5 at low effort a short exchange costs under a cent, and a message deep into a long conversation a cent or two. Fable 5.2 costs about twice that and thinks longer; Haiku 5.5, a few hundredths of a cent.
 

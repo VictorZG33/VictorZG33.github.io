@@ -50,10 +50,25 @@ export class ChatStore extends DurableObject {
     return { status: 200, version, updated };
   }
 
+  // Deletes a conversation, and returns the files it carried that no other conversation does (a copy
+  // made when two devices answered at once carries the same ones), for the Worker to delete too
   remove(id) {
+    const files = new Set();
+    for (const { data } of this.sql.exec('SELECT data FROM messages WHERE chat = ?', id)) {
+      const m = JSON.parse(data);
+      if (m.role === 'user' && Array.isArray(m.content)) {
+        for (const b of m.content) if (b && b.source && b.source.type === 'file') files.add(b.source.file_id);
+      }
+    }
     this.ctx.storage.transactionSync(() => {
       this.sql.exec('DELETE FROM messages WHERE chat = ?', id);
       this.sql.exec('DELETE FROM chats WHERE id = ?', id);
     });
+    return [...files].filter((f) => !this.uses(f));
+  }
+
+  // Whether any stored message carries this file
+  uses(fileId) {
+    return this.sql.exec('SELECT 1 FROM messages WHERE instr(data, ?) > 0 LIMIT 1', fileId).toArray().length > 0;
   }
 }
