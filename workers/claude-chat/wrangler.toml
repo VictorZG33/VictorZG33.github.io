@@ -1,0 +1,16 @@
+# The chat server behind 闲聊 Small Talk (wentaoz.com/chat/), the private page for chatting with Claude.
+# .github/workflows/claude-chat.yml deploys it whenever this folder or chat/chat.js changes on main.
+name = "claude-chat"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+workers_dev = true      # served at https://claude-chat.<your subdomain>.workers.dev
+
+# At most 20 requests per minute from one IP address, counted per Cloudflare location. Nobody types
+# that fast; it slows down anyone trying passcodes, and caps what a leaked passcode can spend.
+[[ratelimits]]
+name = "CHAT_LIMIT"
+namespace_id = "1002"   # unique in the account: the golf coach's limit is 1001
+
+  [ratelimits.simple]
+  limit = 20
+  period = 60

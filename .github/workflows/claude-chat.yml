@@ -1,0 +1,53 @@
+# Deploys the chat server behind 闲聊 Small Talk (wentaoz.com/chat/): the Cloudflare Worker in
+# workers/claude-chat, which calls Claude on the site's Anthropic API key for whoever has the passcode.
+# Needs four repository secrets: CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID (the same ones the other
+# Workers use), ANTHROPIC_API_KEY (the golf coach's) and CHAT_PASSCODE. Until all four are set it does
+# nothing. An optional CHAT_ANTHROPIC_API_KEY is used instead of ANTHROPIC_API_KEY, to give the chat a
+# key, and a spend limit, of its own. Both secrets are uploaded to the Worker on every deploy, so to
+# change the passcode or the key, update the repository secret and run this again.
+name: Claude chat server
+
+on:
+  push:
+    branches: [main]
+    paths: ['workers/claude-chat/**', 'chat/chat.js', '.github/workflows/claude-chat.yml']
+  workflow_dispatch:        # and on demand, from the Actions tab
+
+permissions:
+  contents: read
+
+concurrency: claude-chat
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      ANTHROPIC_API_KEY: ${{ secrets.CHAT_ANTHROPIC_API_KEY || secrets.ANTHROPIC_API_KEY }}
+      CHAT_PASSCODE: ${{ secrets.CHAT_PASSCODE }}
+    steps:
+      - name: Wait for the secrets
+        if: env.CLOUDFLARE_API_TOKEN == '' || env.CLOUDFLARE_ACCOUNT_ID == '' || env.ANTHROPIC_API_KEY == '' || env.CHAT_PASSCODE == ''
+        run: echo "::notice::Add CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, ANTHROPIC_API_KEY and CHAT_PASSCODE as repository secrets to deploy the chat server."
+
+      - uses: actions/checkout@v4
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != '' && env.ANTHROPIC_API_KEY != '' && env.CHAT_PASSCODE != ''
+
+      - uses: actions/setup-node@v4
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != '' && env.ANTHROPIC_API_KEY != '' && env.CHAT_PASSCODE != ''
+        with:
+          node-version: 22
+
+      - name: Deploy with the key and the passcode, and show the server's address in the run summary
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != '' && env.ANTHROPIC_API_KEY != '' && env.CHAT_PASSCODE != ''
+        working-directory: workers/claude-chat
+        shell: bash
+        run: |
+          npm ci --no-audit --no-fund
+          secrets="$RUNNER_TEMP/claude-chat-secrets.json"
+          trap 'rm -f "$secrets"' EXIT
+          jq -n --arg key "$ANTHROPIC_API_KEY" --arg pass "$CHAT_PASSCODE" '{ANTHROPIC_API_KEY: $key, CHAT_PASSCODE: $pass}' > "$secrets"
+          npx wrangler deploy --secrets-file "$secrets" | tee deploy.log
+          url=$(grep -o 'https://[a-z0-9.-]*\.workers\.dev' deploy.log | head -n 1)
+          echo "::notice title=Chat server address (CHAT_ENDPOINT in chat/index.html)::$url"
