@@ -109,13 +109,43 @@ button:disabled { cursor: default; }
 .list .d { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 12px; color: var(--ink-2); }
 .list .tag { color: var(--alert); }
 .list .tag.live { color: var(--film); }
-.list .del { flex: none; width: 32px; height: 32px; margin-right: 2px; background: none; border: 0; border-radius: 8px; font-size: 17px; color: var(--ink-2); visibility: hidden; }
-.list li:hover .del, .list li:focus-within .del, .list li.on .del { visibility: visible; }
-.list .del:hover { color: var(--alert); }
-@media (pointer: coarse) { .list .del { visibility: visible; } }
+.list .more { flex: none; width: 32px; height: 32px; margin-right: 2px; background: none; border: 0; border-radius: 8px; font-size: 16px; letter-spacing: 1px; color: var(--ink-2); visibility: hidden; }
+.list li:hover .more, .list li:focus-within .more, .list li.on .more, .list .more[aria-expanded="true"] { visibility: visible; }
+.list .more:hover, .list .more[aria-expanded="true"] { background: var(--bg); color: var(--ink); }
+@media (pointer: coarse) { .list .more { visibility: visible; } }
+.list .rename { flex: 1; min-width: 0; margin: 4px; padding: 5px 7px; font-size: 14px; background: var(--bg); border: 1px solid var(--film); border-radius: 7px; outline: 0; }
+.list mark { background: color-mix(in srgb, var(--film) 24%, transparent); color: inherit; border-radius: 2px; }
+.find { margin: 0 10px 6px; }
+.find input { width: 100%; padding: 6px 10px; font-size: 14px; background: var(--bg); border: 1px solid var(--rule); border-radius: 9px; outline: 0; }
+.find input:focus { border-color: var(--film); }
+@media (pointer: coarse) { .find input { font-size: 16px; } }
+/* a conversation's menu: rename, export, delete */
+.menu { position: fixed; z-index: 6; min-width: 156px; padding: 4px; background: var(--bg); border: 1px solid var(--rule); border-radius: 10px; box-shadow: 0 10px 30px rgb(15 23 32 / 0.18); }
+.menu button { display: block; width: 100%; padding: 7px 12px; background: none; border: 0; border-radius: 7px; text-align: left; font-size: 14px; }
+.menu button:hover, .menu button:focus-visible { background: var(--bubble); outline: 0; }
+.menu .danger { color: var(--alert); }
 .none { margin: 0; padding: 20px 18px; color: var(--ink-2); font-size: 14px; }
 .side-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 18px calc(12px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--rule); }
-.who { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 14px; font-weight: 600; }
+.who { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 0; background: none; border: 0; text-align: left; font-size: 14px; font-weight: 600; }
+.who:hover { text-decoration: underline; text-underline-offset: 0.2em; }
+/* the account: what it spent, and its password */
+dialog.sheet { width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 48px); padding: 0; background: var(--bg); color: var(--ink); border: 1px solid var(--rule); border-radius: 14px; box-shadow: 0 20px 60px rgb(0 0 0 / 0.28); }
+dialog.sheet::backdrop { background: rgb(12 18 24 / 0.45); }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 10px 0 20px; }
+.sheet-head h2 { margin: 0; font-size: 18px; font-weight: 600; }
+.sheet section { padding: 6px 20px 16px; }
+.sheet section + section { border-top: 1px solid var(--rule); padding-top: 14px; }
+.sheet h3 { margin: 4px 0 8px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+.usage { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+.usage th { padding: 0 0 4px; font-weight: 500; font-size: 12.5px; color: var(--ink-2); text-align: right; }
+.usage td { padding: 3px 0; vertical-align: baseline; }
+.usage td + td, .usage th + th { text-align: right; padding-left: 12px; }
+.usage .sub { display: block; font-size: 12.5px; color: var(--ink-2); }
+.sheet .fine { margin: 10px 0 0; font-size: 12.5px; color: var(--ink-2); }
+.sheet #pw-form { display: grid; gap: 10px; }
+.sheet .msg-line { margin: 0; font-size: 14px; color: var(--alert); }
+.sheet .msg-line.ok { color: var(--film); }
+.sheet .msg-line:empty { display: none; }
 .side-foot .link { flex: none; }
 .link { background: none; border: 0; padding: 0; font-size: 13px; color: var(--ink-2); text-decoration: underline; text-underline-offset: 0.2em; text-align: left; }
 .link:hover { color: var(--ink); }
@@ -332,14 +362,44 @@ button:disabled { cursor: default; }
   <button type="button" class="new" id="new-btn">
     <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>新对话
   </button>
+  <div class="find" id="find-box" hidden><input type="search" id="find" placeholder="搜索对话" aria-label="搜索对话" enterkeyhint="search" autocomplete="off"></div>
   <ul class="list" id="chat-list"></ul>
   <p class="none" id="chat-none">还没有对话。</p>
   <div class="side-foot" id="side-foot" hidden>
-    <span class="who" id="who"></span>
+    <button type="button" class="who" id="who" title="花费和密码"></button>
     <button type="button" class="link" id="forget" title="退出这个账号，并清掉这台设备上存的对话；云端的还在">退出登录</button>
   </div>
 </aside>
 <div class="scrim" id="scrim" hidden></div>
+<div class="menu" id="menu" role="menu" hidden>
+  <button type="button" role="menuitem" data-do="rename">改标题</button>
+  <button type="button" role="menuitem" data-do="export">导出 Markdown</button>
+  <button type="button" role="menuitem" data-do="delete" class="danger">删除</button>
+</div>
+<dialog class="sheet" id="account" aria-labelledby="account-title">
+  <form method="dialog" class="sheet-head">
+    <h2 id="account-title">账号</h2>
+    <button class="icon" value="close" aria-label="关闭">
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </form>
+  <section>
+    <h3>花费</h3>
+    <div id="usage"></div>
+  </section>
+  <section>
+    <h3>修改密码</h3>
+    <form id="pw-form">
+      <input type="text" id="pw-user" name="username" autocomplete="username" hidden>
+      <div class="fields">
+        <input id="pw-old" type="password" aria-label="现在的密码" placeholder="现在的密码" autocomplete="current-password" required>
+        <input id="pw-new" type="password" aria-label="新密码" placeholder="新密码：至少 8 个字符" autocomplete="new-password" required>
+      </div>
+      <button type="submit" class="lock-go" id="pw-go">改密码</button>
+      <p class="msg-line" id="pw-msg" role="status"></p>
+    </form>
+  </section>
+</dialog>
 
 <div class="app">
   <header class="bar">
@@ -967,14 +1027,18 @@ function bodyHtml(content, { live = false, opened = null, secs = 0, thought = 0 
 }
 // The pages Claude cited, in the order it first cited them, each once
 const hostOf = (url) => { try { return new URL(url).hostname.replace(/^www\./, ''); } catch (e) { return ''; } };
-function sourcesHtml(content) {
+function citedOf(content) {
   const cited = new Map();
   for (const b of content) {
     if (b.type !== 'text' || !Array.isArray(b.citations)) continue;
     for (const c of b.citations) if (c && c.type === 'web_search_result_location' && /^https?:\/\//i.test(c.url) && !cited.has(c.url)) cited.set(c.url, c);
   }
-  if (!cited.size) return '';
-  return '<div class="sources"><span class="lab">来源</span>' + [...cited.values()].map((c) =>
+  return [...cited.values()];
+}
+function sourcesHtml(content) {
+  const cited = citedOf(content);
+  if (!cited.length) return '';
+  return '<div class="sources"><span class="lab">来源</span>' + cited.map((c) =>
     `<a href="${esc(c.url)}" target="_blank" rel="noopener noreferrer" title="${esc(c.cited_text || c.title || c.url)}"><b>${esc(hostOf(c.url))}</b>${esc(c.title || '')}</a>`).join('') + '</div>';
 }
 const money = (x) => '$' + x.toFixed(x < 0.1 ? 4 : 2);
@@ -1028,17 +1092,41 @@ function notice(text) { $('notice').textContent = text; $('notice').hidden = !te
 // ---------- the list of conversations ----------
 // The conversations, the latest first. One whose reply is coming, or whose message got no answer, goes
 // at the top, marked, from the moment its message is sent: a new one is listed before it has an answer.
-function drawList() {
-  const row = (id, title, desc, del) => `<li${id === conv.id ? ' class="on"' : ''}><button type="button" class="open" data-open="${esc(id)}"${id === conv.id ? ' aria-current="true"' : ''}>` +
-    `<span class="t">${esc(title)}</span><span class="d">${desc}</span></button>` +
-    (del ? `<button type="button" class="del" data-del="${esc(id)}" aria-label="删除「${esc(title)}」">×</button>` : '') + '</li>';
+// With words in the search box, only the conversations with them in their title or anywhere in their
+// messages, as the cloud finds them, each with a snippet. The list waits while a title is edited in it.
+let finding = '', found = null, renaming = null, menuFor = null;   // the search, what the cloud found for it (id → snippet), the title being edited, the conversation whose menu is open
+const noneText = () => (token ? '还没有对话。' : '登录后，这里是你的对话。');
+const marking = (text, q) => {   // text, with q marked wherever it is
+  text = String(text ?? '');
+  if (!q) return esc(text);
+  const lower = text.toLowerCase(), k = q.toLowerCase();
+  let out = '', at = 0;
+  for (let i = lower.indexOf(k); i >= 0; i = lower.indexOf(k, at)) { out += esc(text.slice(at, i)) + `<mark>${esc(text.slice(i, i + k.length))}</mark>`; at = i + k.length; }
+  return out + esc(text.slice(at));
+};
+function drawList(force) {
+  if (renaming && !force) return;
+  const row = (id, title, desc, more) => `<li${id === conv.id ? ' class="on"' : ''}>` +
+    (id === renaming ? `<input class="rename" value="${esc(title)}" maxlength="100" aria-label="新标题" enterkeyhint="done">`
+      : `<button type="button" class="open" data-open="${esc(id)}"${id === conv.id ? ' aria-current="true"' : ''}><span class="t">${marking(title, finding)}</span><span class="d">${desc}</span></button>` +
+        (more ? `<button type="button" class="more" data-more="${esc(id)}" aria-label="「${esc(title)}」的操作" aria-haspopup="menu" aria-expanded="${menuFor === id}">⋯</button>` : '')) + '</li>';
+  const dateOf = (e) => `${esc(day(e.updated))}${e.model ? ' · ' + esc(nameOf(e.model)) : ''}${anEffort(e.effort) ? ' · ' + e.effort : ''}${e.dirty || !e.version ? ' · <span class="tag">还没存到云端</span>' : ''}`;
+  if (finding) {
+    const q = finding.toLowerCase(), hits = index.filter((e) => e.title.toLowerCase().includes(q) || (found && found.has(e.id)));
+    // A snippet starts just before what was found, so a narrow list still shows it
+    const near = (text) => { const i = text.toLowerCase().indexOf(q); return i > 6 ? '…' + text.slice(i - 4).replace(/^…/, '') : text; };
+    $('chat-list').innerHTML = hits.map((e) => row(e.id, e.title, found && found.get(e.id) ? marking(near(found.get(e.id)), finding) : dateOf(e), true)).join('');
+    $('chat-none').textContent = found ? `没找到「${finding}」。` : '在找…';
+    $('chat-none').hidden = hits.length > 0;
+    return;
+  }
   const marked = [...jobs.values()].map((j) => ({ c: j.c, at: j.started, first: j.view.find((m) => m.role === 'user'), tag: '<span class="tag live">回复中…</span>' }))
     .concat([...missed.values()].filter((x) => !jobs.has(x.c.id)).map((x) => ({ c: x.c, at: x.at, first: { content: x.typed.text, files: x.typed.files }, tag: '<span class="tag">没收到回复</span>' })))
     .sort((a, b) => b.at - a.at);
   const ids = new Set(marked.map((x) => x.c.id));
   $('chat-list').innerHTML = marked.map((x) => row(x.c.id, x.c.title || (x.first ? titleOf(x.first) : '新对话'), `${esc(day(x.at))} · ${x.tag}`, false))
-    .concat(index.filter((e) => !ids.has(e.id)).map((e) => row(e.id, e.title,
-      `${esc(day(e.updated))}${e.model ? ' · ' + esc(nameOf(e.model)) : ''}${anEffort(e.effort) ? ' · ' + e.effort : ''}${e.dirty || !e.version ? ' · <span class="tag">还没存到云端</span>' : ''}`, true))).join('');
+    .concat(index.filter((e) => !ids.has(e.id)).map((e) => row(e.id, e.title, dateOf(e), true))).join('');
+  $('chat-none').textContent = noneText();
   $('chat-none').hidden = index.length + marked.length > 0;
 }
 // On a narrow screen the list slides in over the page
@@ -1056,19 +1144,155 @@ const closeSide = () => { if (narrow.matches) openSide(false); };
 $('side-btn').addEventListener('click', () => openSide(true));
 $('side-close').addEventListener('click', () => openSide(false));
 $('scrim').addEventListener('click', () => openSide(false));
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && document.body.classList.contains('side-open')) openSide(false); });
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  if (!menu.hidden) closeMenu(true);
+  else if (document.body.classList.contains('side-open') && !renaming && !$('account').open) openSide(false);
+});
 narrow.addEventListener('change', () => openSide(false));
 $('chat-list').addEventListener('click', async (e) => {
-  const open = e.target.closest('[data-open]'), del = e.target.closest('[data-del]');
+  const open = e.target.closest('[data-open]'), more = e.target.closest('[data-more]');
+  if (more) return menuFor === more.dataset.more ? closeMenu() : openMenu(more.dataset.more, more);
   if (open) {
     closeSide();
     await openChat(open.dataset.open);
-  } else if (del) {
-    const id = del.dataset.del, entry = index.find((x) => x.id === id);
-    if (!confirm(`删除「${entry ? entry.title : ''}」？云端的和它带的文件也会删掉，找不回来了。`)) return;
-    await remove(id);
   }
 });
+
+// ---------- a conversation's menu: rename, export, delete ----------
+const menu = $('menu');
+function openMenu(id, button) {
+  menuFor = id;
+  menu.hidden = false;
+  const r = button.getBoundingClientRect(), w = menu.offsetWidth, h = menu.offsetHeight;
+  menu.style.left = Math.max(8, Math.min(r.right - w, innerWidth - w - 8)) + 'px';
+  menu.style.top = (r.bottom + 4 + h > innerHeight - 8 ? Math.max(8, r.top - h - 4) : r.bottom + 4) + 'px';
+  drawList();
+  menu.querySelector('button').focus();
+}
+function closeMenu(refocus) {
+  const id = menuFor;
+  menu.hidden = true;
+  menuFor = null;
+  drawList();
+  if (refocus) { const b = $('chat-list').querySelector(`[data-more="${CSS.escape(id)}"]`); if (b) b.focus(); }
+}
+document.addEventListener('click', (e) => { if (!menu.hidden && !menu.contains(e.target) && !e.target.closest('[data-more]')) closeMenu(); });
+$('chat-list').addEventListener('scroll', () => { if (!menu.hidden) closeMenu(); });
+menu.addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-do]'), id = menuFor;
+  if (!b || !id) return;
+  closeMenu();
+  const entry = index.find((x) => x.id === id);
+  if (b.dataset.do === 'rename') startRename(id);
+  else if (b.dataset.do === 'export') exportChat(id);
+  else if (confirm(`删除「${entry ? entry.title : ''}」？云端的和它带的文件也会删掉，找不回来了。`)) await remove(id);
+});
+
+// A conversation by id, for the menu: the one open or answering, or this browser's copy, or the
+// cloud's when that is newer or this browser has none
+async function getChat(id) {
+  if (jobs.has(id)) return jobs.get(id).c;
+  if (conv.id === id) return conv;
+  const e = index.find((x) => x.id === id), c = load(id);
+  return c && !(e && !c.dirty && e.version > c.version) ? c : (await inOrder(() => pull(id))) || c;
+}
+// A new title, here at once and in the cloud soon, without moving the conversation in the list
+async function setTitle(id, title) {
+  const c = await getChat(id);
+  if (!c) { drawList(); return notice('改不了标题：连不上服务器。'); }
+  c.title = title;
+  c.dirty = true;
+  stash(c);
+  enlist(c);
+  upload(c);
+}
+// The title edited where it is in the list: Enter or leaving the box keeps it, Escape doesn't
+function startRename(id) {
+  if (!index.some((x) => x.id === id)) return;
+  renaming = id;
+  drawList(true);
+  const box = $('chat-list').querySelector('.rename');
+  box.focus();
+  box.select();
+}
+function endRename(keep) {
+  const id = renaming, box = $('chat-list').querySelector('.rename');
+  renaming = null;
+  const title = box ? box.value.replace(/\s+/g, ' ').trim().slice(0, 100) : '', e = index.find((x) => x.id === id);
+  if (keep && title && e && title !== e.title) { e.title = title; drawList(); return setTitle(id, title); }   // shown at once
+  drawList();
+}
+$('chat-list').addEventListener('keydown', (e) => {
+  if (!e.target.matches('.rename')) return;
+  if (e.key === 'Enter' && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); endRename(true); }
+  else if (e.key === 'Escape') { e.stopPropagation(); endRename(false); }
+});
+$('chat-list').addEventListener('focusout', (e) => { if (e.target.matches('.rename') && renaming) endRename(true); });
+
+// A conversation as a Markdown file, saved by the browser: what was said, the thinking summaries,
+// the searches and the pages cited, and the files by name
+function markdownOf(c) {
+  const when = (t) => new Date(t).toLocaleString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
+  const out = [`# ${c.title || '对话'}`, ''];
+  for (const m of c.messages) {
+    if (m.role === 'user') {
+      out.push(`**我**${m.at ? `（${when(m.at)}）` : ''}：`, '');
+      if (m.files && m.files.length) out.push(m.files.map((f) => `[附件：${f.name}]`).join(' '), '');
+      if (userText(m)) out.push(userText(m), '');
+    } else if (m.role === 'assistant') {
+      const head = [m.by || (m.model && nameOf(m.model)), m.effort].filter(Boolean).join(' · ');
+      out.push(`**Claude**${head ? `（${head}）` : ''}：`, '');
+      for (const p of partsOf(m.content)) {
+        if (p.text) out.push(p.text.trim(), '');
+        else if (p.think != null) out.push(['> **思考过程**', ...p.think.trim().split('\n')].join('\n> '), '');
+        else out.push(`*搜索了：${p.searches.map((q) => `「${q.query}」`).join('')}*`, '');
+      }
+      const cited = citedOf(m.content);
+      if (cited.length) out.push('来源：' + cited.map((x) => `[${(x.title || hostOf(x.url)).replace(/[[\]]/g, '')}](${x.url})`).join(' · '), '');
+      if (m.stopped) out.push('*（回复中断了）*', '');
+      out.push('---', '');
+    }
+  }
+  return out.join('\n');
+}
+async function exportChat(id) {
+  const c = await getChat(id);
+  if (!c || !c.messages.length) return notice('导不出来：连不上服务器。');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([markdownOf(c)], { type: 'text/markdown;charset=utf-8' }));
+  a.download = (c.title || '对话').replace(/[\\/:*?"<>|\u0000-\u001f]/g, '_').slice(0, 60) + '.md';
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+}
+
+// ---------- searching ----------
+// The titles here are searched at once, and the words of every message by the cloud, a moment after
+// typing stops. The cloud gives older messages their words a few at a time, so while some still lack
+// them it is asked again.
+let findTimer = 0, findSeq = 0;
+$('find').addEventListener('input', () => {
+  finding = $('find').value.trim();
+  found = null;
+  clearTimeout(findTimer);
+  drawList();
+  if (finding) findTimer = setTimeout(() => search(finding, 0), 250);
+});
+async function search(q, tries) {
+  const seq = ++findSeq;
+  let r;
+  try {
+    const res = await api('GET', '/search?q=' + encodeURIComponent(q));
+    if (!res.ok) throw new Error(res.status);
+    r = await res.json();
+  } catch (e) { r = { hits: [], pending: 0 }; }   // offline: the titles will do
+  if (seq !== findSeq || q !== finding) return;
+  found = new Map(r.hits.map((h) => [h.id, h.snippet]));
+  drawList();
+  if (r.pending && tries < 10) findTimer = setTimeout(() => search(q, tries + 1), 300);
+}
 function newChat() {
   closeSide();
   show(fresh());
@@ -1213,12 +1437,13 @@ async function run(c, base, extra, typed) {
       if (round === MAX_RESUMES) throw new Error('paused too often');   // kept as far as it got, below
     }
     if (!sofar.some((b) => b.type === 'text')) return fail('Claude 这次没说话，再试一次？');
-    const pondered = sofar.some((b) => b.type === 'thinking' && b.thinking && b.thinking.trim());
+    const pondered = sofar.some((b) => b.type === 'thinking' && b.thinking && b.thinking.trim()), first = !base.some((m) => m.role === 'assistant');
     commit(c, view.concat([{
       role: 'assistant', content: sofar, at: Date.now(), model, effort, cost, thought: pondered ? thoughtFor() || undefined : undefined,
       by: msg.model && !msg.model.startsWith(model) ? msg.model : undefined,
       truncated: msg.stop_reason === 'max_tokens' || undefined,
     }]));
+    if (first) nameIt(c);
   } catch (err) {
     const text = textOf({ content: live() });
     if (err.status === 401 && err.message === 'bad_session') {
@@ -1242,6 +1467,21 @@ async function run(c, base, extra, typed) {
     } else updateSend();
     drawList();
   }
+}
+
+// After its first answer, Haiku names a conversation whose first message is long, or only files: till
+// then, and if no name comes, its first 40 characters are its title. A title changed meanwhile stays.
+async function nameIt(c) {
+  const user = c.messages.find((m) => m.role === 'user'), reply = c.messages.find((m) => m.role === 'assistant');
+  const said = userText(user), before = c.title;
+  if ((said && said.length <= 20) || before !== titleOf(user)) return;
+  let title = '';
+  try {
+    const res = await api('POST', '/title', { user: said || (user.files || []).map((f) => f.name).join('、'), reply: textOf(reply).slice(0, 2000) });
+    if (res.ok) ({ title } = await res.json());
+  } catch (e) { return; }
+  const now = jobs.has(c.id) ? jobs.get(c.id).c : conv.id === c.id ? conv : load(c.id);
+  if (title && now && now.title === before && index.some((e) => e.id === c.id)) setTitle(c.id, title);
 }
 
 function sendTyped() {
@@ -1364,6 +1604,7 @@ function unlock() {
   $('opts').hidden = false;
   $('who').textContent = me.name;
   $('side-foot').hidden = false;
+  $('find-box').hidden = false;
   if (!coarse) input.focus();
 }
 $('lock-switch').addEventListener('click', () => {
@@ -1434,6 +1675,62 @@ $('lock').addEventListener('submit', async (e) => {
   }
 });
 
+// ---------- the account: what it spent, and its password ----------
+// The cost is the Worker's, from each reply's usage, by month (UTC). The first account sees every
+// account's too, which the others are told.
+$('who').addEventListener('click', async () => {
+  closeSide();
+  $('pw-form').reset();
+  $('pw-user').value = me.name;
+  $('pw-msg').textContent = '';
+  $('usage').innerHTML = '<p class="fine">在读…</p>';
+  $('account').showModal();
+  try {
+    const res = await api('GET', '/usage');
+    if (!res.ok) throw new Error(res.status);
+    drawUsage(await res.json());
+  } catch (e) { $('usage').innerHTML = '<p class="fine">读不到：连不上服务器。</p>'; }
+});
+const monthOf = (m) => `${+m.slice(5)} 月`;
+const dollars = (x) => (x ? money(x) : '$0');
+function drawUsage({ mine, all }) {
+  const now = new Date().toISOString().slice(0, 7), d = new Date();
+  d.setUTCDate(1);
+  d.setUTCMonth(d.getUTCMonth() - 1);
+  const last = d.toISOString().slice(0, 7);
+  const rows = (mine.some((r) => r.month === now) ? mine : [{ month: now, cost: 0, replies: 0, searches: 0 }, ...mine]).map((r) =>
+    `<tr><td>${r.month === now ? `这个月（${monthOf(r.month)}）` : monthOf(r.month)}<span class="sub">${r.replies} 条回复${r.searches ? ` · ${r.searches} 次搜索` : ''}</span></td><td>${dollars(r.cost)}</td></tr>`).join('');
+  let html = `<table class="usage">${rows}</table>`;
+  if (all) {
+    const by = new Map();
+    for (const r of all) { const x = by.get(r.name) || { now: 0, last: 0 }; x[r.month === now ? 'now' : 'last'] += r.cost; by.set(r.name, x); }
+    html += `<h3 style="margin-top:14px">所有账号</h3><table class="usage"><tr><th></th><th>${monthOf(now)}</th><th>${monthOf(last)}</th></tr>` +
+      ([...by].sort((a, b) => b[1].now - a[1].now || b[1].last - a[1].last).map(([name, x]) => `<tr><td>${esc(name)}</td><td>${dollars(x.now)}</td><td>${dollars(x.last)}</td></tr>`).join('') ||
+        '<tr><td colspan="3">还没有花费。</td></tr>') + '</table>';
+  }
+  html += `<p class="fine">按每条回复用掉的 token 和搜索算，美元，按 UTC 分月，从这个功能上线起开始记。${all ? '' : '网站的主人能看到每个账号的花费。'}</p>`;
+  $('usage').innerHTML = html;
+}
+$('pw-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const password = $('pw-old').value, next = $('pw-new').value, msg = $('pw-msg');
+  const say = (t, ok) => { msg.textContent = t; msg.classList.toggle('ok', !!ok); };
+  const problem = checkAccount(me.name, next);
+  if (problem) return say(SIGN_IN[problem]);
+  $('pw-go').disabled = true;
+  say('');
+  try {
+    const res = await api('POST', '/password', { password, next });
+    const why = res.ok ? '' : (await res.json().catch(() => ({}))).error;
+    if (res.ok) { $('pw-form').reset(); $('pw-user').value = me.name; }
+    say(res.ok ? '密码改好了。其他设备上的登录都退出了。' : why === 'bad_password' ? '现在的密码不对。' : SIGN_IN[why] || `出错了：${why || res.status}`, res.ok);
+  } catch (err) {
+    say('连不上服务器。');
+  } finally {
+    $('pw-go').disabled = false;
+  }
+});
+
 // Signing out ends the session in the cloud too, and clears this browser's copies of what the cloud
 // has; anything not uploaded yet stays, and goes up when the same account signs in again
 function signOut(msg, tell = true) {
@@ -1467,7 +1764,6 @@ if (token) { unlock(); look(); }
 else {
   let flash = '';
   try { flash = sessionStorage.getItem(AUTH.flash) || ''; sessionStorage.removeItem(AUTH.flash); } catch (e) {}
-  $('chat-none').textContent = '登录后，这里是你的对话。';
   if (legacy) { joining = true; $('acct-invite').value = legacy; }
   lock(flash);
 }

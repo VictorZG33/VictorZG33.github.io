@@ -8,7 +8,11 @@
 // and then, with the token in "Authorization: Bearer <token>":
 //   POST   /logout       -> 204, and the token stops working
 //   GET    /             -> { id, name, first }
+//   GET    /usage        -> { mine: [{ month, cost, replies, searches }], all?: [{ name, month, … }] }, all for the first account
+//   POST   /password     { password, next } -> 204, and the account's other sessions end | 403 bad_password
 //   POST   /             { model, effort, messages } -> Claude's reply, streamed as newline-delimited events
+//   POST   /title        { user, reply } -> { title }: a short name for a new conversation, by Haiku, or ''
+//   GET    /search?q=    -> { hits: [{ id, snippet }], pending }: the conversations with q in their title or words
 //   GET    /chats        -> { chats: [{ id, title, model, effort, updated, version, size }] }, the latest first
 //   GET    /chats/:id    -> { id, title, model, effort, updated, version, size, messages } | 404
 //   PUT    /chats/:id    { base, keep, append, title, model, effort } -> { version, updated } | 409 { version }
@@ -23,7 +27,8 @@
 // their own, in store.js. See README.md in this folder.
 
 import Anthropic, { toFile } from '@anthropic-ai/sdk';
-import { buildChatRequest, checkChatInput, checkSave, checkUpload, checkAccount, NAME, FILE_ID } from '../../chat/chat.js';
+import { buildChatRequest, checkChatInput, checkSave, checkUpload, checkAccount, costOf, NAME, FILE_ID } from '../../chat/chat.js';
+import { hashOf, ROUNDS, b64 } from './accounts.js';
 
 export { ChatStore } from './store.js';
 export { Accounts } from './accounts.js';
@@ -116,10 +121,34 @@ export default {
       await accounts.logout(session);
       return done();
     }
+    if (pathname === '/usage') return method === 'GET' ? json(200, await accounts.usage(me.id, me.first)) : fail(405, 'GET only');
+    if (pathname === '/password') {
+      if (method !== 'POST') return fail(405, 'POST only');
+      let x;
+      try { x = await request.json(); } catch { return fail(400, 'bad json'); }
+      if (!x || typeof x.password !== 'string' || x.password.length > 200) return fail(403, 'bad_password');
+      const problem = checkAccount(me.name, x.next);
+      if (problem) return fail(400, problem);
+      // The new password is hashed here and the current one checked by Accounts: one hash a call,
+      // as the free plan allows a call 10 ms of CPU time
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const hash = await hashOf(x.next, salt, ROUNDS);
+      return (await accounts.changePassword(me.id, x.password, b64(salt), b64(hash), ROUNDS, session)) ? done() : fail(403, 'bad_password');
+    }
+    if (pathname === '/search') {
+      if (method !== 'GET') return fail(405, 'GET only');
+      const q = (new URL(request.url).searchParams.get('q') || '').trim();
+      if (!q || q.length > 100) return fail(400, 'bad query');
+      return json(200, await store.search(q));
+    }
+    if (pathname === '/title') {
+      if (method !== 'POST') return fail(405, 'POST only');
+      return title(request, env, ctx, accounts, me, json, fail);
+    }
     if (pathname === '/') {
       if (method === 'GET') return json(200, { id: me.id, name: me.name, first: me.first });
       if (method !== 'POST') return fail(405, 'GET or POST only');
-      return chat(request, env, store, cors, fail);
+      return chat(request, env, ctx, store, accounts, me, cors, fail);
     }
 
     const f = pathname.match(FILES);
@@ -194,7 +223,7 @@ async function files(request, env, store, id, json, fail, done) {
   return fail(405, 'method not allowed');
 }
 
-async function chat(request, env, store, cors, fail) {
+async function chat(request, env, ctx, store, accounts, me, cors, fail) {
   let input;
   try { input = await request.json(); } catch { return fail(400, 'bad json'); }
   const problem = checkChatInput(input);
@@ -210,8 +239,41 @@ async function chat(request, env, store, cors, fail) {
   } catch (e) {
     return apiFail(e, fail);
   }
+  // What the reply cost, from its usage, goes on its user's month once it ends, or as far as it got if
+  // the page stopped listening first: then without the output not yet reported
+  let seen = null;
+  stream.on('streamEvent', (e, snapshot) => { seen = snapshot; });
+  ctx.waitUntil(stream.done().catch(() => {}).then(() => {
+    const u = (stream.receivedMessages.at(-1) || seen || {}).usage;
+    if (u) return accounts.spend(me.id, costOf(input.model, u) || 0, (u.server_tool_use && u.server_tool_use.web_search_requests) || 0, 1);
+  }).catch(() => {}));
   // Newline-delimited events, read on the page with BetaMessageStream.fromReadableStream()
   return new Response(keepAlive(stream.toReadableStream()), { headers: { ...cors, 'Content-Type': 'application/x-ndjson', 'Cache-Control': 'no-store' } });
+}
+
+// A name for a new conversation, from its first message and reply, by the smallest model: a
+// hundredth of a cent or so, which goes on the user's month too
+const TITLE_MODEL = 'claude-haiku-5-5';
+const TITLE_PROMPT = "You name conversations for a chat app's list. Reply with a short title for the conversation the user shows you, in the language it is written in: at most 12 characters for Chinese or Japanese, at most 6 words otherwise. No quotes, no full stop, nothing else.";
+async function title(request, env, ctx, accounts, me, json, fail) {
+  let x;
+  try { x = await request.json(); } catch { return fail(400, 'bad json'); }
+  const user = typeof x?.user === 'string' ? x.user.slice(0, 2000) : '', reply = typeof x?.reply === 'string' ? x.reply.slice(0, 2000) : '';
+  if (!user.trim() && !reply.trim()) return fail(400, 'nothing to name');
+  const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+  let msg;
+  try {
+    msg = await client.messages.create({
+      model: TITLE_MODEL, max_tokens: 64, thinking: { type: 'disabled' }, output_config: { effort: 'low' }, system: TITLE_PROMPT,
+      messages: [{ role: 'user', content: `<user>\n${user}\n</user>\n<assistant>\n${reply}\n</assistant>` }],
+    });
+  } catch (e) {
+    return apiFail(e, fail);
+  }
+  ctx.waitUntil(accounts.spend(me.id, costOf(TITLE_MODEL, msg.usage) || 0, 0, 0).catch(() => {}));
+  const said = msg.stop_reason === 'refusal' ? '' : msg.content.filter((b) => b.type === 'text').map((b) => b.text).join('');
+  const name = said.replace(/\s+/g, ' ').trim().replace(/^["'“”‘’「」『』《》【】]+|["'“”‘’「」『』《》【】。．.!！?？]+$/g, '').trim().slice(0, 40);
+  return json(200, { title: name });   // '' when none came: the page keeps the title it has
 }
 
 // At high effort Claude can think for minutes before it writes a word, and the stream carries nothing
