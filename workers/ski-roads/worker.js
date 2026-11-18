@@ -18,8 +18,8 @@
    On the free plan a request may use 10 ms of CPU; reading the largest feed, District 3's lane closures
    (1.2 MB), takes about 5, which is why each district is its own request. */
 import {
-  caltransUrl, CHP_URL, CHP_KML_URL, roadsUrl, ROAD_NUMBERS, DISTRICTS,
-  keepChains, keepCams, keepClosures, parseChp, parseChpKml, parseRoads,
+  caltransUrl, caltransCsvUrl, CHP_URL, CHP_KML_URL, roadsUrl, ROAD_NUMBERS, DISTRICTS,
+  keepChains, keepCams, keepClosures, ccFromCsv, parseChp, parseChpKml, parseRoads,
 } from '../../ski/roads.js';
 
 const ORIGINS = ['https://wentaoz.com', 'https://www.wentaoz.com', 'https://victorzg33.github.io'];
@@ -32,11 +32,11 @@ const TTL = { chains: 60, cams: 6 * 3600, closures: 300, chp: 60, roads: 120 };
 const STALE_MS = 45 * 60 * 1000;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-// A feed, asked again after a pause when it answers a server error or not at all
-async function upstream(url, kind, { timeout = 12000, tries = 2 } = {}) {
+// A feed, asked again after a growing pause when it answers a server error or not at all
+async function upstream(url, kind, { timeout = 12000, tries = 3 } = {}) {
   let last;
   for (let i = 0; i < tries; i++) {
-    if (i) await sleep(700);
+    if (i) await sleep(700 * i);
     try {
       const res = await fetch(url, {
         headers: { 'User-Agent': AGENT, Accept: kind === 'json' ? 'application/json' : '*/*' },
@@ -56,7 +56,21 @@ async function upstream(url, kind, { timeout = 12000, tries = 2 } = {}) {
 const lastRoad = new Map();
 
 const FEEDS = {
-  chains: (d) => upstream(caltransUrl('cc', d), 'json').then(keepChains),
+  // the CSV and the JSON by turns, four tries in all: in a storm Caltrans' server fails either, often
+  chains: async (d) => {
+    let last;
+    for (let k = 0; k < 4; k++) {
+      if (k) await sleep(600 * k);
+      try {
+        return k % 2 === 0
+          ? keepChains(ccFromCsv(await upstream(caltransCsvUrl('cc', d), 'text', { tries: 1 })))
+          : keepChains(await upstream(caltransUrl('cc', d), 'json', { tries: 1 }));
+      } catch (err) {
+        last = err;
+      }
+    }
+    throw last;
+  },
   cams: (d) => upstream(caltransUrl('cctv', d), 'json').then(keepCams),
   closures: (d) => upstream(caltransUrl('lcs', d), 'json').then((j) => keepClosures(j)),
   chp: async () => {

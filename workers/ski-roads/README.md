@@ -22,7 +22,7 @@ All `GET`, all answering `{at, data}`, where `at` is when the feed was fetched (
 
 District 3 is Marysville (I-80, US-50, SR-89, SR-267, SR-28), District 10 Stockton (SR-88, for Kirkwood). Each answer is kept in the Worker's memory for the time above, so a burst of visitors fetches each feed once; if a feed can't be reached, an answer up to 45 minutes old is sent instead, with an `X-Stale` header saying why. Nothing is stored anywhere else.
 
-The feeds are not always well. Caltrans' servers answer `500` now and then, so each request to them is tried a second time after a pause. The road conditions page sends, about as often as not, a page with no highway on it; each highway is asked up to three times, and one that still won't come keeps its last good text, up to 45 minutes old. Requests are answered only for `https://wentaoz.com` (by the `Origin` header).
+The feeds are not always well. Caltrans' servers answer `500` now and then, more often in a storm, when everyone is looking, so each request to them is tried three times with a growing pause; the chain controls are asked for as CSV and as JSON by turns, four times in all, since Caltrans publishes both and one often answers when the other doesn't (`ccFromCsv` in `ski/roads.js` reads the CSV, a quarter the size of the JSON). The road conditions page sends, about as often as not, a page with no highway on it; each highway is asked up to three times, and one that still won't come keeps its last good text, up to 45 minutes old. Requests are answered only for `https://wentaoz.com` (by the `Origin` header).
 
 On the free plan a request may use 10 ms of CPU. Reading District 3's lane closures, the largest feed at 1.2 MB, takes about 5, which is why each district is a request of its own.
 
