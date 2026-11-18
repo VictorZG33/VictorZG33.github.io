@@ -1,0 +1,1682 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="上山 First Chair: a ski-day dashboard for Lake Tahoe by Wentao Zhang. Whether to drive up today, from chain controls, closures, CHP incidents and storm warnings; the weather at the base, up top and on the pass, hour by hour and for a week, with the snow level and how dry the snow is; what to wear; the road and resort cameras; and a packing list.">
+<meta property="og:title" content="上山 First Chair">
+<meta property="og:description" content="Should we drive up to Tahoe today? Chain controls, closures, CHP incidents, storm warnings, the snow level, road cameras, what to wear and what to pack, for Palisades, Northstar, Sugar Bowl, Heavenly, Sierra-at-Tahoe and Kirkwood.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://wentaoz.com/ski/">
+<meta property="og:site_name" content="Wentao Zhang">
+<meta property="og:image" content="https://wentaoz.com/ski/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="上山 First Chair, the morning call for a Tahoe ski day.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#EDF1F5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0A1017" media="(prefers-color-scheme: dark)">
+<script>
+/* Apply the theme picked with the Dark button (here or on the homepage) before first paint */
+(function () { try { var t = localStorage.getItem('wentaoz.theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {} })();
+</script>
+<link rel="canonical" href="https://wentaoz.com/ski/">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%226%22%20fill%3D%22%23123150%22%2F%3E%3Cpath%20d%3D%22M3%2027l9-13%205%206%204-5%208%2012z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M4%209l24-5%22%20stroke%3D%22%2386b6ef%22%20stroke-width%3D%221.5%22%2F%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%229.5%22%20r%3D%222.2%22%20fill%3D%22%2386b6ef%22%2F%3E%3C%2Fsvg%3E">
+<title>上山 First Chair</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://api.open-meteo.com" crossorigin>
+<link rel="preconnect" href="https://api.weather.gov" crossorigin>
+<!-- The Chinese serif is cut down to the two characters of the name, 上山, so other wording in it needs adding to text= -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@900&text=%E4%B8%8A%E5%B1%B1&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=STIX+Two+Text:ital,wght@1,500&display=swap">
+<style>
+/* Layout: one 760px column, a header with the resort and the controls, four tabs. Snow-light greys and a
+   glacier blue; the verdict and the chain control carry the status colours (green go, amber careful,
+   red stay home), always with an icon and words. The charts' four colours follow the quantity
+   everywhere: snow blue, temperature orange, rain aqua, wind violet. */
+:root {
+  --bg: #EDF1F5;
+  --surface: #FFFFFF;
+  --surface-2: #F4F7FA;
+  --ink: #0E1822;
+  --ink-2: #445260;
+  --muted: #66727F;
+  --rule: #D9E0E7;
+  --rule-strong: #B4C0CC;
+  --accent: #1C64A8;
+  --accent-wash: rgba(28, 100, 168, 0.10);
+  --on-accent: #FFFFFF;
+  /* status: never a series colour, always with an icon and a word */
+  --good: #0CA30C; --good-ink: #0B6B1F; --good-wash: rgba(12, 163, 12, 0.10);
+  --warn: #FAB219; --warn-ink: #8A5600; --warn-wash: rgba(250, 178, 25, 0.16);
+  --crit: #D03B3B; --crit-ink: #A12424; --crit-wash: rgba(208, 59, 59, 0.10);
+  --serious: #EC835A;
+  /* chart series */
+  --snow: #2A78D6; --temp: #EB6834; --rain: #1BAF7A; --wind: #6250D6;
+  --grid: #E6EBF0; --axis: #C3CCD5;
+  --font-cjk: "Noto Serif SC", "Songti SC", "STSong", "Source Han Serif SC", serif;
+  --font-latin: "STIX Two Text", "STIXGeneral", Cambria, "Times New Roman", serif;
+  --font: system-ui, -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", Roboto, "Noto Sans SC", sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0A1017; --surface: #141D27; --surface-2: #1B2632; --ink: #E7EDF3; --ink-2: #A9B6C3; --muted: #8794A1;
+    --rule: #253240; --rule-strong: #3A4A5B; --accent: #6DB0EE; --accent-wash: rgba(109, 176, 238, 0.14); --on-accent: #0A1017;
+    --good-ink: #5FD07A; --good-wash: rgba(12, 163, 12, 0.16); --warn-ink: #F5C45A; --warn-wash: rgba(250, 178, 25, 0.14);
+    --crit-ink: #F08A8A; --crit-wash: rgba(208, 59, 59, 0.18);
+    --snow: #3987E5; --temp: #D95926; --rain: #199E70; --wind: #9085E9; --grid: #1E2935; --axis: #34424F;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0A1017; --surface: #141D27; --surface-2: #1B2632; --ink: #E7EDF3; --ink-2: #A9B6C3; --muted: #8794A1;
+  --rule: #253240; --rule-strong: #3A4A5B; --accent: #6DB0EE; --accent-wash: rgba(109, 176, 238, 0.14); --on-accent: #0A1017;
+  --good-ink: #5FD07A; --good-wash: rgba(12, 163, 12, 0.16); --warn-ink: #F5C45A; --warn-wash: rgba(250, 178, 25, 0.14);
+  --crit-ink: #F08A8A; --crit-wash: rgba(208, 59, 59, 0.18);
+  --snow: #3987E5; --temp: #D95926; --rain: #199E70; --wind: #9085E9; --grid: #1E2935; --axis: #34424F;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--font); font-size: 16px; line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+.page {
+  max-width: 760px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-top: max(14px, env(safe-area-inset-top, 0px));
+  padding-bottom: max(48px, env(safe-area-inset-bottom, 0px));
+}
+h1, h2, h3, p, ul, ol, dl, dd, figure { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: var(--accent); text-underline-offset: 0.18em; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* header */
+.home { display: inline-block; margin-bottom: 6px; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); text-decoration: none; }
+.home:hover { color: var(--ink); }
+.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 16px; }
+.brand { display: flex; align-items: baseline; gap: 10px; }
+.brand .zh { font-family: var(--font-cjk); font-weight: 900; font-size: 34px; line-height: 1.1; letter-spacing: 0.06em; }
+.brand .en { font-family: var(--font-latin); font-style: italic; font-weight: 500; font-size: 22px; color: var(--ink-2); }
+.tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--rule-strong); border-radius: 999px; overflow: hidden; background: var(--surface); flex: none; }
+.seg button { border: 0; background: transparent; padding: 6px 12px; font-size: 13.5px; font-weight: 600; cursor: pointer; color: var(--ink-2); white-space: nowrap; }
+.seg button + button { border-left: 1px solid var(--rule); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.icon-btn { border: 1px solid var(--rule-strong); background: var(--surface); border-radius: 999px; padding: 6px 12px; font-size: 13.5px; font-weight: 600; cursor: pointer; color: var(--ink-2); display: inline-flex; align-items: center; gap: 6px; }
+.icon-btn:hover { color: var(--ink); border-color: var(--ink-2); }
+.icon-btn svg { width: 15px; height: 15px; }
+.icon-btn.busy svg { animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .icon-btn.busy svg { animation: none; } }
+.lede { margin-top: 8px; color: var(--ink-2); font-size: 15px; max-width: 38em; }
+.pick { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 14px; }
+.select { position: relative; flex: 1 1 260px; min-width: 0; }
+.select select {
+  width: 100%; appearance: none; -webkit-appearance: none; border: 1px solid var(--rule-strong); border-radius: 12px;
+  background: var(--surface); padding: 10px 38px 10px 14px; font-size: 16px; font-weight: 650; cursor: pointer;
+}
+.select::after { content: ""; position: absolute; right: 16px; top: 50%; width: 8px; height: 8px; margin-top: -6px; border-right: 2px solid var(--ink-2); border-bottom: 2px solid var(--ink-2); transform: rotate(45deg); pointer-events: none; }
+.pick .seg button { padding: 9px 14px; font-size: 14px; }
+.status { margin-top: 10px; font-size: 13px; color: var(--muted); min-height: 1.5em; }
+.status b { font-weight: 600; color: var(--ink-2); }
+
+/* tabs */
+.tabs { position: sticky; top: 0; z-index: 20; display: flex; margin: 14px calc(-1 * max(16px, env(safe-area-inset-left, 0px))) 0; padding: 0 max(16px, env(safe-area-inset-left, 0px)); background: var(--bg); border-bottom: 1px solid var(--rule); overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tabs button { flex: 1 0 auto; border: 0; background: none; padding: 12px 10px 10px; font-size: 16px; font-weight: 650; color: var(--muted); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+.tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+.panel { display: grid; gap: 14px; padding-top: 16px; }
+
+/* cards and sections */
+.card { background: var(--surface); border: 1px solid var(--rule); border-radius: 14px; padding: 16px; min-width: 0; }
+.sec-h { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; margin-top: 10px; }
+.sec-h h2 { font-size: 19px; font-weight: 750; letter-spacing: 0.01em; }
+.sec-h .aside { font-size: 12.5px; color: var(--muted); }
+.card h3 { font-size: 15.5px; font-weight: 700; }
+.note { font-size: 13.5px; color: var(--ink-2); line-height: 1.6; }
+.muted { color: var(--muted); }
+.small { font-size: 12.5px; }
+.err { font-size: 14px; color: var(--ink-2); padding: 10px 12px; border-radius: 10px; background: var(--surface-2); border: 1px dashed var(--rule-strong); }
+.err b { color: var(--ink); }
+.links { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; border-radius: 999px; border: 1px solid var(--rule-strong); background: var(--surface); color: var(--ink); font-size: 14px; font-weight: 650; text-decoration: none; cursor: pointer; }
+.btn:hover { border-color: var(--ink-2); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--rule-strong); background: var(--surface); border-radius: 999px; padding: 6px 13px; font-size: 14px; font-weight: 600; cursor: pointer; color: var(--ink-2); }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+details > summary { cursor: pointer; list-style: none; }
+details > summary::-webkit-details-marker { display: none; }
+.fold { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.fold::after { content: ""; flex: none; width: 7px; height: 7px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); margin: -4px 4px 0 0; transition: transform 0.15s; }
+details[open] > .fold::after { transform: rotate(-135deg); margin-top: 4px; }
+
+/* verdict */
+.verdict { position: relative; overflow: hidden; border-left: 6px solid var(--v, var(--rule-strong)); background: linear-gradient(var(--v-wash, transparent), var(--v-wash, transparent)), var(--surface); }
+.verdict.go { --v: var(--good); --v-ink: var(--good-ink); --v-wash: var(--good-wash); }
+.verdict.caution { --v: var(--warn); --v-ink: var(--warn-ink); --v-wash: var(--warn-wash); }
+.verdict.stop { --v: var(--crit); --v-ink: var(--crit-ink); --v-wash: var(--crit-wash); }
+.verdict .ridge { position: absolute; right: -8px; bottom: -6px; width: 230px; height: 90px; color: var(--v, var(--rule-strong)); opacity: 0.16; pointer-events: none; }
+.v-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.v-route { font-size: 12.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); }
+.v-head { display: flex; align-items: flex-start; gap: 12px; margin-top: 10px; }
+.v-icon { flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--v, var(--rule-strong)); color: #fff; display: grid; place-items: center; margin-top: 3px; }
+.verdict.caution .v-icon { color: #0B0B0B; }
+.v-icon svg { width: 20px; height: 20px; }
+.v-title { font-size: clamp(25px, 6.4vw, 33px); line-height: 1.22; font-weight: 800; letter-spacing: 0.01em; }
+.v-reasons { margin-top: 12px; display: grid; gap: 6px; position: relative; }
+.v-reasons li { position: relative; padding-left: 16px; font-size: 15px; line-height: 1.5; }
+.v-reasons li::before { content: ""; position: absolute; left: 2px; top: 0.62em; width: 6px; height: 6px; border-radius: 50%; background: var(--v-ink, var(--ink-2)); }
+.v-reasons li.ok::before { background: var(--good); }
+.v-basis { margin-top: 12px; font-size: 12.5px; color: var(--ink-2); line-height: 1.6; position: relative; }
+.v-basis b { font-weight: 650; }
+
+/* alerts */
+.alert { border-radius: 14px; padding: 13px 15px; border: 1.5px solid var(--warn); background: var(--surface); }
+.alert.severe { border-color: var(--crit); }
+.alert h3 { display: flex; align-items: center; gap: 8px; font-size: 16px; color: var(--warn-ink); }
+.alert.severe h3 { color: var(--crit-ink); }
+.alert h3 svg { width: 18px; height: 18px; flex: none; }
+.alert p { font-size: 14px; margin-top: 4px; }
+.alert .small { margin-top: 4px; color: var(--muted); }
+
+/* now */
+.now { display: grid; gap: 10px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 620px) { .now { grid-template-columns: minmax(0, 1fr); } }
+.now .card { padding: 14px 16px; }
+.now h3 { font-size: 15px; }
+.now .sub { font-size: 12.5px; color: var(--muted); }
+.now .big { font-size: 46px; line-height: 1.05; font-weight: 700; margin: 8px 0 4px; letter-spacing: -0.01em; }
+.now .big small { font-size: 0.5em; font-weight: 600; margin-left: 2px; color: var(--ink-2); }
+.now .line { font-size: 14px; color: var(--ink-2); }
+@media (max-width: 620px) {
+  .now .card { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; align-items: center; }
+  .now .card .big { grid-row: 1 / span 4; grid-column: 2; margin: 0; font-size: 40px; }
+}
+
+/* charts */
+.chart-wrap { display: grid; gap: 10px; }
+.readout { font-size: 13.5px; color: var(--ink-2); min-height: 2.6em; display: flex; flex-wrap: wrap; gap: 2px 12px; align-items: baseline; padding: 8px 10px; background: var(--surface-2); border-radius: 10px; }
+.readout b { color: var(--ink); font-weight: 700; }
+.readout .k { display: inline-flex; align-items: center; gap: 5px; }
+.key { display: inline-block; width: 14px; height: 0; border-top: 2px solid currentColor; }
+.key.dash { border-top-style: dashed; }
+.key.bar { width: 9px; height: 9px; border: 0; border-radius: 2px; background: currentColor; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.chart { position: relative; touch-action: pan-y; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart .t { font-size: 11px; fill: var(--muted); font-family: var(--font); }
+.chart .lbl { font-size: 11.5px; fill: var(--ink-2); font-family: var(--font); font-weight: 600; }
+.chart-title { font-size: 12.5px; font-weight: 650; color: var(--ink-2); margin-bottom: 2px; }
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -4px; padding: 0 4px; }
+table.data { width: 100%; border-collapse: collapse; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+table.data th { font-size: 12px; font-weight: 600; color: var(--muted); text-align: right; padding: 6px 6px; white-space: nowrap; border-bottom: 1px solid var(--rule); vertical-align: bottom; line-height: 1.25; }
+table.data th small { display: block; font-size: 11px; font-weight: 500; }
+table.data td { text-align: right; padding: 7px 6px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+@media (max-width: 460px) {
+  table.data { font-size: 13px; }
+  table.data th, table.data td { padding-left: 3px; padding-right: 3px; }
+}
+.panel > * { scroll-margin-top: 60px; }
+table.data th:first-child, table.data td:first-child { text-align: left; padding-left: 2px; }
+table.data tr.on td { background: var(--accent-wash); }
+table.data tr.hit { cursor: pointer; }
+table.data tr.hit:hover td { background: var(--surface-2); }
+table.data tr.sel td { background: var(--accent-wash); }
+table.data tr.sel td:first-child { box-shadow: inset 3px 0 var(--accent); }
+td .s { color: var(--snow); font-weight: 700; }
+td .z { color: var(--muted); }
+td .w { color: var(--ink-2); font-size: 12.5px; }
+.hourly-table { max-height: 360px; overflow-y: auto; }
+.hourly-table th { position: sticky; top: 0; background: var(--surface); z-index: 1; }
+
+/* outfit */
+.tier { font-size: 18px; font-weight: 750; }
+.wear { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); margin-top: 10px; }
+.wear h3 { font-size: 14px; color: var(--accent); margin-bottom: 6px; }
+.wear li { position: relative; padding-left: 14px; font-size: 14.5px; line-height: 1.55; margin-top: 3px; }
+.wear li::before { content: "·"; position: absolute; left: 2px; color: var(--muted); font-weight: 700; }
+.switch { display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; color: var(--ink-2); cursor: pointer; user-select: none; }
+.switch input { appearance: none; -webkit-appearance: none; width: 34px; height: 20px; border-radius: 999px; background: var(--rule-strong); position: relative; cursor: pointer; margin: 0; flex: none; transition: background 0.15s; }
+.switch input::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform 0.15s; box-shadow: 0 1px 2px rgba(0,0,0,0.25); }
+.switch input:checked { background: var(--accent); }
+.switch input:checked::after { transform: translateX(14px); }
+
+/* resort cams */
+.live { display: flex; align-items: center; gap: 14px; padding: 15px 16px; border-radius: 14px; background: var(--accent); color: var(--on-accent); text-decoration: none; }
+.live .dot { width: 10px; height: 10px; border-radius: 50%; background: currentColor; flex: none; box-shadow: 0 0 0 4px rgba(255,255,255,0.25); }
+.live b { display: block; font-size: 17px; }
+.live span { font-size: 13.5px; opacity: 0.9; }
+.live .arr, .tile .arr { margin-left: auto; font-size: 20px; flex: none; }
+.tile { display: flex; align-items: center; gap: 14px; text-decoration: none; color: inherit; }
+.tile b { display: block; font-size: 16px; }
+.tile span { font-size: 13.5px; color: var(--ink-2); }
+.tile .arr { color: var(--accent); }
+
+/* roads */
+.chain-hero { border-left: 6px solid var(--c, var(--rule-strong)); background: linear-gradient(var(--c-wash, transparent), var(--c-wash, transparent)), var(--surface); }
+.chain-hero.c0 { --c: var(--good); --c-wash: var(--good-wash); --c-ink: var(--good-ink); }
+.chain-hero.c1 { --c: var(--warn); --c-wash: var(--warn-wash); --c-ink: var(--warn-ink); }
+.chain-hero.c2 { --c: var(--crit); --c-wash: var(--crit-wash); --c-ink: var(--crit-ink); }
+.chain-hero .lab { font-size: 12.5px; font-weight: 700; letter-spacing: 0.06em; color: var(--ink-2); }
+.chain-hero .lvl { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; margin-top: 4px; }
+.chain-hero .lvl b { font-size: 40px; line-height: 1.1; font-weight: 800; color: var(--c-ink, var(--ink)); }
+.chain-hero .lvl span { font-size: 22px; font-weight: 750; }
+.chain-hero p { margin-top: 6px; font-size: 14.5px; color: var(--ink-2); }
+.cp { display: grid; gap: 0; margin-top: 8px; }
+.cp li { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; gap: 10px; align-items: baseline; padding: 7px 0; border-top: 1px solid var(--rule); font-size: 14px; }
+.cp .st { font-weight: 750; font-variant-numeric: tabular-nums; }
+.cp .st.hi { color: var(--warn-ink); }
+.cp .st.top { color: var(--crit-ink); }
+.cp .wh small { display: block; color: var(--muted); font-size: 12.5px; }
+.cp .tm { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.road-text { display: grid; gap: 12px; }
+.road-text h3 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; font-size: 16px; }
+.road-text h3 small { font-weight: 500; font-size: 12.5px; color: var(--muted); }
+.road-text .area { font-size: 11.5px; font-weight: 700; letter-spacing: 0.05em; color: var(--muted); margin-top: 6px; }
+.road-text p { font-size: 14.5px; line-height: 1.6; margin-top: 3px; }
+.road-text p.closed { color: var(--crit-ink); font-weight: 600; }
+.road-text p.chains { color: var(--warn-ink); font-weight: 600; }
+.list { display: grid; }
+.list > li { padding: 10px 0; border-top: 1px solid var(--rule); display: grid; gap: 2px; }
+.list > li:first-child { border-top: 0; padding-top: 2px; }
+.list .what { font-weight: 700; font-size: 15px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.list .where { font-size: 14px; color: var(--ink-2); }
+.list .when { font-size: 12.5px; color: var(--muted); }
+.tag { display: inline-block; font-size: 11.5px; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--rule); letter-spacing: 0.02em; }
+.tag.crit { background: var(--crit-wash); color: var(--crit-ink); border-color: transparent; }
+.tag.warn { background: var(--warn-wash); color: var(--warn-ink); border-color: transparent; }
+.tag.good { background: var(--good-wash); color: var(--good-ink); border-color: transparent; }
+.count { color: var(--crit-ink); font-weight: 750; }
+
+/* map */
+.map { height: 380px; border-radius: 12px; overflow: hidden; border: 1px solid var(--rule); background: var(--surface-2); position: relative; z-index: 0; }
+@media (max-width: 620px) { .map { height: 320px; } }
+.map-legend { display: grid; gap: 6px; margin-top: 10px; font-size: 13px; color: var(--ink-2); }
+.map-legend div { display: flex; align-items: center; gap: 8px; }
+.pin { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; font: 700 11.5px/1 var(--font); color: #fff; background: #1F6F5C; border: 2px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.35); flex: none; }
+.pin.cam { background: #1F6F5C; }
+.pin.inc { background: var(--crit); font-size: 14px; }
+.pin.clo { background: var(--serious); font-size: 14px; }
+.pin.cc { background: var(--warn); color: #0B0B0B; width: auto; min-width: 24px; padding: 0 6px; border-radius: 12px; font-size: 11px; }
+.leaflet-container { font-family: var(--font); background: var(--surface-2); }
+.map .leaflet-tile-pane { filter: saturate(0.75); }
+.map.dark .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.88) saturate(0.55); }
+.leaflet-div-icon { background: none; border: 0; }
+.leaflet-popup-content { margin: 10px 12px; font-size: 13px; line-height: 1.45; }
+.leaflet-popup-content b { display: block; font-size: 13.5px; }
+.leaflet-popup-content img { display: block; width: 200px; max-width: 60vw; border-radius: 6px; margin-top: 6px; cursor: zoom-in; }
+
+/* road cameras */
+.cam-group { padding: 0; overflow: hidden; }
+.cam-group > summary { padding: 14px 16px; }
+.cam-group > summary b { font-size: 16px; }
+.cam-group > summary span { font-size: 13px; color: var(--muted); margin-left: 8px; }
+.cams { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; padding: 0 12px 14px; }
+@media (max-width: 380px) { .cams { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } }
+.cam { border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; background: var(--surface-2); cursor: zoom-in; display: flex; flex-direction: column; text-align: left; padding: 0; }
+.cam .img { position: relative; aspect-ratio: 4 / 3; background: var(--rule); }
+.cam img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.cam .n { position: absolute; left: 6px; top: 6px; }
+.cam .img.broken img { visibility: hidden; }
+.cam .img.broken::after { content: attr(data-broken); position: absolute; inset: 0; display: grid; place-items: center; padding: 8px; text-align: center; font-size: 12.5px; color: var(--muted); }
+.cam .cap { padding: 7px 9px 9px; font-size: 13px; line-height: 1.35; }
+.cam .cap b { font-weight: 700; }
+.cam .vid { color: var(--crit-ink); font-weight: 700; font-size: 12px; display: inline-flex; align-items: center; gap: 4px; margin-left: 2px; }
+.cam .vid::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--serious); }
+.cams-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+/* camera viewer */
+dialog.viewer { border: 0; padding: 0; border-radius: 16px; width: min(760px, calc(100vw - 24px)); max-height: calc(100vh - 24px); background: var(--surface); color: var(--ink); box-shadow: 0 10px 40px rgba(0,0,0,0.35); }
+dialog.viewer::backdrop { background: rgba(6, 12, 18, 0.72); }
+.viewer .vh { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 14px 16px 10px; }
+.viewer .vh b { font-size: 16px; }
+.viewer .vh small { display: block; color: var(--muted); font-size: 12.5px; }
+.viewer .x { border: 0; background: var(--surface-2); width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 20px; line-height: 1; flex: none; }
+.viewer .frame { background: #000; aspect-ratio: 4 / 3; max-height: 62vh; display: grid; place-items: center; }
+.viewer .frame img, .viewer .frame video { width: 100%; height: 100%; object-fit: contain; display: block; }
+.viewer .vf { padding: 12px 16px 16px; display: grid; gap: 10px; }
+.viewer .scrub { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ink-2); }
+.viewer .scrub input { flex: 1; accent-color: var(--accent); }
+
+/* packing list */
+.progress { height: 6px; border-radius: 999px; background: var(--surface-2); overflow: hidden; margin-top: 10px; }
+.progress i { display: block; height: 100%; background: var(--accent); border-radius: 999px; transition: width 0.2s; }
+.pack-h { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-top: 12px; }
+.pack-h b { font-size: 16px; }
+.group-name { font-size: 14px; font-weight: 750; color: var(--accent); margin: 16px 0 2px; }
+.items li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px 12px; align-items: start; padding: 11px 0; border-top: 1px solid var(--rule); }
+.items input[type="checkbox"] { width: 22px; height: 22px; margin: 1px 0 0; accent-color: var(--accent); cursor: pointer; }
+.items .txt { font-size: 15.5px; line-height: 1.45; cursor: pointer; }
+.items li.done .txt { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--rule-strong); }
+.items .where { grid-column: 2 / 4; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); }
+.items .where button { border: 1px solid var(--rule-strong); background: transparent; border-radius: 999px; padding: 3px 10px; font-size: 12.5px; font-weight: 600; color: var(--ink-2); cursor: pointer; }
+.items .where button[aria-pressed="true"] { background: var(--accent-wash); border-color: var(--accent); color: var(--accent); }
+.items .del { border: 0; background: none; color: var(--muted); font-size: 20px; line-height: 1; padding: 0 4px; cursor: pointer; }
+.items .del:hover { color: var(--crit-ink); }
+.add { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.add input[type="text"] { flex: 1 1 200px; min-width: 0; border: 1px solid var(--rule-strong); border-radius: 10px; padding: 9px 12px; background: var(--surface); font-size: 15px; }
+.add select { border: 1px solid var(--rule-strong); border-radius: 10px; padding: 9px 10px; background: var(--surface); font-size: 14px; }
+
+footer { margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--rule); font-size: 12.5px; color: var(--muted); line-height: 1.7; display: grid; gap: 8px; }
+footer a { color: inherit; }
+.nojs { margin-top: 18px; font-size: 16px; }
+</style>
+<noscript><style>.tools, .pick, .tabs, .panel, .status { display: none; }</style></noscript>
+</head>
+<body>
+<div class="page" id="page">
+  <a class="home" href="../">← wentaoz.com</a>
+  <header class="top">
+    <div class="brand"><span class="zh" lang="zh-CN">上山</span><span class="en" lang="en">First Chair</span></div>
+    <div class="tools">
+      <button type="button" class="icon-btn" id="btn-theme" aria-pressed="false" hidden></button>
+      <div class="seg" role="group" aria-label="Language">
+        <button type="button" data-lang="zh" aria-pressed="true" lang="zh-CN">中文</button>
+        <button type="button" data-lang="en" aria-pressed="false" lang="en">EN</button>
+      </div>
+      <div class="seg" role="group" id="units" aria-label="Units">
+        <button type="button" data-units="metric" aria-pressed="true">°C</button>
+        <button type="button" data-units="imperial" aria-pressed="false">°F</button>
+      </div>
+    </div>
+  </header>
+  <p class="lede" id="lede"></p>
+  <noscript><p class="nojs">上山 把天气、链条管制和路况在你的浏览器里取来，需要 JavaScript。<br><span lang="en">First Chair fetches the weather, chain controls and roads in your browser and needs JavaScript.</span></p></noscript>
+
+  <div class="pick">
+    <label class="select"><span class="sr" id="resort-label"></span><select id="resort" aria-labelledby="resort-label"></select></label>
+    <div class="seg" role="group" id="from" aria-label="Starting from">
+      <button type="button" data-from="far" aria-pressed="true"></button>
+      <button type="button" data-from="near" aria-pressed="false"></button>
+    </div>
+    <button type="button" class="icon-btn" id="refresh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg><span></span></button>
+  </div>
+  <p class="status" id="status" aria-live="polite"></p>
+
+  <nav class="tabs" role="tablist" id="tabs">
+    <button type="button" role="tab" id="tab-overview" data-tab="overview" aria-controls="panel-overview" aria-selected="true"></button>
+    <button type="button" role="tab" id="tab-weather" data-tab="weather" aria-controls="panel-weather" aria-selected="false" tabindex="-1"></button>
+    <button type="button" role="tab" id="tab-roads" data-tab="roads" aria-controls="panel-roads" aria-selected="false" tabindex="-1"></button>
+    <button type="button" role="tab" id="tab-pack" data-tab="pack" aria-controls="panel-pack" aria-selected="false" tabindex="-1"></button>
+  </nav>
+
+  <section class="panel" role="tabpanel" id="panel-overview" aria-labelledby="tab-overview">
+    <div class="card verdict" id="verdict"></div>
+    <div id="alerts" class="panel" style="padding:0;gap:10px"></div>
+    <div class="sec-h"><h2 id="now-h"></h2><span class="aside" id="now-aside"></span></div>
+    <div class="now" id="now"></div>
+    <div class="links" id="ov-links"></div>
+  </section>
+
+  <section class="panel" role="tabpanel" id="panel-weather" aria-labelledby="tab-weather" hidden>
+    <div class="sec-h"><h2 id="hourly-h"></h2><span class="aside" id="hourly-aside"></span></div>
+    <div class="card chart-wrap" id="hourly"></div>
+    <div class="sec-h"><h2 id="nws-h"></h2><span class="aside" id="nws-aside"></span></div>
+    <div id="nws" class="panel" style="padding:0;gap:10px"></div>
+    <p class="note" id="nws-note"></p>
+    <div class="sec-h"><h2 id="week-h"></h2><span class="aside" id="week-aside"></span></div>
+    <div class="card" id="week"></div>
+    <div class="sec-h"><h2 id="wear-h"></h2><label class="switch"><input type="checkbox" id="kids"><span id="kids-label"></span></label></div>
+    <div class="card" id="wear"></div>
+    <div class="sec-h"><h2 id="rcams-h"></h2><span class="aside" id="rcams-aside"></span></div>
+    <div id="rcams" class="panel" style="padding:0;gap:10px"></div>
+  </section>
+
+  <section class="panel" role="tabpanel" id="panel-roads" aria-labelledby="tab-roads" hidden>
+    <div class="sec-h"><h2 id="chain-h"></h2><span class="aside" id="chain-aside"></span></div>
+    <div class="card chain-hero" id="chain"></div>
+    <div class="card" id="roadtext"></div>
+    <div class="sec-h"><h2 id="clo-h"></h2><span class="aside" id="clo-aside"></span></div>
+    <div class="card" id="closures"></div>
+    <div class="sec-h"><h2 id="chp-h"></h2><span class="aside" id="chp-aside"></span></div>
+    <div class="card" id="chp"></div>
+    <div class="sec-h"><h2 id="map-h"></h2><span class="aside" id="map-aside"></span></div>
+    <div class="card"><div class="map" id="map" role="region"></div><div class="map-legend" id="map-legend"></div></div>
+    <div class="cams-bar"><p class="note" id="cams-note"></p><button type="button" class="btn" id="cams-refresh"></button></div>
+    <div id="roadcams" class="panel" style="padding:0;gap:10px"></div>
+  </section>
+
+  <section class="panel" role="tabpanel" id="panel-pack" aria-labelledby="tab-pack" hidden>
+    <div class="card" id="pack"></div>
+  </section>
+
+  <footer id="foot"></footer>
+</div>
+
+<dialog class="viewer" id="viewer" aria-labelledby="viewer-title">
+  <div class="vh"><div><b id="viewer-title"></b><small id="viewer-sub"></small></div><button type="button" class="x" id="viewer-x">×</button></div>
+  <div class="frame" id="viewer-frame"></div>
+  <div class="vf" id="viewer-foot"></div>
+</dialog>
+
+<script type="module">
+import { RESORTS, PACKING, NEAR_KM } from './data.js';
+import { caltransUrl, keepChains, keepCams, keepClosures, chainRank, chpKind, countiesOf, pacificMs } from './roads.js';
+
+// The server that reads CHP's incidents and Caltrans' road text for the page (workers/ski-roads). The
+// Caltrans files it also trims are fetched straight from Caltrans when it can't be reached.
+const ROADS_ENDPOINT = 'https://ski-roads.wentaozhang1997.workers.dev';
+const TZ = 'America/Los_Angeles';
+const REFRESH_MS = 10 * 60 * 1000;   // the whole page, while it is open and visible
+const CAM_MS = 60 * 1000;            // the road cameras on screen; Caltrans renews a picture about once a minute
+const LEAFLET = { js: 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js', jsSri: 'sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH',
+  css: 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css', cssSri: 'sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H' };
+const HLS = { js: 'https://cdn.jsdelivr.net/npm/hls.js@1.5.20/dist/hls.light.min.js', sri: 'sha384-GMRZjjumhWPywgLYrubnh5qVhHY0BpD+pxIL57uwAenrOEYDLZ/z+8s/rFIjS+yO' };
+
+// ---------- state, kept in the address (resort, tab, starting point) and in the browser ----------
+const store = {
+  get(k) { try { return localStorage.getItem('firstchair.' + k); } catch (e) { return null; } },
+  set(k, v) { try { if (v == null) localStorage.removeItem('firstchair.' + k); else localStorage.setItem('firstchair.' + k, v); } catch (e) {} },
+};
+const hashArgs = new URLSearchParams(location.hash.slice(1));
+const resortById = (id) => RESORTS.find((r) => r.id === id);
+const state = {
+  lang: store.get('lang') || ((navigator.language || 'zh').toLowerCase().startsWith('zh') ? 'zh' : 'en'),
+  units: store.get('units') === 'imperial' ? 'imperial' : 'metric',
+  resort: resortById(hashArgs.get('r')) ? hashArgs.get('r') : (resortById(store.get('resort')) ? store.get('resort') : 'palisades'),
+  from: (hashArgs.get('from') || store.get('from')) === 'near' ? 'near' : 'far',
+  tab: ['overview', 'weather', 'roads', 'pack'].includes(hashArgs.get('t')) ? hashArgs.get('t') : 'overview',
+  kids: store.get('kids') === '1',
+  verdictDay: null,          // null: today before 2 pm in Tahoe, tomorrow after
+  hourPlace: 'base', hourDay: 0, hour: null, wearDay: 0,
+  data: {}, errors: {}, loading: false, loadedAt: null,
+};
+if (state.lang !== 'zh' && state.lang !== 'en') state.lang = 'zh';
+const R = () => resortById(state.resort);
+const legs = () => (state.from === 'near' ? R().near : R().far);
+const third = () => (state.from === 'near' ? R().town : R().pass);
+
+// ---------- small helpers ----------
+const $ = (id) => document.getElementById(id);
+function h(tag, props, ...kids) {
+  const e = document.createElement(tag);
+  if (props) for (const [k, v] of Object.entries(props)) {
+    if (v == null || v === false) continue;
+    if (k === 'class') e.className = v;
+    else if (k === 'text') e.textContent = v;
+    else if (k.startsWith('on') && typeof v === 'function') e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v === true ? '' : v);
+  }
+  for (const k of kids.flat(3)) if (k != null && k !== false && k !== '') e.append(k.nodeType ? k : String(k));
+  return e;
+}
+const L = (zh, en) => (state.lang === 'zh' ? zh : en);
+const P = (pair) => (pair ? pair[state.lang === 'zh' ? 0 : 1] : '');
+const fill = (node, ...kids) => { node.replaceChildren(...kids.flat(3).filter((k) => k != null && k !== false && k !== '')); return node; };
+const svgIcon = (name) => {
+  const paths = {
+    check: '<path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>',
+    alert: '<path d="M12 7v6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="17.2" r="1.5" fill="currentColor"/>',
+    stop: '<path d="M7.5 7.5l9 9M16.5 7.5l-9 9" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>',
+    tri: '<path d="M12 3.5l9.5 16.5h-19z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v4.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17.3" r="1.2" fill="currentColor"/>',
+  };
+  const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('aria-hidden', 'true');
+  s.innerHTML = paths[name];
+  return s;
+};
+const safeUrl = (u, hosts) => { try { const x = new URL(u); return x.protocol === 'https:' && hosts.some((hh) => x.hostname === hh || x.hostname.endsWith('.' + hh)) ? x.href : null; } catch (e) { return null; } };
+
+// units: everything is fetched metric and shown in the units picked
+const M = () => state.units === 'metric';
+const U = {
+  t: (c) => (c == null || isNaN(c) ? '–' : Math.round(M() ? c : c * 9 / 5 + 32) + '°'),
+  tv: (c) => (M() ? c : c * 9 / 5 + 32),
+  tu: () => (M() ? '°C' : '°F'),
+  snow: (cm) => (cm == null || isNaN(cm) ? '–' : M() ? (cm >= 10 ? cm.toFixed(0) : cm.toFixed(1)) : (cm / 2.54).toFixed(1)),
+  snowv: (cm) => (M() ? cm : cm / 2.54),
+  su: () => (M() ? 'cm' : 'in'),
+  water: (mm) => (mm == null || isNaN(mm) ? '–' : M() ? (mm >= 10 ? mm.toFixed(0) : mm.toFixed(1)) : (mm / 25.4).toFixed(2)),
+  waterv: (mm) => (M() ? mm : mm / 25.4),
+  wu: () => (M() ? 'mm' : 'in'),
+  wind: (k) => (k == null || isNaN(k) ? '–' : String(Math.round(M() ? k : k / 1.609344))),
+  windv: (k) => (M() ? k : k / 1.609344),
+  vu: () => (M() ? 'km/h' : 'mph'),
+  elev: (m) => (m == null || isNaN(m) ? '–' : Math.round(M() ? m : m * 3.28084).toLocaleString('en-US')),
+  eu: () => (M() ? 'm' : 'ft'),
+};
+
+// time, always Tahoe's
+const fmts = {};
+const fmt = (opts) => { const k = state.lang + JSON.stringify(opts); return fmts[k] || (fmts[k] = new Intl.DateTimeFormat(state.lang === 'zh' ? 'zh-CN' : 'en-US', { timeZone: TZ, ...opts })); };
+function parts(ms) {
+  const o = {};
+  for (const p of new Intl.DateTimeFormat('en-US', { timeZone: TZ, year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', weekday: 'short', hourCycle: 'h23' }).formatToParts(ms)) o[p.type] = p.value;
+  return { y: +o.year, mo: +o.month, d: +o.day, h: +o.hour % 24, mi: +o.minute, wd: o.weekday };
+}
+const ymd = (ms) => { const p = parts(ms); return `${p.y}-${String(p.mo).padStart(2, '0')}-${String(p.d).padStart(2, '0')}`; };
+const localMs = (s) => { const m = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}))?/.exec(s || ''); return m ? pacificMs(+m[1], +m[2], +m[3], +(m[4] || 0), +(m[5] || 0)) : NaN; };
+const clock = (ms) => fmt({ hour: 'numeric', minute: '2-digit' }).format(ms);
+const WD = { Sun: ['周日', 'Sun'], Mon: ['周一', 'Mon'], Tue: ['周二', 'Tue'], Wed: ['周三', 'Wed'], Thu: ['周四', 'Thu'], Fri: ['周五', 'Fri'], Sat: ['周六', 'Sat'] };
+const dayName = (ms) => { const p = parts(ms); return L(`${p.mo}/${p.d} ${WD[p.wd][0]}`, `${WD[p.wd][1]} ${p.mo}/${p.d}`); };
+const whenShort = (ms) => { if (!ms) return ''; return ymd(ms) === ymd(Date.now()) ? clock(ms) : dayName(ms) + ' ' + clock(ms); };
+const hourLabel = (h) => String(h).padStart(2, '0') + ':00';
+const DAY_WORD = [['今天', 'Today'], ['明天', 'Tomorrow'], ['后天', 'Day after']];
+
+// ---------- words ----------
+const WMO = { 0: ['晴', 'Clear'], 1: ['大致晴', 'Mostly clear'], 2: ['多云', 'Partly cloudy'], 3: ['阴', 'Overcast'], 45: ['雾', 'Fog'], 48: ['冻雾', 'Freezing fog'],
+  51: ['小毛毛雨', 'Light drizzle'], 53: ['毛毛雨', 'Drizzle'], 55: ['毛毛雨', 'Heavy drizzle'], 56: ['冻毛毛雨', 'Freezing drizzle'], 57: ['冻毛毛雨', 'Freezing drizzle'],
+  61: ['小雨', 'Light rain'], 63: ['中雨', 'Rain'], 65: ['大雨', 'Heavy rain'], 66: ['冻雨', 'Freezing rain'], 67: ['冻雨', 'Freezing rain'],
+  71: ['小雪', 'Light snow'], 73: ['中雪', 'Snow'], 75: ['大雪', 'Heavy snow'], 77: ['米雪', 'Snow grains'],
+  80: ['阵雨', 'Showers'], 81: ['阵雨', 'Showers'], 82: ['强阵雨', 'Heavy showers'], 85: ['阵雪', 'Snow showers'], 86: ['强阵雪', 'Heavy snow showers'],
+  95: ['雷阵雨', 'Thunderstorms'], 96: ['雷阵雨夹冰雹', 'Thunderstorms, hail'], 99: ['雷阵雨夹冰雹', 'Thunderstorms, hail'] };
+const wx = (code) => P(WMO[code] || ['–', '–']);
+const ALERT_ZH = { 'Winter Storm Warning': '冬季风暴警告', 'Winter Storm Watch': '冬季风暴预警', 'Winter Weather Advisory': '冬季天气提示', 'Blizzard Warning': '暴风雪警告',
+  'Ice Storm Warning': '冰暴警告', 'High Wind Warning': '大风警告', 'High Wind Watch': '大风预警', 'Wind Advisory': '大风提示', 'Lake Wind Advisory': '湖面大风提示',
+  'Avalanche Warning': '雪崩警告', 'Avalanche Watch': '雪崩预警', 'Avalanche Advisory': '雪崩提示', 'Wind Chill Warning': '风寒警告', 'Wind Chill Advisory': '风寒提示',
+  'Extreme Cold Warning': '极寒警告', 'Extreme Cold Watch': '极寒预警', 'Cold Weather Advisory': '低温提示', 'Freeze Warning': '霜冻警告', 'Dense Fog Advisory': '浓雾提示',
+  'Flood Watch': '洪水预警', 'Flood Warning': '洪水警告', 'Flash Flood Warning': '山洪警告', 'Special Weather Statement': '特别天气通报', 'Hazardous Weather Outlook': '危险天气展望' };
+// How an NWS alert weighs on the drive: 2 stay home, 1 careful, 0 worth knowing
+const ALERT_WEIGHT = { 'Blizzard Warning': 2, 'Ice Storm Warning': 2, 'Winter Storm Warning': 1, 'Winter Weather Advisory': 1, 'Avalanche Warning': 1, 'High Wind Warning': 1, 'Extreme Cold Warning': 1, 'Wind Chill Warning': 1 };
+const CHP_WORDS = [
+  [/^1179/, ['车祸，救护车在路上', 'Crash, ambulance on the way']], [/^1180/, ['车祸，有重伤', 'Crash, major injuries']], [/^1181/, ['车祸，轻伤', 'Crash, minor injuries']],
+  [/^1182/, ['车祸，无人受伤', 'Crash, no injuries']], [/^1183/, ['车祸，伤情不明', 'Crash, injuries unknown']], [/^1125/, ['路上有障碍物', 'Something in the road']],
+  [/^1166/, ['信号灯故障', 'Signals out']], [/^20001/, ['肇事逃逸，有人受伤', 'Hit and run, injuries']], [/^20002/, ['肇事逃逸，无人受伤', 'Hit and run, no injuries']],
+  [/^WW/, ['逆行车辆', 'Wrong-way driver']], [/^FIRE/, ['火情', 'Fire']], [/^FLOOD/, ['路面积水', 'Flooding']], [/^SNOW/, ['雪况通报', 'Snow report']],
+  [/^CHAINS/, ['链条管制通报', 'Chain control']], [/^CZP/, ['协助施工', 'Helping a work zone']], [/^MZP/, ['协助养护', 'Helping road maintenance']],
+  [/^1013/, ['路况天气通报', 'Road and weather report']], [/^WIND/, ['大风通报', 'Wind report']], [/^FOG/, ['大雾', 'Fog']], [/^ESCORT/, ['护送通行', 'Escorting traffic']],
+  [/^TADV/, ['交通通报', 'Traffic advisory']], [/^CLOSURE/, ['封路', 'Road closed']], [/SIG ?ALERT/i, ['SigAlert，长时间堵路', 'SigAlert']], [/^ANML|ANIMAL|^1184/, ['路上有动物', 'Animal on the road']],
+];
+const chpWord = (type) => { for (const [re, w] of CHP_WORDS) if (re.test(type)) return P(w); return type; };
+const DIR = { East: ['东向', 'eastbound'], West: ['西向', 'westbound'], North: ['北向', 'northbound'], South: ['南向', 'southbound'] };
+const dirWord = (d) => (DIR[d] ? P(DIR[d]) : d || '');
+const CLOSE_TYPE = { Full: ['全封', 'Full closure'], Lane: ['封车道', 'Lane closed'], 'One-Way Traffic': ['单向轮流放行', 'One-way traffic'], 'Alternating Lanes': ['轮流封车道', 'Alternating lanes'], Moving: ['移动施工', 'Moving work zone'] };
+const WORK_ZH = { 'Pavement Work': '路面施工', 'Fiber optic installation': '光纤施工', 'Utility Work': '管线施工', 'Tree Work': '伐树', 'Miscellaneous Work': '施工',
+  'Striping Operation': '划线', 'Slab Replacement': '换路面板', 'Sign Work': '标牌施工', Drilling: '钻探', 'Sweeping Operation': '清扫', 'Emergency Work': '抢修',
+  'Guardrail Work': '护栏施工', 'Drainage Work': '排水施工', 'Grinding and Paving': '铣刨铺路', 'Sewer Work': '下水道施工', 'Bridge Work': '桥梁施工',
+  'Electrical Work': '电力施工', 'Maintenance Operation': '养护', 'Snow Removal': '除雪', 'Paving Operation': '铺路', 'Concrete Pour': '浇混凝土',
+  'Falsework Removal': '拆支架', 'Shoulder Work': '路肩施工', 'Rock Scaling': '清理落石', 'Slide Removal': '清理塌方' };
+const CHAIN = {
+  'R-0': [['不用链条', 'No chains'], ['走廊各检查点目前都没有链条管制。', 'No chain controls at any checkpoint on the way.']],
+  W: [['路上可能有雪', 'Watch for snow'], ['没有链条管制，但路面可能有雪。', 'No chain controls, but there may be snow on the road.']],
+  VM: [['分批放行', 'Metering'], ['检查点在分批放车，路上会慢。', 'Traffic is being metered at a checkpoint: expect delays.']],
+  'R-1': [['要雪胎或链条', 'Snow tires or chains'], ['两驱车的驱动轮要装链条或用雪胎；四驱、全驱可以直接过，但车上要带链条。', 'Two-wheel-drive cars need chains or snow tires on the drive wheels; 4WD and AWD go through, carrying chains.']],
+  'R-2': [['四驱加雪胎，否则装链条', '4WD with snow tires, or chains'], ['四驱或全驱、四个轮子都是雪胎的车可以过；其余所有车都要装链条。', 'Only 4WD or AWD on snow tires all round goes through; everything else needs chains.']],
+  'R-3': [['所有车都要装链条', 'Chains on every vehicle'], ['不管什么车都要装链条，没有例外。往往马上就会封路。', 'Chains on every vehicle, no exceptions. A closure often follows.']],
+  ESC: [['CHP 护送通行', 'CHP escorts'], ['天气太差，CHP 在一队一队地护送车辆过山。', 'CHP is escorting traffic over in groups because of the weather.']],
+  HT: [['暂停放行', 'Traffic held'], ['检查点暂停放行所有车辆，等放行。', 'All traffic is being held at a checkpoint.']],
+  RC: [['封路', 'Closed'], ['有检查点封路了。', 'A checkpoint is closed to traffic.']],
+};
+CHAIN['ROAD CLOSED'] = CHAIN.RC;
+const chainInfo = (s) => CHAIN[String(s || '').toUpperCase()] || CHAIN[s] || null;
+
+// ---------- geometry: is a thing on the drive ----------
+function prepLeg(leg, i) {
+  const lat0 = leg.path.reduce((a, p) => a + p[0], 0) / leg.path.length;
+  const kx = 111.32 * Math.cos(lat0 * Math.PI / 180), ky = 110.57;
+  const xy = leg.path.map(([la, lo]) => [lo * kx, la * ky]);
+  const cum = [0];
+  for (let k = 1; k < xy.length; k++) cum.push(cum[k - 1] + Math.hypot(xy[k][0] - xy[k - 1][0], xy[k][1] - xy[k - 1][1]));
+  return { ...leg, i, kx, ky, xy, cum };
+}
+function onLeg(L2, lat, lon) {
+  if (lat == null || lon == null || isNaN(lat) || isNaN(lon)) return null;
+  const px = lon * L2.kx, py = lat * L2.ky;
+  let best = null;
+  for (let k = 1; k < L2.xy.length; k++) {
+    const [ax, ay] = L2.xy[k - 1], [bx, by] = L2.xy[k];
+    const dx = bx - ax, dy = by - ay, len2 = dx * dx + dy * dy || 1e-9;
+    const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len2));
+    const d = Math.hypot(px - ax - t * dx, py - ay - t * dy);
+    if (!best || d < best.d) best = { d, along: L2.cum[k - 1] + t * Math.sqrt(len2) };
+  }
+  return best;
+}
+// The legs of the drive a thing on `route` at lat, lon is on, nearest first
+function place(route, lat, lon, within = NEAR_KM) {
+  let best = null;
+  for (const L2 of state.legs) {
+    if (route && L2.route !== route) continue;
+    const o = onLeg(L2, lat, lon);
+    if (o && o.d <= within && (!best || o.d < best.d)) best = { leg: L2, ...o };
+  }
+  return best;
+}
+const ROUTE_RE = {
+  'I-80': /\b(I-?80|I 80|Hwy ?80|Interstate 80|[EW]b ?80)\b/i, 'US-50': /\b(US-?50|Us ?50|Hwy ?50|[EW]b ?50)\b/i,
+  'SR-89': /\b(SR-?89|Sr ?89|Hwy ?89|[NS]b ?89)\b/i, 'SR-267': /\b(SR-?267|Sr ?267|Hwy ?267)\b/i,
+  'SR-28': /\b(SR-?28|Sr ?28|Hwy ?28)\b/i, 'SR-88': /\b(SR-?88|Sr ?88|Hwy ?88)\b/i,
+};
+
+// ---------- fetching ----------
+async function getJSON(url, ms = 20000) {
+  const res = await fetch(url, { signal: AbortSignal.timeout ? AbortSignal.timeout(ms) : undefined, headers: { Accept: 'application/json, application/geo+json' } });
+  if (!res.ok) throw new Error(new URL(url).host + ' ' + res.status);
+  return res.json();
+}
+const retry = (fn, n = 1) => fn().catch((e) => (n > 0 ? new Promise((r) => setTimeout(r, 800)).then(() => retry(fn, n - 1)) : Promise.reject(e)));
+// A feed from the Worker; for the three Caltrans files, from Caltrans itself if the Worker fails
+const workerUrl = (path) => ROADS_ENDPOINT.replace(/\/+$/, '') + path;
+async function roadFeed(kind, d) {
+  if (ROADS_ENDPOINT) {
+    try {
+      const r = await getJSON(workerUrl(`/${kind}${d ? '?d=' + d : ''}`), 15000);
+      if (r && 'data' in r) return { at: r.at, data: r.data, via: 'worker' };
+    } catch (e) { if (!d) throw e; }
+  }
+  if (!d) throw new Error('no server');
+  const file = { chains: 'cc', cams: 'cctv', closures: 'lcs' }[kind];
+  const json = await getJSON(caltransUrl(file, d), 40000);
+  const keep = { chains: keepChains, cams: keepCams, closures: (j) => keepClosures(j) }[kind];
+  return { at: Date.now(), data: keep(json), via: 'caltrans' };
+}
+const pt = (p) => `${p.at[0].toFixed(4)},${p.at[1].toFixed(4)}`;
+// NWS forecasts on a grid; which cell a place is in is asked once and kept, and asked again if the
+// kept one stops answering (NWS renumbers its grids now and then)
+async function nwsGrid(p) {
+  const key = 'grid.' + pt(p);
+  const lookup = async () => {
+    const meta = await retry(() => getJSON('https://api.weather.gov/points/' + pt(p)));
+    const u = meta && meta.properties && meta.properties.forecastGridData;
+    if (!u || !/^https:\/\/api\.weather\.gov\//.test(u)) throw new Error('NWS has no grid here');
+    store.set(key, u);
+    return u;
+  };
+  const kept = store.get(key);
+  try {
+    const url = kept || (await lookup());
+    return (await retry(() => getJSON(url, 25000))).properties;
+  } catch (e) {
+    if (!kept) throw e;
+    store.set(key, null);
+    const url = await lookup();
+    return (await retry(() => getJSON(url, 25000))).properties;
+  }
+}
+async function nwsAlerts(points) {
+  const all = await Promise.all(points.map((p) => retry(() => getJSON('https://api.weather.gov/alerts/active?point=' + pt(p))).then((j) => j.features || [])));
+  const seen = new Map();
+  for (const f of all.flat()) { const q = f.properties; if (q && !seen.has(q.event + q.ends)) seen.set(q.event + q.ends, q); }
+  return [...seen.values()].sort((a, b) => (ALERT_WEIGHT[b.event] || 0) - (ALERT_WEIGHT[a.event] || 0));
+}
+function openMeteo(points) {
+  const q = new URLSearchParams({
+    latitude: points.map((p) => p.at[0]).join(','), longitude: points.map((p) => p.at[1]).join(','), elevation: points.map((p) => p.at[2]).join(','),
+    current: 'temperature_2m,apparent_temperature,weather_code,wind_speed_10m,wind_gusts_10m',
+    hourly: 'temperature_2m,apparent_temperature,precipitation_probability,rain,showers,snowfall,wind_speed_10m,wind_gusts_10m,weather_code,freezing_level_height',
+    daily: 'weather_code,temperature_2m_max,temperature_2m_min,snowfall_sum,rain_sum,showers_sum,precipitation_probability_max,wind_gusts_10m_max',
+    timezone: TZ, forecast_days: '7',
+  });
+  return retry(() => getJSON('https://api.open-meteo.com/v1/forecast?' + q)).then((j) => (Array.isArray(j) ? j : [j]));
+}
+
+// What is fetched, and when it was: weather for the three places, the NWS grids for base and top, the
+// alerts, and the road feeds for the districts the drive crosses
+// The weather belongs to one resort and starting point; the road feeds are by district and serve every
+// resort in it, so switching resorts fetches them again only once they are a minute old.
+let loadSeq = 0;
+const WEATHER = ['om', 'gridBase', 'gridTop', 'alerts'];
+async function load(force) {
+  const seq = ++loadSeq, resort = R(), key = resort.id + state.from;
+  state.loading = true;
+  for (const k of WEATHER) if (state.data[k] && state.data[k].key !== key) { delete state.data[k]; delete state.errors[k]; }
+  renderSoon();
+  const pts = [resort.base, resort.top, third()];
+  const districts = [...new Set(legs().map((l) => l.d))];
+  const make = {
+    om: () => openMeteo(pts),
+    gridBase: () => nwsGrid(resort.base), gridTop: () => nwsGrid(resort.top),
+    alerts: () => nwsAlerts([resort.base, third()]),
+    chp: () => roadFeed('chp'), roads: () => roadFeed('roads'),
+  };
+  for (const d of districts) for (const k of ['chains', 'cams', 'closures']) make[k + d] = () => roadFeed(k, d);
+  const jobs = Object.entries(make).filter(([k]) => force || !state.data[k] || (WEATHER.includes(k) ? state.data[k].key !== key : Date.now() - state.data[k].got > 60e3));
+  await Promise.all(jobs.map(([k, f]) => f().then((v) => {
+    if (seq !== loadSeq) return;
+    state.data[k] = { v, got: Date.now(), key }; delete state.errors[k];
+    renderSoon();
+  }, (e) => {
+    if (seq !== loadSeq) return;
+    state.errors[k] = String((e && e.message) || e);
+    // a refresh that fails keeps what the page already had for the roads, which is still worth showing
+    if (WEATHER.includes(k)) delete state.data[k];
+    renderSoon();
+  })));
+  if (seq !== loadSeq) return;
+  state.loading = false; state.loadedAt = Date.now();
+  renderSoon(); scheduleRefresh();
+}
+let refreshTimer = null;
+function scheduleRefresh() { clearTimeout(refreshTimer); refreshTimer = setTimeout(() => { if (!document.hidden) load(true); else scheduleRefresh(); }, REFRESH_MS); }
+document.addEventListener('visibilitychange', () => { if (!document.hidden && state.loadedAt && Date.now() - state.loadedAt > REFRESH_MS) load(true); });
+
+// ---------- reading the data ----------
+const D = (k) => state.data[k] && state.data[k].v;
+const om = (i) => { const a = D('om'); return a && a[i]; };   // 0 base, 1 top, 2 pass or town
+// The hours of one Tahoe day (0 today, 1 tomorrow…) from Open-Meteo, for place i
+function hoursOf(i, day) {
+  const o = om(i); if (!o) return null;
+  const want = ymd(Date.now() + day * 86400e3), H = o.hourly, out = [];
+  for (let k = 0; k < H.time.length; k++) {
+    if (H.time[k].slice(0, 10) !== want) continue;
+    out.push({ h: +H.time[k].slice(11, 13), ms: localMs(H.time[k]), temp: H.temperature_2m[k], feel: H.apparent_temperature[k], pop: H.precipitation_probability[k],
+      rain: (H.rain[k] || 0) + (H.showers[k] || 0), snow: H.snowfall[k] || 0, wind: H.wind_speed_10m[k], gust: H.wind_gusts_10m[k], code: H.weather_code[k], fz: H.freezing_level_height[k] });
+  }
+  return out.length ? out : null;
+}
+function dayOf(i, day) {
+  const o = om(i); if (!o) return null;
+  const want = ymd(Date.now() + day * 86400e3), k = o.daily.time.indexOf(want); if (k < 0) return null;
+  const Dd = o.daily;
+  return { date: want, ms: localMs(want + 'T12:00'), code: Dd.weather_code[k], max: Dd.temperature_2m_max[k], min: Dd.temperature_2m_min[k], snow: Dd.snowfall_sum[k] || 0,
+    rain: (Dd.rain_sum[k] || 0) + (Dd.showers_sum[k] || 0), pop: Dd.precipitation_probability_max[k], gust: Dd.wind_gusts_10m_max[k] };
+}
+// NWS's grid: values over intervals like '2026-11-18T06:00:00+00:00/PT6H', spread evenly over their hours
+function intervals(series) {
+  const out = [];
+  for (const v of (series && series.values) || []) {
+    const [s, dur] = v.validTime.split('/');
+    const m = /^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?)?$/.exec(dur || '');
+    const hours = m ? (+(m[1] || 0)) * 24 + (+(m[2] || 0)) + (+(m[3] || 0)) / 60 : 1;
+    out.push({ start: Date.parse(s), hours: Math.max(1, Math.round(hours)), value: v.value });
+  }
+  return out;
+}
+function nwsDays(grid, n = 3) {
+  if (!grid) return null;
+  const days = [];
+  for (let i = 0; i < n; i++) days.push({ key: ymd(Date.now() + i * 86400e3), snow: 0, water: 0, lo: Infinity, hi: -Infinity, pop: 0, seen: false });
+  const at = (ms) => days.find((d) => d.key === ymd(ms));
+  for (const [name, mode] of [['snowfallAmount', 'sum'], ['quantitativePrecipitation', 'sum'], ['snowLevel', 'range'], ['probabilityOfPrecipitation', 'max']]) {
+    for (const iv of intervals(grid[name])) {
+      if (iv.value == null) continue;
+      for (let k = 0; k < iv.hours; k++) {
+        const d = at(iv.start + k * 3600e3 + 1); if (!d) continue;
+        d.seen = true;
+        if (name === 'snowfallAmount') d.snow += iv.value / iv.hours;
+        else if (name === 'quantitativePrecipitation') d.water += iv.value / iv.hours;
+        else if (mode === 'range') { d.lo = Math.min(d.lo, iv.value); d.hi = Math.max(d.hi, iv.value); }
+        else d.pop = Math.max(d.pop, iv.value);
+      }
+    }
+  }
+  return days.filter((d) => d.seen);
+}
+// The NWS snow level at a given hour, for the hourly table
+function snowLevelAt(grid, ms) {
+  if (!grid) return null;
+  for (const iv of intervals(grid.snowLevel)) if (ms >= iv.start && ms < iv.start + iv.hours * 3600e3) return iv.value;
+  return null;
+}
+
+// The road feeds, cut to the legs of this drive
+function roads() {
+  const r = { chains: [], cams: [], closures: [], incidents: [], info: [], text: {}, missing: [], at: [] };
+  const districts = [...new Set(legs().map((l) => l.d))];
+  for (const d of districts) {
+    for (const k of ['chains', 'cams', 'closures']) {
+      const got = D(k + d);
+      if (!got) { if (state.errors[k + d]) r.missing.push(k); continue; }
+      r.at.push(got.at);
+      for (const x of got.data) {
+        const p = place(x.route, x.lat, x.lon) || (k === 'closures' ? place(x.route, x.lat2, x.lon2) : null);
+        if (p) r[k].push({ ...x, leg: p.leg.i, along: p.along });
+      }
+    }
+  }
+  const order = (a, b) => a.leg - b.leg || a.along - b.along;
+  r.chains.sort(order); r.cams.sort(order);
+  r.cams.forEach((c, i) => { c.n = i + 1; });
+  const chp = D('chp');
+  if (chp) {
+    r.at.push(chp.at);
+    for (const x of chp.data) {
+      const kind = chpKind(x.type); if (kind === 'skip') continue;
+      const named = Object.keys(ROUTE_RE).filter((rt) => ROUTE_RE[rt].test(x.where + ' ' + x.desc));
+      let p = null;
+      for (const rt of named) { const q = place(rt, x.lat, x.lon, NEAR_KM); if (q && (!p || q.d < p.d)) p = q; }
+      if (!p) { const q = place(null, x.lat, x.lon, 0.35); if (q) p = q; }
+      if (!p) continue;
+      const row = { ...x, kind, leg: p.leg.i, along: p.along, route: p.leg.route, named: named.includes(p.leg.route) };
+      (kind === 'info' ? r.info : r.incidents).push(row);
+    }
+    r.incidents.sort((a, b) => (b.last || b.at || 0) - (a.last || a.at || 0));
+  } else if (state.errors.chp) r.missing.push('chp');
+  const text = D('roads');
+  if (text) {
+    r.textAsof = text.data.asof;
+    const byRoute = {};
+    for (const l of legs()) {
+      const n = l.route.replace(/^\D+-/, '');
+      byRoute[n] = byRoute[n] || { route: l.route, counties: new Set() };
+      for (const c of l.counties) byRoute[n].counties.add(c);
+    }
+    for (const [n, want] of Object.entries(byRoute)) {
+      const items = (text.data.routes[n] || []).filter((s) => {
+        if (/^please research chain control/i.test(s.text)) return false;
+        const cs = countiesOf(s.text);
+        // From the Bay Area, all of I-80 and US-50 in California is on the way
+        if (state.from === 'far' && (n === '80' || n === '50') && cs.length) return true;
+        return cs.some((c) => want.counties.has(c));
+      });
+      r.text[n] = { route: want.route, items, known: n in text.data.routes };
+    }
+  } else if (state.errors.roads) r.missing.push('roads');
+  return r;
+}
+const closedText = (t) => /^(is closed|closed)\b|^(eastbound|westbound|northbound|southbound|both directions)[^.]{0,40}\bis closed\b/i.test(t) && !/\b\d{4} hrs\b/i.test(t);
+const chainText = (t) => /\bchains\b.*\brequired\b/i.test(t);
+
+// ---------- the verdict ----------
+function verdictDay() { return state.verdictDay != null ? state.verdictDay : parts(Date.now()).h >= 14 ? 1 : 0; }
+function verdict() {
+  const day = verdictDay(), rd = roads(), reasons = [], checked = [];
+  let level = 0;   // 0 go, 1 careful, 2 stay home
+  const raise = (n, text, main) => { reasons.push({ n, text, main }); level = Math.max(level, n); };
+  // chain controls
+  if (rd.chains.length || !rd.missing.includes('chains')) checked.push(L('Caltrans 链条管制等级', 'Caltrans chain control'));
+  let worst = null;
+  for (const c of rd.chains) if (!worst || chainRank(c.status) > chainRank(worst.status)) worst = c;
+  const wr = worst ? chainRank(worst.status) : 0;
+  if (wr >= 6) raise(2, L(`Caltrans 在 ${worst.name} 封路`, `Caltrans has closed the road at ${worst.name}`), 'closed');
+  else if (worst && worst.status === 'R-3') raise(2, L(`R-3 链条管制（${worst.name}）：所有车都要装链条`, `R-3 at ${worst.name}: chains on every vehicle`), 'r3');
+  else if (wr >= 3) raise(1, `${worst.status} · ${P(chainInfo(worst.status)[0])} · ${worst.name} ${dirWord(worst.dir)}`, worst.status === 'R-1' ? 'r1' : 'chains');
+  else if (wr >= 2) raise(1, L(`${worst.name} 检查点在分批放车，路上会慢`, `Traffic is being metered at ${worst.name}`), 'slow');
+  else if (worst && wr === 0.5) reasons.push({ n: 0, text: L(`货车在 ${worst.name} 查链条，小车不受影响`, `Trucks are being screened for chains at ${worst.name}; cars aren't`) });
+  // closures: Caltrans' own words, CHP, and work zones that close the highway
+  checked.push(L('走廊封路（Caltrans 原文 / CHP / 施工）', 'closures (Caltrans text, CHP, work zones)'));
+  for (const t of Object.values(rd.text)) for (const s of t.items) if (closedText(s.text)) raise(2, L(`Caltrans：${t.route} 封路 — ${s.text}`, `Caltrans: ${t.route} — ${s.text}`), 'closed');
+  const now = Date.now();
+  for (const c of rd.closures) {
+    const live = c.on || (c.start <= now && (!c.end || c.end > now));
+    if (c.type === 'Full' && live) raise(1, L(`${c.route} ${c.from} 到 ${c.to} 施工全封（${dirWord(c.dir)}）`, `${c.route} fully closed for work, ${c.from} to ${c.to} (${dirWord(c.dir)})`), 'work');
+  }
+  // a CHP closure that names the highway is the highway; one placed only by where it is may be a side road
+  for (const x of rd.incidents) if (x.kind === 'closure') raise(x.named ? 2 : 1, L(`CHP：${x.where} ${chpWord(x.type)}`, `CHP: ${chpWord(x.type)} at ${x.where}`), x.named ? 'closed' : 'work');
+  // NWS alerts
+  const alerts = D('alerts') || [];
+  if (D('alerts') || !state.errors.alerts) checked.push(L('NWS 警报', 'NWS alerts'));
+  const dayStart = localMs(ymd(now + day * 86400e3) + 'T00:00'), dayEnd = dayStart + 86400e3;
+  for (const a of alerts) {
+    const w = ALERT_WEIGHT[a.event] || 0; if (!w) continue;
+    const from = Date.parse(a.onset || a.effective), to = Date.parse(a.ends || a.expires);
+    if ((to && to < dayStart) || (from && from > dayEnd)) continue;
+    raise(w, L(`NWS ${ALERT_ZH[a.event] || a.event}${from > now ? '，' + whenShort(from) + ' 起' : '生效中'}`, `NWS ${a.event}${from > now ? ' from ' + whenShort(from) : ' in effect'}`), 'storm');
+  }
+  // snow and wind on the day
+  const dBase = dayOf(0, day), hTop = hoursOf(1, day);
+  if (dBase) {
+    checked.push(L(DAY_WORD[day][0] + '降雪', 'snowfall ' + DAY_WORD[day][1].toLowerCase()));
+    const snow = Math.max(dBase.snow, dayOf(1, day) ? dayOf(1, day).snow : 0);
+    if (snow >= 15) raise(1, L(`${DAY_WORD[day][0]}预计降雪约 ${U.snow(snow)} ${U.su()}，粉雪日但路上慢`, `About ${U.snow(snow)} ${U.su()} of snow expected ${DAY_WORD[day][1].toLowerCase()}: a powder day, but slow roads`), 'snow');
+    else if (snow >= 3) reasons.push({ n: 0, text: L(`${DAY_WORD[day][0]}预计新雪约 ${U.snow(snow)} ${U.su()}`, `About ${U.snow(snow)} ${U.su()} of new snow ${DAY_WORD[day][1].toLowerCase()}`), ok: true });
+    if (dBase.rain >= 5 && snow < 15) reasons.push({ n: 0, text: L(`山脚预计有雨约 ${U.water(dBase.rain)} ${U.wu()}，下面的雪会湿重`, `Rain at the base, about ${U.water(dBase.rain)} ${U.wu()}: heavy, wet snow down low`) });
+  }
+  if (hTop) {
+    checked.push(L('山上阵风', 'gusts up top'));
+    const lift = hTop.filter((x) => x.h >= 9 && x.h <= 15), g = Math.max(...lift.map((x) => x.gust || 0));
+    if (g >= 80) raise(1, L(`山上阵风可达 ${U.wind(g)} ${U.vu()}，上面的缆车可能停`, `Gusts up to ${U.wind(g)} ${U.vu()} up top: the upper lifts may hold`), 'wind');
+    else if (g >= 60) reasons.push({ n: 0, text: L(`山上阵风 ${U.wind(g)} ${U.vu()}，缆车可能限速`, `Gusts of ${U.wind(g)} ${U.vu()} up top: lifts may slow`) });
+  }
+  // CHP incidents on the way, touched in the last three hours: the feed keeps an incident until CHP
+  // closes it, and some stay open long after the road is clear
+  if (D('chp')) checked.push(L('CHP 事故（信息类通报不算）', 'CHP incidents (not its notices)'));
+  const inc = rd.incidents.filter((x) => x.kind === 'incident' && (x.last || x.at || 0) > now - 3 * 3600e3);
+  if (inc.length) {
+    const x = inc[0];
+    raise(1, L(`CHP 正在处理走廊事故：${chpWord(x.type)} · ${x.where}${x.area ? '（' + x.area + '）' : ''}${inc.length > 1 ? `，另有 ${inc.length - 1} 起` : ''}`,
+      `CHP is at a crash on the way: ${chpWord(x.type)}, ${x.where}${x.area ? ' (' + x.area + ')' : ''}${inc.length > 1 ? `, and ${inc.length - 1} more` : ''}`), 'crash');
+  }
+  // the headline
+  const main = (reasons.filter((r) => r.n === level).find((r) => r.main) || {}).main;
+  const head = level === 2
+    ? (main === 'r3' ? L('今天别去：链条管制 R-3', 'Stay home: R-3 chain control') : L('今天别去：路封了', 'Stay home: the road is closed'))
+    : level === 1
+      ? ({ chains: L('能去，要四驱加雪胎，或者装链条', 'Go, with 4WD and snow tires, or chains'), r1: L('能去，要雪胎或者带好链条', 'Go, with snow tires or chains'),
+        storm: L('能去，但要早走慢开', 'Go, but leave early and drive slowly'),
+        snow: L('能去，但要早走慢开', 'Go, but leave early and drive slowly'), wind: L('能去，但山上风大，缆车可能停', 'Go, but wind may hold the upper lifts'),
+        crash: L('能去，路上有事故，留意绕行', 'Go, but there is a crash on the way'), work: L('能去，路上有施工封路', 'Go, but a work zone closes the road'),
+        slow: L('能去，但路上会慢', 'Go, but expect delays') }[main] || L('能去，但要小心', 'Go, carefully'))
+      : (reasons.some((r) => r.ok) ? L('放心去，还有新雪', 'Good to go, with new snow') : L('放心去', 'Good to go'));
+  return { level, head, reasons: reasons.sort((a, b) => b.n - a.n), checked, day, missing: rd.missing };
+}
+
+// ---------- rendering ----------
+let renderQueued = false;
+function renderSoon() { if (!renderQueued) { renderQueued = true; requestAnimationFrame(() => { renderQueued = false; render(); }); } }
+function render() {
+  state.legs = legs().map(prepLeg);
+  document.documentElement.lang = state.lang === 'zh' ? 'zh-CN' : 'en';
+  renderStatic(); showStatus(); showTheme();
+  renderVerdict(); renderAlerts(); renderNow();
+  if (state.tab === 'weather') { renderHourly(); renderNws(); renderWeek(); renderWear(); renderResortCams(); }
+  if (state.tab === 'roads') { renderChains(); renderRoadText(); renderClosures(); renderChp(); renderMap(); renderRoadCams(); }
+  if (state.tab === 'pack') renderPack();
+  renderFoot();
+}
+
+function renderStatic() {
+  const r = R();
+  document.title = L(`上山 First Chair · ${P(r.name)}`, `First Chair · ${P(r.name)}`);
+  $('lede').textContent = L(`去 ${P(r.name)} 滑雪的一天，出门前看一眼：去不去、山上山下的天气、穿什么、路上的链条管制和摄像头、要带的东西。`,
+    `Before a day at ${P(r.name)}: whether to go, the weather up and down the mountain, what to wear, chain controls and cameras on the way, and what to pack.`);
+  $('resort-label').textContent = L('雪场', 'Resort');
+  const sel = $('resort');
+  if (sel.options.length !== RESORTS.length || sel.dataset.lang !== state.lang) {
+    fill(sel, RESORTS.map((x) => h('option', { value: x.id, text: `${P(x.name)} · ${P(x.area)}` })));
+    sel.dataset.lang = state.lang;
+  }
+  sel.value = state.resort;
+  const [bFar, bNear] = $('from').querySelectorAll('button');
+  bFar.textContent = L('从湾区出发', 'From the Bay Area');
+  bNear.textContent = L(`住在 ${P(r.town.name)}`, `Staying in ${P(r.town.name)}`);
+  bFar.setAttribute('aria-pressed', state.from === 'far'); bNear.setAttribute('aria-pressed', state.from === 'near');
+  $('refresh').querySelector('span').textContent = L('刷新', 'Refresh');
+  $('refresh').classList.toggle('busy', state.loading);
+  for (const b of document.querySelectorAll('[data-lang]')) b.setAttribute('aria-pressed', b.dataset.lang === state.lang);
+  for (const b of document.querySelectorAll('[data-units]')) b.setAttribute('aria-pressed', b.dataset.units === state.units);
+  const tabs = { overview: ['总览', 'Overview'], weather: ['天气', 'Weather'], roads: ['路况', 'Roads'], pack: ['清单', 'Packing'] };
+  for (const [k, w] of Object.entries(tabs)) {
+    const b = $('tab-' + k); b.textContent = P(w);
+    b.setAttribute('aria-selected', state.tab === k); b.tabIndex = state.tab === k ? 0 : -1;
+    $('panel-' + k).hidden = state.tab !== k;
+  }
+  $('now-h').textContent = L('现在 · 山上山下', 'Now, up and down');
+  $('now-aside').textContent = `Open-Meteo · ${U.tu()} · ${U.vu()}`;
+  $('hourly-h').textContent = L('逐小时', 'Hour by hour');
+  $('hourly-aside').textContent = L('三个地方、三天可切换', 'three places, three days');
+  $('nws-h').textContent = L('未来 3 天 · 雪线与雪比', 'Next 3 days: snow level and snow ratio');
+  $('nws-aside').textContent = L('NWS 官方网格预报', 'NWS forecast grid');
+  $('week-h').textContent = L('未来 7 天（山脚）', 'Next 7 days (base)');
+  $('week-aside').textContent = L('点某一天，下面换成那天的穿法', 'pick a day to see what to wear');
+  $('wear-h').textContent = L('穿衣安排', 'What to wear');
+  $('kids-label').textContent = L('带娃', 'Kids');
+  $('kids').checked = state.kids;
+  $('rcams-h').textContent = L('雪场摄像头 · 看山上真下雪没', 'Resort cameras: is it really snowing?');
+  $('rcams-aside').textContent = L(`${P(r.name)} 官方 · 点开看实时`, `${P(r.name)}'s own, live`);
+  $('chain-h').textContent = L('路况 · 链条管制与封路', 'Roads: chain controls and closures');
+  $('chain-aside').textContent = L('Caltrans 实时', 'Caltrans, live');
+  $('clo-h').textContent = L('封路与施工', 'Closures and work zones');
+  $('clo-aside').textContent = L('Caltrans 施工 + CHP · 现在和未来 36 小时', 'Caltrans work and CHP, now and the next 36 hours');
+  $('chp-h').textContent = L('CHP 实时事故', 'CHP incidents');
+  $('chp-aside').textContent = L('Truckee + Sacramento 调度中心', 'Truckee and Sacramento dispatch');
+  $('map-h').textContent = L('沿途摄像头地图', 'Cameras on the way');
+  $('map-aside').textContent = L('编号和下面的照片一致', 'numbered as the pictures below');
+  $('map').setAttribute('aria-label', L('沿途摄像头、事故和封路的地图', 'Map of the cameras, incidents and closures on the way'));
+  $('cams-note').textContent = L('Caltrans 沿途实拍，按路段分组；点照片看大图、过去 3 小时和直播；画面每分钟自动换新。', 'Caltrans pictures by stretch of road; tap one for a larger view, the last three hours and live video. They renew every minute.');
+  $('cams-refresh').textContent = L('换一帧', 'New frames');
+}
+
+function showStatus() {
+  const s = $('status');
+  const names = { om: 'Open-Meteo', gridBase: 'NWS', gridTop: 'NWS', alerts: L('NWS 警报', 'NWS alerts'), chp: 'CHP', roads: L('Caltrans 原文', 'Caltrans text'),
+    chains3: L('链条管制', 'chain controls'), chains10: L('链条管制', 'chain controls'), cams3: L('摄像头', 'cameras'), cams10: L('摄像头', 'cameras'), closures3: L('施工', 'closures'), closures10: L('施工', 'closures') };
+  const failed = [...new Set(Object.keys(state.errors).map((k) => names[k] || k))];
+  const kids = [];
+  if (state.loading && !state.loadedAt) kids.push(L('正在取数据…', 'Fetching…'));
+  else if (state.loadedAt) kids.push(L('数据更新于 ', 'Updated '), h('b', { text: whenShort(state.loadedAt) }), L('（太浩湖时间）', ' Tahoe time'), state.loading ? L(' · 正在刷新…', ' · refreshing…') : '');
+  if (failed.length) kids.push(L(` · 暂时拿不到：${failed.join('、')}`, ` · Couldn't reach: ${failed.join(', ')}`));
+  fill(s, kids);
+  $('refresh').classList.toggle('busy', state.loading);
+}
+
+const ridge = () => { const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '0 0 230 90'); s.setAttribute('class', 'ridge'); s.setAttribute('aria-hidden', 'true'); s.innerHTML = '<path d="M0 90 L48 34 L70 52 L104 8 L134 44 L156 30 L230 90 Z" fill="currentColor"/>'; return s; };
+function renderVerdict() {
+  const box = $('verdict'), v = verdict(), r = R();
+  const haveAny = D('om') || state.data.chains3 || state.data.chains10;
+  box.className = 'card verdict ' + (haveAny ? ['go', 'caution', 'stop'][v.level] : '');
+  const startName = state.from === 'near' ? P(r.town.name) : L('湾区', 'Bay Area');
+  const daySeg = h('div', { class: 'seg', role: 'group', 'aria-label': L('哪天', 'Which day') },
+    [0, 1].map((d) => h('button', { type: 'button', 'aria-pressed': String(v.day === d), text: P(DAY_WORD[d]), onclick: () => { state.verdictDay = d; renderVerdict(); } })));
+  const icon = h('span', { class: 'v-icon' }, svgIcon(['check', 'alert', 'stop'][v.level]));
+  fill(box,
+    ridge(),
+    h('div', { class: 'v-top' }, h('span', { class: 'v-route', text: `${startName} → ${P(r.name)} · ${L('出发判决', 'the call')}` }), daySeg),
+    haveAny
+      ? [h('div', { class: 'v-head' }, icon, h('h1', { class: 'v-title', text: v.head })),
+        h('ul', { class: 'v-reasons' }, v.reasons.length ? v.reasons.map((x) => h('li', { class: x.ok ? 'ok' : null, text: x.text }))
+          : h('li', { class: 'ok', text: L('没有链条管制、没有封路、没有警报，山上风也不大。', 'No chain controls, no closures, no warnings, and little wind up top.') })),
+        h('p', { class: 'v-basis' }, h('b', { text: L('判决依据：', 'Based on: ') }), v.checked.join(L(' · ', ' · ')),
+          v.missing.length ? L(`。缺：${v.missing.map((m) => ({ chains: '链条管制', chp: 'CHP', roads: 'Caltrans 原文', cams: '摄像头', closures: '施工' }[m])).join('、')}，判决可能不全`,
+            `. Missing: ${v.missing.map((m) => ({ chains: 'chain controls', chp: 'CHP', roads: 'the Caltrans text', cams: 'cameras', closures: 'closures' }[m])).join(', ')}, so this may be incomplete`) : '',
+          v.day === 1 ? L('。明天的判决用的是现在的路况和明天的天气预报', '. Tomorrow’s call uses the roads as they are now and tomorrow’s forecast') : '',
+          state.loadedAt ? L(` · 数据更新于 ${whenShort(state.loadedAt)}（太浩湖时间）`, ` · updated ${whenShort(state.loadedAt)} Tahoe time`) : '')]
+      : h('div', { class: 'v-head' }, h('h1', { class: 'v-title', text: state.loading ? L('正在看路况和天气…', 'Checking the roads and the weather…') : L('暂时拿不到数据', 'No data yet') })),
+  );
+}
+
+function renderAlerts() {
+  const box = $('alerts'), alerts = D('alerts');
+  if (!alerts || !alerts.length) { fill(box); box.hidden = true; return; }
+  box.hidden = false;
+  fill(box, alerts.map((a) => {
+    const w = ALERT_WEIGHT[a.event] || 0, ends = Date.parse(a.ends || a.expires);
+    return h('div', { class: 'alert' + (w >= 2 ? ' severe' : '') },
+      h('h3', null, svgIcon('tri'), state.lang === 'zh' && ALERT_ZH[a.event] ? `${ALERT_ZH[a.event]} · ${a.event}` : a.event),
+      a.headline ? h('p', { text: a.headline }) : null,
+      h('p', { class: 'small', text: (ends ? L(`至 ${whenShort(ends)}`, `until ${whenShort(ends)}`) + ' · ' : '') + L(`NWS 国家气象局 · ${a.senderName || ''}`, a.senderName || 'National Weather Service') }));
+  }));
+}
+
+function renderNow() {
+  const r = R(), box = $('now'), places = [r.base, r.top, third()];
+  if (!D('om')) { fill(box, h('p', { class: 'err', text: state.errors.om ? L('天气暂时拿不到（Open-Meteo）。', 'The weather is unavailable right now (Open-Meteo).') : L('正在取天气…', 'Fetching the weather…') })); return; }
+  fill(box, places.map((p, i) => {
+    const o = om(i); if (!o) return null;
+    const c = o.current, d = dayOf(i, 0);
+    return h('div', { class: 'card' },
+      h('h3', { text: P(p.name) }),
+      h('div', { class: 'sub', text: `${P(p.note)} · ${U.elev(p.at[2])} ${U.eu()}` }),
+      h('div', { class: 'big' }, U.t(c.temperature_2m), h('small', { text: M() ? 'C' : 'F' })),
+      h('div', { class: 'line', text: `${wx(c.weather_code)} · ${L('体感', 'feels')} ${U.t(c.apparent_temperature)}` }),
+      h('div', { class: 'line', text: `${L('风', 'Wind')} ${U.wind(c.wind_speed_10m)} · ${L('阵风', 'gusts')} ${U.wind(c.wind_gusts_10m)} ${U.vu()}` }),
+      d ? h('div', { class: 'line', text: `${L('今天', 'Today')} ${U.t(d.max)} / ${U.t(d.min)}${d.snow >= 0.1 ? ` · ${L('雪', 'snow')} ${U.snow(d.snow)} ${U.su()}` : ''}` }) : null);
+  }));
+  const links = $('ov-links');
+  fill(links,
+    h('button', { class: 'btn primary', type: 'button', text: L('看路况和摄像头 →', 'Roads and cameras →'), onclick: () => setTab('roads') }),
+    h('a', { class: 'btn', href: r.links.report, target: '_blank', rel: 'noopener', text: L('雪场官方 Mountain Report →', 'Mountain report →') }),
+    h('a', { class: 'btn', href: 'https://quickmap.dot.ca.gov/', target: '_blank', rel: 'noopener', text: 'Caltrans QuickMap →' }));
+}
+
+// ---------- the hourly charts: one axis each, sharing the hours ----------
+function niceTicks(lo, hi, n = 4) {
+  const span = hi - lo || 1, raw = span / n, mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const step = [1, 2, 2.5, 5, 10].map((s) => s * mag).find((s) => span / s <= n) || 10 * mag;
+  const out = []; for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(+v.toFixed(6));
+  return { ticks: out, step };
+}
+function chartSvg({ hours, w, ht, series, kind, max, floor, hl, label }) {
+  const padL = 30, padR = 8, padT = 10, padB = 20;
+  const iw = w - padL - padR, ih = ht - padT - padB, n = hours.length, step = iw / n;
+  const x = (i) => padL + step * (i + 0.5);
+  let lo, hi;
+  const vals = series.flatMap((s) => hours.map((r) => s.get(r)).filter((v) => v != null && !isNaN(v)));
+  if (kind === 'bar') { lo = 0; hi = Math.max(max || 0, ...vals) || 1; }
+  else { lo = Math.min(...vals); hi = Math.max(...vals); if (floor != null) lo = Math.min(lo, floor); const pad = Math.max(1, (hi - lo) * 0.12); lo -= pad; hi += pad; if (kind === 'wind') lo = 0; }
+  const { ticks } = niceTicks(lo, hi, kind === 'bar' ? 2 : 3);
+  lo = Math.min(lo, ticks[0]); hi = Math.max(hi, ticks[ticks.length - 1]);
+  const y = (v) => padT + ih - ((v - lo) / (hi - lo || 1)) * ih;
+  let s = `<svg viewBox="0 0 ${w} ${ht}" role="img" aria-label="${label}">`;
+  for (const t of ticks) s += `<line x1="${padL}" x2="${w - padR}" y1="${y(t).toFixed(1)}" y2="${y(t).toFixed(1)}" stroke="var(--grid)" stroke-width="1"/><text class="t" x="${padL - 5}" y="${(y(t) + 3.5).toFixed(1)}" text-anchor="end">${+t.toFixed(2)}</text>`;
+  if (floor != null && floor > lo && floor < hi) s += `<line x1="${padL}" x2="${w - padR}" y1="${y(floor).toFixed(1)}" y2="${y(floor).toFixed(1)}" stroke="var(--axis)" stroke-width="1.5"/><text class="t" x="${w - padR}" y="${(y(floor) - 4).toFixed(1)}" text-anchor="end">${L('冰点', 'freezing')}</text>`;
+  s += `<line x1="${padL}" x2="${w - padR}" y1="${padT + ih}" y2="${padT + ih}" stroke="var(--axis)" stroke-width="1"/>`;
+  for (const hh of [0, 6, 12, 18]) { const i = hours.findIndex((r) => r.h === hh); if (i >= 0) s += `<text class="t" x="${x(i).toFixed(1)}" y="${ht - 5}" text-anchor="middle">${hourLabel(hh)}</text>`; }
+  if (hl != null && hl >= 0 && hl < n) s += `<line x1="${x(hl).toFixed(1)}" x2="${x(hl).toFixed(1)}" y1="${padT}" y2="${padT + ih}" stroke="var(--ink-2)" stroke-width="1" opacity="0.55"/>`;
+  for (const se of series) {
+    if (kind === 'bar') {
+      const bw = Math.max(2, Math.min(24, step - 2));
+      hours.forEach((r, i) => {
+        const v = se.get(r); if (!v || v <= 0) return;
+        const top = y(v), base = padT + ih, x0 = x(i) - bw / 2, rr = Math.min(4, bw / 2, base - top);
+        s += `<path d="M${x0.toFixed(1)} ${base} V${(top + rr).toFixed(1)} Q${x0.toFixed(1)} ${top.toFixed(1)} ${(x0 + rr).toFixed(1)} ${top.toFixed(1)} H${(x0 + bw - rr).toFixed(1)} Q${(x0 + bw).toFixed(1)} ${top.toFixed(1)} ${(x0 + bw).toFixed(1)} ${(top + rr).toFixed(1)} V${base} Z" fill="${se.color}"${hl === i ? '' : hl != null ? ' opacity="0.8"' : ''}/>`;
+      });
+      // the largest hour, labelled at its cap
+      let mi = -1; hours.forEach((r, i) => { if (se.get(r) > 0 && (mi < 0 || se.get(r) > se.get(hours[mi]))) mi = i; });
+      if (mi >= 0) s += `<text class="lbl" x="${x(mi).toFixed(1)}" y="${(y(se.get(hours[mi])) - 4).toFixed(1)}" text-anchor="middle">${se.fmt(se.get(hours[mi]))}</text>`;
+    } else {
+      const pts = hours.map((r, i) => [x(i), se.get(r)]).filter((p) => p[1] != null && !isNaN(p[1]));
+      s += `<path d="${pts.map((p, k) => (k ? 'L' : 'M') + p[0].toFixed(1) + ' ' + y(p[1]).toFixed(1)).join(' ')}" fill="none" stroke="${se.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"${se.dash ? ' stroke-dasharray="5 4"' : ''}/>`;
+      if (hl != null && hl >= 0 && hl < n && se.get(hours[hl]) != null) s += `<circle cx="${x(hl).toFixed(1)}" cy="${y(se.get(hours[hl])).toFixed(1)}" r="4.5" fill="${se.color}" stroke="var(--surface)" stroke-width="2"/>`;
+    }
+  }
+  return { svg: s + '</svg>', x, step, padL, n };
+}
+// A table head whose units sit under the names, so six or nine columns fit a phone
+const heads = (cols) => h('thead', null, h('tr', null, cols.map(([name, unit]) => h('th', null, name, unit ? h('small', { text: unit }) : null))));
+function renderHourly() {
+  const box = $('hourly'), r = R(), places = [['base', r.base, 0], ['top', r.top, 1], ['third', third(), 2]];
+  const pi = places.findIndex((p) => p[0] === state.hourPlace), [, place, idx] = places[pi < 0 ? 0 : pi];
+  const hours = hoursOf(idx, state.hourDay);
+  const nowH = parts(Date.now()).h;
+  if (state.hour == null || state.hour >= (hours ? hours.length : 24)) state.hour = state.hourDay === 0 ? nowH : 9;
+  const grid = idx === 0 ? D('gridBase') : idx === 1 ? D('gridTop') : null;
+  const placeChips = h('div', { class: 'chips' }, places.map(([k, p]) => h('button', { class: 'chip', type: 'button', 'aria-pressed': String(state.hourPlace === k), text: P(p.name), onclick: () => { state.hourPlace = k; renderHourly(); } })));
+  const dayChips = h('div', { class: 'chips' }, [0, 1, 2].map((d) => h('button', { class: 'chip', type: 'button', 'aria-pressed': String(state.hourDay === d), text: P(DAY_WORD[d]), onclick: () => { state.hourDay = d; state.hour = d === 0 ? nowH : 9; renderHourly(); } })),
+    h('span', { class: 'muted small', style: 'align-self:center;margin-left:4px', text: dayName(Date.now() + state.hourDay * 86400e3) }));
+  if (!hours) { fill(box, placeChips, dayChips, h('p', { class: 'err', text: state.errors.om ? L('天气暂时拿不到（Open-Meteo）。', 'The weather is unavailable right now (Open-Meteo).') : L('正在取天气…', 'Fetching the weather…') })); return; }
+  const readout = h('div', { class: 'readout', 'aria-live': 'polite' });
+  const charts = h('div', { class: 'chart', tabindex: '0', 'aria-label': L('逐小时图表，用左右键换小时', 'Hourly charts; use the arrow keys to move between hours') });
+  const legend = h('div', { class: 'legend' },
+    h('span', { style: 'color:var(--temp)' }, h('i', { class: 'key' }), h('b', { style: 'color:var(--ink-2);font-weight:500', text: L('气温', 'Temperature') })),
+    h('span', { style: 'color:var(--temp)' }, h('i', { class: 'key dash' }), h('b', { style: 'color:var(--ink-2);font-weight:500', text: L('体感', 'Feels like') })),
+    h('span', { style: 'color:var(--snow)' }, h('i', { class: 'key bar' }), h('b', { style: 'color:var(--ink-2);font-weight:500', text: L('降雪', 'Snow') })),
+    hours.some((x) => x.rain > 0.05) ? h('span', { style: 'color:var(--rain)' }, h('i', { class: 'key bar' }), h('b', { style: 'color:var(--ink-2);font-weight:500', text: L('降雨', 'Rain') })) : null,
+    h('span', { style: 'color:var(--wind)' }, h('i', { class: 'key' }), h('b', { style: 'color:var(--ink-2);font-weight:500', text: L('风速', 'Wind') })),
+    h('span', { style: 'color:var(--wind)' }, h('i', { class: 'key dash' }), h('b', { style: 'color:var(--ink-2);font-weight:500', text: L('阵风', 'Gusts') })));
+  const rows = hours.map((x) => {
+    const sl = snowLevelAt(grid, x.ms);
+    return h('tr', { class: 'hit', 'data-i': hours.indexOf(x), onclick: () => { state.hour = hours.indexOf(x); draw(); } },
+      h('td', { class: 'num', text: hourLabel(x.h) }), h('td', { text: U.t(x.temp) }), h('td', { class: 'muted', text: U.t(x.feel) }),
+      h('td', null, x.snow >= 0.05 ? h('span', { class: 's', text: U.snow(x.snow) }) : h('span', { class: 'z', text: '–' })),
+      h('td', null, x.rain >= 0.05 ? h('span', { text: U.water(x.rain) }) : h('span', { class: 'z', text: '–' })),
+      h('td', { text: x.pop == null ? '–' : x.pop + '%' }), h('td', { text: U.wind(x.wind) }), h('td', { text: U.wind(x.gust) }),
+      h('td', { text: sl == null ? '–' : U.elev(sl) }));
+  });
+  const table = h('div', { class: 'table-wrap hourly-table' }, h('table', { class: 'data' },
+    heads([[L('时间', 'Hour')], [L('气温', 'Temp'), U.tu()], [L('体感', 'Feels'), U.tu()], [L('雪', 'Snow'), U.su()], [L('雨', 'Rain'), U.wu()], [L('概率', 'Chance')], [L('风', 'Wind'), U.vu()], [L('阵风', 'Gusts'), U.vu()], [L('雪线', 'Snow lvl'), U.eu()]]),
+    h('tbody', null, rows)));
+  fill(box, h('div', { class: 'chips', style: 'justify-content:space-between' }, placeChips), dayChips, h('p', { class: 'small muted', text: `${P(place.note)} · ${U.elev(place.at[2])} ${U.eu()}` }), legend, readout, charts, table);
+  let geo = [];
+  function draw() {
+    const w = Math.max(280, Math.round(charts.clientWidth || box.clientWidth - 32));
+    const hl = state.hour;
+    const blocks = [
+      { title: `${L('气温', 'Temperature')} ${U.tu()}`, kind: 'line', floor: U.tv(0), ht: 150, series: [{ get: (r) => U.tv(r.temp), color: 'var(--temp)' }, { get: (r) => U.tv(r.feel), color: 'var(--temp)', dash: true }] },
+      { title: `${L('降雪', 'Snow')} ${U.su()}`, kind: 'bar', max: U.snowv(0.5), ht: 104, series: [{ get: (r) => U.snowv(r.snow), color: 'var(--snow)', fmt: (v) => (M() ? v.toFixed(1) : v.toFixed(2)) }] },
+      hours.some((x) => x.rain > 0.05) ? { title: `${L('降雨', 'Rain')} ${U.wu()}`, kind: 'bar', max: U.waterv(0.5), ht: 96, series: [{ get: (r) => U.waterv(r.rain), color: 'var(--rain)', fmt: (v) => (M() ? v.toFixed(1) : v.toFixed(2)) }] } : null,
+      { title: `${L('风速 / 阵风', 'Wind and gusts')} ${U.vu()}`, kind: 'wind', ht: 120, series: [{ get: (r) => U.windv(r.wind), color: 'var(--wind)' }, { get: (r) => U.windv(r.gust), color: 'var(--wind)', dash: true }] },
+    ].filter(Boolean);
+    geo = [];
+    fill(charts, blocks.map((b) => {
+      const c = chartSvg({ hours, w, ht: b.ht, series: b.series, kind: b.kind, max: b.max, floor: b.floor, hl, label: b.title });
+      geo.push(c);
+      const div = h('div'); div.innerHTML = c.svg;
+      return [h('div', { class: 'chart-title', text: b.title }), div.firstChild];
+    }));
+    const x = hours[hl] || hours[0];
+    fill(readout, h('b', { text: `${P(DAY_WORD[state.hourDay])} ${hourLabel(x.h)}` }),
+      h('span', { class: 'k' }, `${L('气温', 'Temp')} `, h('b', { text: U.t(x.temp) })), h('span', { class: 'k' }, `${L('体感', 'Feels')} `, h('b', { text: U.t(x.feel) })),
+      h('span', { class: 'k' }, `${L('雪', 'Snow')} `, h('b', { text: `${U.snow(x.snow)} ${U.su()}` })),
+      x.rain > 0.05 ? h('span', { class: 'k' }, `${L('雨', 'Rain')} `, h('b', { text: `${U.water(x.rain)} ${U.wu()}` })) : null,
+      h('span', { class: 'k' }, `${L('概率', 'Chance')} `, h('b', { text: x.pop == null ? '–' : x.pop + '%' })),
+      h('span', { class: 'k' }, `${L('风', 'Wind')} `, h('b', { text: `${U.wind(x.wind)} / ${U.wind(x.gust)} ${U.vu()}` })),
+      h('span', { class: 'k muted', text: wx(x.code) }));
+    for (const tr of rows) tr.classList.toggle('on', +tr.dataset.i === hl);
+  }
+  const pick = (ev) => {
+    const svg = ev.target.closest && ev.target.closest('svg'); if (!svg || !geo.length) return;
+    const rect = svg.getBoundingClientRect(), g = geo[0], scale = rect.width / (svg.viewBox.baseVal.width || rect.width);
+    const i = Math.floor(((ev.clientX - rect.left) / scale - g.padL) / g.step);
+    if (i >= 0 && i < hours.length && i !== state.hour) { state.hour = i; draw(); }
+  };
+  charts.addEventListener('pointermove', pick);
+  charts.addEventListener('pointerdown', pick);
+  charts.addEventListener('keydown', (ev) => {
+    if (ev.key === 'ArrowLeft' || ev.key === 'ArrowRight') { ev.preventDefault(); state.hour = Math.max(0, Math.min(hours.length - 1, state.hour + (ev.key === 'ArrowLeft' ? -1 : 1))); draw(); }
+  });
+  draw();
+  if (window.ResizeObserver) { if (box._ro) box._ro.disconnect(); let lastW = charts.clientWidth; box._ro = new ResizeObserver(() => { if (Math.abs(charts.clientWidth - lastW) > 4) { lastW = charts.clientWidth; draw(); } }); box._ro.observe(charts); }
+}
+
+function renderNws() {
+  const box = $('nws'), r = R();
+  const cards = [['gridBase', r.base], ['gridTop', r.top]].map(([k, p]) => {
+    const days = nwsDays(D(k));
+    if (!days) return h('div', { class: 'card' }, h('h3', { text: P(p.name) }), h('p', { class: 'err', text: state.errors[k] ? L('NWS 网格预报暂时拿不到。', 'The NWS grid forecast is unavailable right now.') : L('正在取 NWS 网格…', 'Fetching the NWS grid…') }));
+    return h('div', { class: 'card' }, h('h3', { text: `${P(p.name)} · ${L('未来 3 天', 'next 3 days')}` }),
+      h('div', { class: 'table-wrap' }, h('table', { class: 'data' },
+        heads([[L('日期', 'Day')], [L('雪线', 'Snow level'), U.eu()], [L('降雪', 'Snow'), U.su()], [L('水量', 'Water'), U.wu()], [L('雪比', 'Ratio')], [L('概率', 'Chance')]]),
+        h('tbody', null, days.map((d) => {
+          const ratio = d.water >= 1 && d.snow >= 5 ? d.snow / d.water : null;
+          return h('tr', null, h('td', null, h('b', { text: d.key.slice(5).replace('-', '/').replace(/^0/, '').replace('/0', '/') })),
+            h('td', { text: isFinite(d.lo) ? `${U.elev(d.lo)}–${U.elev(d.hi)}` : '–' }),
+            h('td', null, d.snow >= 1 ? h('span', { class: 's', text: U.snow(d.snow / 10) }) : h('span', { class: 'z', text: d.snow > 0 ? '<' + U.snow(0.1) : '–' })),
+            h('td', { text: d.water >= 0.5 ? U.water(d.water) : '–' }),
+            h('td', null, ratio ? h('b', { text: ratio.toFixed(1) + ':1' }) : h('span', { class: 'z', text: '–' })),
+            h('td', { text: Math.round(d.pop) + '%' }));
+        })))));
+  });
+  fill(box, cards);
+  $('nws-note').textContent = L('这张表是 NWS 里诺办公室的官方网格预报：底下是 NOAA 的 NBM（National Blend of Models，多个模式的混合），再经预报员修订。Open-Meteo 不提供 NBM，这是能直接拿到的 NBM 产品。雪线是当天的高度范围：低于它下雨，高于它下雪。水量是这天的雨和雪全化成水的深度；雪比 = 降雪深度 ÷ 水量，10:1 上下是湿雪，15:1 以上是干粉。它和上面、下面 Open-Meteo 的数字来自不同的模式，同一天的雪量有出入是正常的：看雪线和雪比以这张表为准，看逐小时和逐日的走势用 Open-Meteo。',
+    'This table is the official forecast grid of the NWS office in Reno: NOAA’s National Blend of Models, a blend of many models, revised by the forecasters. Open-Meteo doesn’t serve the NBM; this is the NBM product you can get. The snow level is the day’s range of heights: below it rain, above it snow. Water is the day’s rain and snow melted down; the ratio is the depth of snow over that water, about 10:1 for wet snow, 15:1 and up for dry powder. Open-Meteo, above and below, runs other models, so the snow totals for a day differ: take the snow level and the ratio from this table, and the hours and the days from Open-Meteo.');
+}
+
+function renderWeek() {
+  const box = $('week'), o = om(0);
+  if (!o) { fill(box, h('p', { class: 'err', text: state.errors.om ? L('天气暂时拿不到（Open-Meteo）。', 'The weather is unavailable right now (Open-Meteo).') : L('正在取天气…', 'Fetching the weather…') })); return; }
+  const days = [0, 1, 2, 3, 4, 5, 6].map((i) => dayOf(0, i)).filter(Boolean);
+  fill(box, h('h3', { text: L(`${P(R().base.name)} · 未来 7 天`, `${P(R().base.name)}, next 7 days`), style: 'margin-bottom:6px' }),
+    h('div', { class: 'table-wrap' }, h('table', { class: 'data' },
+      heads([[L('日期', 'Day')], [L('天气', 'Weather')], [L('温度', 'High/low'), U.tu()], [L('雪', 'Snow'), U.su()], [L('雨', 'Rain'), U.wu()], [L('阵风', 'Gusts'), U.vu()]]),
+      h('tbody', null, days.map((d, i) => h('tr', { class: 'hit' + (state.wearDay === i ? ' sel' : ''), tabindex: '0', 'aria-selected': String(state.wearDay === i),
+        onclick: () => { state.wearDay = i; renderWeek(); renderWear(); },
+        onkeydown: (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); state.wearDay = i; renderWeek(); renderWear(); } } },
+        h('td', null, h('b', { text: dayName(d.ms) })), h('td', null, h('span', { class: 'w', text: wx(d.code) })),
+        h('td', { text: `${U.t(d.max)} / ${U.t(d.min)}` }),
+        h('td', null, d.snow >= 0.1 ? h('span', { class: 's', text: U.snow(d.snow) }) : h('span', { class: 'z', text: '–' })),
+        h('td', { text: d.rain >= 0.1 ? U.water(d.rain) : '–' }), h('td', { text: U.wind(d.gust) })))))));
+}
+
+// What to wear, from the day's feels-like temperature up top and at the base in lift hours, its wind,
+// snow, rain and sun. Kids run a step colder: they lose heat faster and say so later.
+const TIERS = [
+  { min: 2, name: ['暖和 · 春雪天，少穿一层', 'Mild: spring skiing, one layer fewer'] },
+  { min: -5, name: ['凉 · 正常一套就够', 'Cool: the usual kit'] },
+  { min: -12, name: ['冷 · 多加一层保暖', 'Cold: add a warm layer'] },
+  { min: -20, name: ['很冷 · 全副武装', 'Very cold: everything on'] },
+  { min: -Infinity, name: ['严寒 · 能裹的全裹上，缩短户外时间', 'Bitter: cover every inch, and keep the time outside short'] },
+];
+function wearFor(day) {
+  const top = hoursOf(1, day), base = hoursOf(0, day); if (!top || !base) return null;
+  const lift = (a) => a.filter((x) => x.h >= 9 && x.h <= 15);
+  const all = [...lift(top), ...lift(base)];
+  const feel = Math.min(...all.map((x) => x.feel)), gust = Math.max(...lift(top).map((x) => x.gust || 0));
+  const snow = lift(base).reduce((a, x) => a + x.snow, 0) + lift(top).reduce((a, x) => a + x.snow, 0) / 2;
+  const rain = lift(base).reduce((a, x) => a + x.rain, 0);
+  const sun = lift(top).filter((x) => x.code <= 1).length / Math.max(1, lift(top).length);
+  const tier = TIERS.findIndex((t) => feel >= t.min);
+  return { feel, gust, snow, rain, sun, tier, warm: Math.max(...lift(base).map((x) => x.temp)) };
+}
+function renderWear() {
+  const box = $('wear'), day = state.wearDay, w = wearFor(day);
+  if (!w) {
+    const d = dayOf(0, day);
+    fill(box, h('p', { class: d ? 'note' : 'err', text: d ? L('逐小时预报只到这几天，更远的日子先看上面的 7 天表。', 'The hourly forecast doesn’t reach this far; see the 7-day table.') : state.errors.om ? L('天气暂时拿不到。', 'The weather is unavailable right now.') : L('正在取天气…', 'Fetching the weather…') }));
+    return;
+  }
+  const t = w.tier, wet = w.snow >= 1 || w.rain >= 0.5, windy = w.gust >= 50;
+  const adult = [
+    [['薄速干打底', 'A light synthetic base layer'], ['中厚美利奴打底', 'A midweight merino base layer'], ['厚美利奴打底', 'A heavyweight merino base layer'], ['厚美利奴打底，外面再叠一层薄速干', 'Heavy merino, with a light layer over it'], ['厚美利奴打底 ×1（可再叠一层薄速干）', 'Heavy merino (and a light layer over it)']][t],
+    [['不用中间层，或者一件薄抓绒', 'No mid layer, or a light fleece'], ['薄抓绒', 'A light fleece'], ['抓绒 + 羽绒背心', 'A fleece and a down vest'], ['羽绒内胆', 'A down jacket under the shell'], ['羽绒内胆 + 抓绒双层', 'Down and fleece together']][t],
+    wet ? ['硬壳全套，防水的那套', 'The full waterproof shell, jacket and pants'] : t >= 3 ? ['硬壳全套，帽子戴上拉紧', 'The full shell, hood up and cinched'] : t === 0 ? ['硬壳，腋下拉链打开透气', 'The shell, with the pit zips open'] : ['硬壳或软壳外套 + 雪裤', 'A shell or soft-shell jacket and ski pants'],
+    [['薄围脖，挡太阳', 'A thin neck gaiter, for the sun'], ['围脖', 'A neck gaiter'], ['围脖或面罩', 'A neck gaiter or a balaclava'], ['面罩 + 雪镜，脸上别露皮肤', 'Balaclava and goggles, no skin showing'], ['面罩 + 雪镜，全脸不露皮肤', 'Balaclava and goggles, no skin showing anywhere']][t],
+    [['薄手套', 'Light gloves'], ['雪手套', 'Ski gloves'], ['保暖手套 + 暖宝宝', 'Warm gloves and hand warmers'], ['连指手套 + 暖宝宝', 'Mittens and hand warmers'], ['Expedition 连指手套 + 暖宝宝，脚趾暖包贴好', 'Expedition mittens and hand warmers, toe warmers in']][t],
+  ];
+  const k = Math.min(4, t + 1);
+  const kid = [
+    [['薄打底', 'A light base layer'], ['中厚打底', 'A midweight base layer'], ['厚打底', 'A warm base layer'], ['厚打底 + 薄抓绒', 'A warm base layer and a fleece'], ['厚打底 + 抓绒，两层都要', 'A warm base layer and a fleece, both']][k],
+    [['薄抓绒', 'A light fleece'], ['抓绒', 'A fleece'], ['抓绒 + 羽绒背心', 'A fleece and a down vest'], ['羽绒内胆', 'A down jacket'], ['羽绒内胆 + 抓绒', 'Down and fleece']][k],
+    ['防水雪服，一体式最暖', 'A waterproof snowsuit; one-piece is warmest'],
+    ['连指手套（比分指暖），多带一副', 'Mittens (warmer than gloves), and a spare pair'],
+    ['短围脖，别用长围巾（会卡缆车）', 'A short neck warmer, never a long scarf (it catches on lifts)'],
+    t >= 2 ? ['每小时进屋暖一暖，问问手脚冷不冷', 'Go in every hour to warm up, and ask about fingers and toes'] : ['中午进屋吃饭，换干袜子', 'Come in for lunch and change into dry socks'],
+  ];
+  const extra = [];
+  extra.push(w.snow >= 1 || w.sun < 0.3 ? ['雪镜（下雪、阴天优先低光镜片）', 'Goggles (a low-light lens on snowy, flat-light days)'] : ['雪镜换深色镜片，再带副墨镜', 'Goggles with a dark lens, and sunglasses']);
+  if (t >= 2) extra.push(['头盔和雪镜之间别留缝（gaper gap 冻额头）', 'No gap between helmet and goggles (the gaper gap freezes your forehead)']);
+  extra.push(['防晒霜 + 唇膏（雪面反光强，阴天也要）', 'Sunscreen and lip balm (snow reflects, even when it is grey)']);
+  if (t >= 2) extra.push([`暖宝宝 ×${state.kids ? 8 : 4} + 脚趾暖包`, `Hand warmers ×${state.kids ? 8 : 4} and toe warmers`]);
+  extra.push(['保温杯热水（lodge 休息时喝）', 'A thermos of something hot for the lodge']);
+  extra.push(['车里留一套干衣服，回程换', 'A dry change of clothes in the car for the drive home']);
+  if (wet) extra.push(['下雪天：备用手套至少一副（湿手套 = 冻手）', 'Snowy day: at least one spare pair of gloves (wet gloves are cold hands)'], ['雪镜布放内侧口袋，随时擦镜面水汽', 'A lens cloth in an inside pocket for fogged goggles']);
+  if (w.rain >= 0.5) extra.push(['会下雨：防水手套，外套拉链拉到顶', 'Rain: waterproof gloves, and zip everything up']);
+  if (windy) extra.push([`山上阵风 ${U.wind(w.gust)} ${U.vu()}：面罩别摘，缆车上背风坐，帽子绳系紧`, `Gusts of ${U.wind(w.gust)} ${U.vu()} up top: keep the face covered, sit with your back to the wind on lifts, cinch the hood`]);
+  if (state.kids) extra.push(['给孩子多带一副连指手套和袜子', 'A spare pair of mittens and socks for each kid']);
+  const d = dayOf(0, day);
+  fill(box,
+    h('p', { class: 'small muted', text: `${dayName(d ? d.ms : Date.now() + day * 86400e3)} · ${L('缆车时段山上山下最低体感', 'lowest feels-like on the lifts')} ${U.t(w.feel)}${M() ? 'C' : 'F'} · ${L('阵风', 'gusts')} ${U.wind(w.gust)} ${U.vu()}${w.snow >= 0.5 ? ` · ${L('雪', 'snow')} ${U.snow(w.snow)} ${U.su()}` : ''}` }),
+    h('p', { class: 'tier', style: 'margin-top:4px', text: P(TIERS[t].name) }),
+    h('div', { class: 'wear' },
+      h('div', null, h('h3', { text: L('大人', 'Adults') }), h('ul', null, [['Base layer', adult[0]], ['Mid layer', adult[1]], ['Shell', adult[2]], [L('脸', 'Face'), adult[3]], [L('手', 'Hands'), adult[4]]].map(([k2, v]) => h('li', { text: `${k2}：${P(v)}`.replace('：', state.lang === 'zh' ? '：' : ': ') })))),
+      state.kids ? h('div', null, h('h3', { text: L('孩子（比大人冷一档）', 'Kids (a step colder)') }), h('ul', null, kid.map((v) => h('li', { text: P(v) })))) : null,
+      h('div', null, h('h3', { text: L('别忘带', 'Don’t forget') }), h('ul', null, extra.map((v) => h('li', { text: P(v) }))))));
+}
+
+function renderResortCams() {
+  const r = R(), l = r.links, box = $('rcams');
+  fill(box,
+    l.live ? h('a', { class: 'live', href: l.live.url, target: '_blank', rel: 'noopener' }, h('i', { class: 'dot' }),
+      h('div', null, h('b', { text: L(`${l.live.name} 实时直播`, `${l.live.name}, live`) }), h('span', { text: P(l.live.note) })), h('span', { class: 'arr', text: '→' })) : null,
+    h('a', { class: 'card tile', href: l.cams, target: '_blank', rel: 'noopener' },
+      h('div', null, h('b', { text: L(`雪场官方摄像头${l.camNames ? ` · 全部 ${l.camNames.length} 个机位` : ''}`, `The resort’s cameras${l.camNames ? `, all ${l.camNames.length}` : ''}`) }),
+        h('span', { text: l.camNames ? L(`${l.camNames.join('、')}，都在官网这一个页面里，点开切换着看。`, `${l.camNames.join(', ')}: all on one page of the resort’s site.`) : L(`${P(r.name)} 官网的摄像头页面。`, `${P(r.name)}’s webcam page.`) })),
+      h('span', { class: 'arr', text: '→' })),
+    h('a', { class: 'card tile', href: l.report, target: '_blank', rel: 'noopener' },
+      h('div', null, h('b', { text: L('雪场官方 Mountain Report', 'The resort’s mountain report') }), h('span', { text: L('开了哪些缆车、压雪、积雪深度，以雪场为准。', 'Which lifts are running, grooming and the snow depth, from the resort itself.') })),
+      h('span', { class: 'arr', text: '→' })));
+}
+
+// ---------- roads ----------
+function renderChains() {
+  const box = $('chain'), rd = roads();
+  if (!rd.chains.length) {
+    const got = [...new Set(legs().map((l) => l.d))].some((d) => D('chains' + d));
+    box.className = 'card chain-hero' + (got ? ' c0' : '');
+    if (got) {
+      // a drive through town, where Caltrans has no checkpoint
+      fill(box, h('div', { class: 'lab', text: L('链条管制 · 走廊最高等级', 'Chain control: the highest on the way') }),
+        h('div', { class: 'lvl' }, h('b', { text: 'R-0' }), h('span', { text: P(CHAIN['R-0'][0]) })),
+        h('p', { text: L('这段路上没有 Caltrans 的链条检查点。下大雪时城里和雪场的路也可能要求链条，看雪场的通知。', 'There is no Caltrans checkpoint on this stretch. In a big storm the town and the resort can still ask for chains; check the resort’s notices.') }));
+      return;
+    }
+    fill(box, h('p', { class: 'err', text: rd.missing.includes('chains') ? L('链条管制暂时拿不到（Caltrans）。出发前打开 QuickMap 看。', 'Chain controls are unavailable right now (Caltrans). Check QuickMap before you leave.') : L('正在取链条管制…', 'Fetching chain controls…') }));
+    return;
+  }
+  let worst = rd.chains[0];
+  for (const c of rd.chains) if (chainRank(c.status) > chainRank(worst.status)) worst = c;
+  const rank = chainRank(worst.status), info = chainInfo(worst.status) || CHAIN['R-0'];
+  const shown = rank >= 1 ? worst.status : 'R-0';
+  box.className = 'card chain-hero ' + (rank >= 5 ? 'c2' : rank >= 2 ? 'c1' : 'c0');
+  const trucks = rd.chains.filter((c) => chainRank(c.status) === 0.5);
+  const active = rd.chains.filter((c) => chainRank(c.status) >= 1).sort((a, b) => chainRank(b.status) - chainRank(a.status));
+  const cpRow = (c) => {
+    const rr = chainRank(c.status), inf = chainInfo(c.status);
+    return h('li', null, h('span', { class: 'st' + (rr >= 5 ? ' top' : rr >= 2 ? ' hi' : ''), text: c.status || '–' }),
+      h('span', { class: 'wh' }, `${c.name} · ${dirWord(c.dir)}`, h('small', { text: `${c.route} · ${c.place}${c.elev ? ` · ${U.elev(c.elev / 3.28084)} ${U.eu()}` : ''}${inf ? ' · ' + P(inf[0]) : rr === 0.5 ? ' · ' + L('只查货车', 'trucks only') : ''}` })),
+      h('span', { class: 'tm', text: whenShort(c.at) }));
+  };
+  fill(box,
+    h('div', { class: 'lab', text: L('链条管制 · 走廊最高等级', 'Chain control: the highest on the way') }),
+    h('div', { class: 'lvl' }, h('b', { text: shown }), h('span', { text: P((rank >= 1 ? info : CHAIN['R-0'])[0]) })),
+    h('p', { text: rank >= 1 ? `${P(info[1])} ${L(`最高的是 ${worst.name}（${worst.route}，${dirWord(worst.dir)}）。`, `Highest at ${worst.name} (${worst.route}, ${dirWord(worst.dir)}).`)}` : P(CHAIN['R-0'][1]) }),
+    trucks.length ? h('p', { class: 'small', text: L(`货车在 ${[...new Set(trucks.map((c) => c.name))].join('、')} 查链条，小车不受影响。`, `Trucks are being screened at ${[...new Set(trucks.map((c) => c.name))].join(', ')}; cars aren’t.`) }) : null,
+    active.length ? h('ul', { class: 'cp' }, active.map(cpRow)) : null,
+    h('details', { style: 'margin-top:8px' }, h('summary', { class: 'fold small muted', text: L(`全部 ${rd.chains.length} 个检查点`, `All ${rd.chains.length} checkpoints`) }), h('ul', { class: 'cp' }, rd.chains.map(cpRow))));
+}
+
+function renderRoadText() {
+  const box = $('roadtext'), rd = roads(), r = R();
+  const buttons = h('div', { class: 'links', style: 'margin-top:4px' },
+    h('a', { class: 'btn primary', href: 'https://quickmap.dot.ca.gov/', target: '_blank', rel: 'noopener', text: L('打开 QuickMap 看封路 →', 'Closures on QuickMap →') }),
+    h('a', { class: 'btn', href: r.links.report, target: '_blank', rel: 'noopener', text: L('雪场官方 Mountain Report →', 'Mountain report →') }));
+  if (!D('roads')) {
+    fill(box, h('h3', { text: L('Caltrans 官方路况原文', 'Caltrans road conditions, in its own words') }),
+      h('p', { class: 'err', style: 'margin:8px 0 12px', text: state.errors.roads ? L('原文要经 ski-roads 服务器读取，现在连不上。链条管制、施工和摄像头直接从 Caltrans 取，不受影响；原文去 QuickMap 或 roads.dot.ca.gov 看。', 'The text is read through the ski-roads server, which can’t be reached right now. Chain controls, closures and cameras come straight from Caltrans and are unaffected; read the text on QuickMap or roads.dot.ca.gov.') : L('正在取原文…', 'Fetching the text…') }), buttons);
+    return;
+  }
+  const blocks = Object.entries(rd.text).map(([n, t]) => h('div', null,
+    h('h3', null, t.route, h('small', { text: rd.textAsof ? L(`截至 ${whenShort(rd.textAsof)}`, `as of ${whenShort(rd.textAsof)}`) : '' })),
+    t.items.length ? t.items.map((s, i) => [s.area && (i === 0 || t.items[i - 1].area !== s.area) ? h('div', { class: 'area', text: s.area }) : null, h('p', { class: closedText(s.text) ? 'closed' : chainText(s.text) ? 'chains' : null, lang: 'en', text: s.text })])
+      : h('p', { class: 'muted', text: t.known ? L('这一段路暂无交通限制报告。', 'No restrictions reported on this stretch.') : L('Caltrans 这次没给出这条路的原文。', 'Caltrans sent no text for this highway this time.') })));
+  fill(box, h('div', { class: 'road-text' }, h('h3', { text: L('Caltrans 官方路况原文', 'Caltrans road conditions, in its own words'), style: 'font-size:16px' }),
+    h('p', { class: 'small muted', text: (() => {
+      const cs = [...new Set(legs().flatMap((l) => l.counties))];
+      const whole = state.from === 'far' ? legs().map((l) => l.route).filter((x) => x === 'I-80' || x === 'US-50') : [];
+      return whole.length
+        ? L(`${[...new Set(whole)].join('、')} 从湾区一路都在路上，全留；其他路只留这趟经过的县（${cs.join('、')}）。`, `All of ${[...new Set(whole)].join(' and ')} is on the way from the Bay Area; for the other highways, only the counties this drive crosses (${cs.join(', ')}).`)
+        : L(`只留下这趟路经过的县（${cs.join('、')}）的条目。`, `Only the stretches in the counties this drive crosses (${cs.join(', ')}).`);
+    })() }), blocks, buttons));
+}
+
+function renderClosures() {
+  const box = $('closures'), rd = roads(), now = Date.now();
+  const chpClosed = rd.incidents.filter((x) => x.kind === 'closure');
+  // 'on' is Caltrans' 10-97, the crew has set the closure up; a closure in its hours without it may not have started
+  const state3 = (c) => (c.on ? 2 : c.start <= now && (!c.end || c.end > now) ? 1 : 0);
+  const items = rd.closures.map((c) => ({ c, s: state3(c) })).sort((a, b) => b.s - a.s || a.c.start - b.c.start);
+  if (!items.length && !chpClosed.length) {
+    fill(box, rd.missing.includes('closures') && !D('chp')
+      ? h('p', { class: 'err', text: L('施工封路暂时拿不到。', 'Closures are unavailable right now.') })
+      : [h('p', null, h('b', { style: 'color:var(--good-ink)', text: L('目前无封闭', 'Nothing closed') })),
+        h('p', { class: 'note', text: L('这趟路上现在没有 CHP 通报的封路，Caltrans 也没有正在或 36 小时内要做的施工封路。', 'No closure reported by CHP on the way, and no Caltrans work zone on it now or in the next 36 hours.') })]);
+    return;
+  }
+  const tag = (s, c) => h('span', { class: 'tag ' + (s === 2 ? (c.type === 'Full' ? 'crit' : 'warn') : s === 1 ? 'warn' : ''), text: [L('计划', 'planned'), L('计划时段内', 'in its hours'), L('施工中', 'set up')][s] });
+  const row = ({ c, s }) => h('li', null,
+    h('div', { class: 'what' }, tag(s, c), `${c.route} · ${P(CLOSE_TYPE[c.type] || [c.type, c.type])}`),
+    h('div', { class: 'where', text: `${c.from} → ${c.to} · ${dirWord(c.dir)} · ${state.lang === 'zh' ? WORK_ZH[c.work] || c.work : c.work}${c.type === 'Lane' && c.lanes ? ` · ${L('封', 'lanes')} ${c.lanes}${c.of ? ' / ' + c.of : ''}` : ''}` }),
+    h('div', { class: 'when', text: `${whenShort(c.start)} – ${c.end ? whenShort(c.end) : L('未定', 'open-ended')}${c.delay && /^\d+$/.test(c.delay) && +c.delay > 0 ? L(` · 预计耽误 ${c.delay} 分钟`, ` · about ${c.delay} min delay`) : ''}` }));
+  const now2 = items.filter((x) => x.s > 0), later = items.filter((x) => x.s === 0);
+  fill(box,
+    chpClosed.length || now2.length ? h('ul', { class: 'list' },
+      chpClosed.map((x) => h('li', null, h('div', { class: 'what' }, h('span', { class: 'tag crit', text: 'CHP' }), chpWord(x.type)), h('div', { class: 'where', text: `${x.where}${x.desc ? ' · ' + x.desc : ''}${x.area ? ' · ' + x.area : ''}` }), h('div', { class: 'when', text: L(`开始于 ${whenShort(x.at)}`, `since ${whenShort(x.at)}`) }))),
+      now2.map(row)) : h('p', null, h('b', { style: 'color:var(--good-ink)', text: L('现在没有封路', 'Nothing closed right now') })),
+    later.length ? h('details', { style: 'margin-top:10px' }, h('summary', { class: 'fold small muted', text: L(`另有 ${later.length} 条计划中的施工（多在夜里）`, `${later.length} more planned, mostly at night`) }), h('ul', { class: 'list', style: 'margin-top:6px' }, later.map(row))) : null);
+}
+
+function renderChp() {
+  const box = $('chp'), rd = roads();
+  if (!D('chp')) {
+    fill(box, h('p', { class: 'err', text: state.errors.chp ? L('CHP 事故要经 ski-roads 服务器读取，现在连不上；去 QuickMap 看 CHP Incidents 图层。', 'CHP incidents come through the ski-roads server, which can’t be reached right now; see the CHP Incidents layer on QuickMap.') : L('正在取 CHP 事故…', 'Fetching CHP incidents…') }));
+    return;
+  }
+  const inc = rd.incidents.filter((x) => x.kind === 'incident');
+  const row = (x) => h('li', null, h('div', { class: 'what' }, x.kind === 'incident' ? h('span', { class: 'tag crit', text: '!' }) : null, chpWord(x.type), h('span', { class: 'muted small', style: 'font-weight:500', lang: 'en', text: x.type })),
+    h('div', { class: 'where', text: `${x.where}${x.desc ? ' · ' + x.desc : ''}${x.area ? ' · ' + x.area : ''}` }),
+    h('div', { class: 'when', text: L(`开始于 ${whenShort(x.at)}${x.last ? ` · 最近更新 ${whenShort(x.last)}` : ''} · ${x.center === 'TKCC' ? 'Truckee' : 'Sacramento'}`, `since ${whenShort(x.at)}${x.last ? `, updated ${whenShort(x.last)}` : ''} · ${x.center === 'TKCC' ? 'Truckee' : 'Sacramento'}`) }));
+  $('chp-h').replaceChildren(L('CHP 实时事故 · 走廊 ', 'CHP incidents on the way: '), h('span', { class: 'count', text: String(inc.length) }), L(' 条', ''));
+  fill(box,
+    inc.length ? h('ul', { class: 'list' }, inc.map(row)) : h('p', null, h('b', { style: 'color:var(--good-ink)', text: L('走廊上现在没有事故', 'No incidents on the way') })),
+    rd.info.length ? h('details', { style: 'margin-top:10px' }, h('summary', { class: 'fold small muted', text: L(`另有 ${rd.info.length} 条信息类通报（雪况、施工协助等，不算事故）`, `${rd.info.length} notices too (snow, work-zone help and the like, not incidents)`) }), h('ul', { class: 'list', style: 'margin-top:6px' }, rd.info.map(row))) : null,
+    h('p', { class: 'small muted', style: 'margin-top:10px', text: L('来自 CHP 的公开调度记录（QuickMap 的 CHP Incidents 图层也是它）。只显示是什么、在哪、什么时候，不转载调度员的记录。', 'From CHP’s public dispatch log, the source of QuickMap’s CHP Incidents layer. Only what, where and when; the dispatchers’ notes are left out.') }));
+}
+
+// The map: Leaflet, loaded the first time the Roads tab opens
+let mapObj = null, mapLayer = null, leafletP = null;
+function loadLeaflet() {
+  if (window.L && window.L.map) return Promise.resolve(window.L);
+  if (leafletP) return leafletP;
+  leafletP = new Promise((resolve, reject) => {
+    const css = h('link', { rel: 'stylesheet', href: LEAFLET.css, integrity: LEAFLET.cssSri, crossorigin: '' });
+    document.head.append(css);
+    const s = h('script', { src: LEAFLET.js, integrity: LEAFLET.jsSri, crossorigin: '' });
+    s.onload = () => resolve(window.L); s.onerror = () => { leafletP = null; reject(new Error('leaflet')); };
+    document.head.append(s);
+  });
+  return leafletP;
+}
+const isDark = () => { const t = document.documentElement.getAttribute('data-theme'); return t ? t === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches; };
+let tileLayer = null;
+async function renderMap() {
+  const rd = roads();
+  fill($('map-legend'),
+    h('div', null, h('span', { class: 'pin cam', text: '1' }), L('编号 = 摄像头（和下面照片的顺序一致，点钉看画面）', 'Numbers are cameras, in the order of the pictures below')),
+    h('div', null, h('span', { class: 'pin inc', text: '!' }), L('红钉 = CHP 实时事故', 'Red: a CHP incident')),
+    h('div', null, h('span', { class: 'pin clo', text: '×' }), L('橙钉 = 封路或施工', 'Orange: a closure or work zone')),
+    h('div', null, h('span', { class: 'pin cc', text: 'R-2' }), L('黄签 = 有链条管制的检查点', 'Yellow: a checkpoint with chain controls')),
+    h('div', null, h('a', { href: 'https://quickmap.dot.ca.gov/', target: '_blank', rel: 'noopener', text: L('实时车速红黄绿看 QuickMap →', 'Live traffic speeds on QuickMap →') })));
+  let Lf;
+  try { Lf = await loadLeaflet(); } catch (e) { fill($('map'), h('p', { class: 'err', style: 'margin:12px', text: L('地图加载不了（jsDelivr）。', 'The map couldn’t load (jsDelivr).') })); return; }
+  if (state.tab !== 'roads') return;
+  if (!mapObj) {
+    mapObj = Lf.map('map', { scrollWheelZoom: false, zoomControl: true, attributionControl: true });
+    mapLayer = Lf.layerGroup().addTo(mapObj);
+  }
+  const dark = isDark();
+  // OpenStreetMap's own tiles, which need no key; in the dark theme the page inverts them (see .map.dark)
+  if (!tileLayer) {
+    tileLayer = Lf.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19,
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' }).addTo(mapObj);
+  }
+  $('map').classList.toggle('dark', dark);
+  mapLayer.clearLayers();
+  for (const l of state.legs) Lf.polyline(l.path, { color: dark ? '#6DB0EE' : '#1C64A8', weight: 4, opacity: 0.55 }).addTo(mapLayer);
+  const esc = (t) => String(t).replace(/[&<>"']/g, (ch) => '&#' + ch.charCodeAt(0) + ';');
+  const icon = (cls, text) => Lf.divIcon({ className: '', html: `<span class="pin ${cls}">${esc(text)}</span>`, iconSize: [24, 24], iconAnchor: [12, 12] });
+  for (const c of rd.cams) {
+    const m = Lf.marker([c.lat, c.lon], { icon: icon('cam', c.n), title: c.name, keyboard: true }).addTo(mapLayer);
+    const pop = h('div', null, h('b', { text: `${c.n} · ${c.route} · ${camName(c)}` }));
+    const img = safeUrl(c.img, ['dot.ca.gov']);
+    if (img) { const im = h('img', { src: img + '?t=' + Math.floor(Date.now() / CAM_MS), alt: camName(c) }); im.addEventListener('click', () => openCam(c)); pop.append(im); }
+    m.bindPopup(pop);
+  }
+  for (const c of rd.chains.filter((x) => chainRank(x.status) >= 1)) Lf.marker([c.lat, c.lon], { icon: icon('cc', c.status.replace(/\s.*/, '')), zIndexOffset: 400 }).addTo(mapLayer).bindPopup(h('div', null, h('b', { text: `${c.status} · ${c.name}` }), `${c.route} · ${dirWord(c.dir)}`));
+  for (const x of rd.incidents) Lf.marker([x.lat, x.lon], { icon: icon(x.kind === 'closure' ? 'clo' : 'inc', x.kind === 'closure' ? '×' : '!'), zIndexOffset: 600 }).addTo(mapLayer).bindPopup(h('div', null, h('b', { text: chpWord(x.type) }), `${x.where} · ${whenShort(x.at)}`));
+  const now = Date.now();
+  for (const c of rd.closures.filter((x) => x.on || (x.start <= now && (!x.end || x.end > now)))) Lf.marker([c.lat, c.lon], { icon: icon('clo', '×'), zIndexOffset: 500 }).addTo(mapLayer).bindPopup(h('div', null, h('b', { text: `${c.route} · ${P(CLOSE_TYPE[c.type] || [c.type, c.type])}` }), `${c.from} → ${c.to} · ${whenShort(c.start)}`));
+  const key = state.resort + state.from;
+  if (mapObj._fitKey !== key) {
+    mapObj.invalidateSize();
+    mapObj.fitBounds(Lf.latLngBounds(state.legs.flatMap((l) => l.path)), { padding: [24, 24] });
+    mapObj._fitKey = key;
+  } else mapObj.invalidateSize();
+}
+
+const camName = (c) => c.name.replace(/_/g, ' ').replace(/\b(ED|PLA|NEV|SAC|ALP|AMA)\s?(50|80|89|88|267|28)\b/g, '').replace(/^\d+\s*-\s*/, '').replace(/\s+/g, ' ').trim();
+let camTimer = null, camObserver = null;
+function renderRoadCams() {
+  const box = $('roadcams'), rd = roads();
+  if (!rd.cams.length) { fill(box, h('p', { class: 'err', text: rd.missing.includes('cams') ? L('摄像头暂时拿不到（Caltrans）。', 'The cameras are unavailable right now (Caltrans).') : L('正在取摄像头…', 'Fetching the cameras…') })); return; }
+  const t = Math.floor(Date.now() / CAM_MS);
+  if (camObserver) camObserver.disconnect();
+  camObserver = 'IntersectionObserver' in window ? new IntersectionObserver((es) => { for (const e of es) e.target.dataset.seen = e.isIntersecting ? '1' : ''; }, { rootMargin: '100px' }) : null;
+  const groups = state.legs.map((l) => ({ l, cams: rd.cams.filter((c) => c.leg === l.i) })).filter((g) => g.cams.length);
+  const first = groups.length > 1 && state.from === 'far' ? groups[0].l.i : -1;
+  fill(box, groups.map((g) => h('details', { class: 'card cam-group', open: g.l.i !== first },
+    h('summary', { class: 'fold' }, h('div', null, h('b', { text: P(g.l.name) }), h('span', { text: L(`${g.cams.length} 个摄像头`, `${g.cams.length} cameras`) }))),
+    h('div', { class: 'cams' }, g.cams.map((c) => {
+      const src = safeUrl(c.img, ['dot.ca.gov']);
+      const img = h('img', { src: src ? src + '?t=' + t : '', alt: `${c.route} ${camName(c)}`, loading: 'lazy', decoding: 'async', 'data-src': src || '' });
+      if (camObserver) camObserver.observe(img);
+      // Caltrans sometimes answers a picture with an error page; say so instead of a broken image
+      const frame = h('div', { class: 'img', 'data-broken': L('这个摄像头暂时没有画面', 'No picture from this camera right now') }, img, h('span', { class: 'pin cam n', text: c.n }));
+      img.addEventListener('error', () => frame.classList.add('broken'));
+      img.addEventListener('load', () => frame.classList.remove('broken'));
+      return h('button', { class: 'cam', type: 'button', onclick: () => openCam(c) },
+        frame,
+        h('div', { class: 'cap' }, h('b', { text: c.route }), ' · ', camName(c), c.video ? h('span', { class: 'vid', text: L('可看视频', 'video') }) : null));
+    })))));
+  clearInterval(camTimer);
+  camTimer = setInterval(() => refreshCams(false), CAM_MS);
+}
+function refreshCams(all) {
+  if (document.hidden || state.tab !== 'roads') return;
+  const t = Math.floor(Date.now() / CAM_MS) + (all ? '-' + Date.now() % 1000 : '');
+  for (const img of document.querySelectorAll('#roadcams img[data-src]')) {
+    if (!img.dataset.src) continue;
+    if (!all && camObserver && img.dataset.seen !== '1') continue;
+    if (img.closest('details') && !img.closest('details').open) continue;
+    img.src = img.dataset.src + '?t=' + t;
+  }
+}
+
+// The camera viewer: the picture large, Caltrans' twelve earlier frames (about 15 minutes apart, so the
+// last three hours), and the live video where there is one
+let hlsP = null, hlsObj = null, playTimer = null;
+function loadHls() {
+  if (window.Hls) return Promise.resolve(window.Hls);
+  return hlsP || (hlsP = new Promise((res, rej) => { const s = h('script', { src: HLS.js, integrity: HLS.sri, crossorigin: '' }); s.onload = () => res(window.Hls); s.onerror = () => { hlsP = null; rej(new Error('hls')); }; document.head.append(s); }));
+}
+function stopVideo() { clearInterval(playTimer); if (hlsObj) { hlsObj.destroy(); hlsObj = null; } }
+function openCam(c) {
+  const dlg = $('viewer'), src = safeUrl(c.img, ['dot.ca.gov']); if (!src) return;
+  stopVideo();
+  const m = /^(.*\/image\/)([^/]+)\/\2\.jpg$/.exec(src);
+  const frames = [src + '?t=' + Date.now()];
+  if (m) for (let k = 1; k <= 12; k++) frames.push(`${m[1]}${m[2]}/previous/${m[2]}-${k}.jpg?t=${Math.floor(Date.now() / CAM_MS)}`);
+  $('viewer-title').textContent = `${c.n ? c.n + ' · ' : ''}${c.route} · ${camName(c)}`;
+  $('viewer-sub').textContent = `${c.place}${c.elev ? ` · ${U.elev(c.elev / 3.28084)} ${U.eu()}` : ''} · Caltrans`;
+  const img = h('img', { src: frames[0], alt: `${c.route} ${camName(c)}` });
+  const note = h('p', { class: 'err', style: 'margin:16px', hidden: true, text: L('这一帧暂时没有（Caltrans 那边出错），换一帧或往前看看。', 'This frame isn’t available (an error at Caltrans); try another one.') });
+  img.addEventListener('error', () => { img.hidden = true; note.hidden = false; });
+  img.addEventListener('load', () => { img.hidden = false; note.hidden = true; });
+  fill($('viewer-frame'), img, note);
+  const label = h('span', { class: 'num', style: 'min-width:6.5em;text-align:right', text: L('现在', 'now') });
+  const range = h('input', { type: 'range', min: '0', max: String(frames.length - 1), value: '0', step: '1', 'aria-label': L('往前看几帧', 'Earlier frames') });
+  const show = (k) => { img.src = frames[k]; label.textContent = k ? L(`约 ${k * 15} 分钟前`, `about ${k * 15} min ago`) : L('现在', 'now'); };
+  range.addEventListener('input', () => show(frames.length - 1 - +range.value));
+  range.value = String(frames.length - 1);
+  const play = h('button', { type: 'button', class: 'btn', text: L('播放过去 3 小时', 'Play the last 3 hours') });
+  play.addEventListener('click', () => {
+    for (const u of frames) { const pre = new Image(); pre.src = u; }
+    clearInterval(playTimer); let k = frames.length - 1; show(k); range.value = '0';
+    playTimer = setInterval(() => { k--; if (k < 0) { clearInterval(playTimer); return; } show(k); range.value = String(frames.length - 1 - k); }, 450);
+  });
+  const vurl = safeUrl(c.video, ['dot.ca.gov']);
+  const vbtn = vurl ? h('button', { type: 'button', class: 'btn primary', text: L('看直播视频', 'Live video') }) : null;
+  if (vbtn) vbtn.addEventListener('click', async () => {
+    stopVideo();
+    const v = h('video', { controls: true, playsinline: true, muted: true, autoplay: true });
+    fill($('viewer-frame'), v);
+    const fail = () => fill($('viewer-frame'), h('p', { class: 'err', style: 'margin:16px', text: L('直播暂时打不开（Caltrans 的视频时有时无），看静态图吧。', 'The live video won’t play right now (Caltrans’ streams come and go); the pictures still work.') }));
+    v.addEventListener('error', fail);
+    if (v.canPlayType('application/vnd.apple.mpegurl')) { v.src = vurl; v.play().catch(() => {}); return; }
+    try {
+      const Hls = await loadHls();
+      if (!Hls.isSupported()) return fail();
+      hlsObj = new Hls({ enableWorker: true }); hlsObj.loadSource(vurl); hlsObj.attachMedia(v);
+      hlsObj.on(Hls.Events.ERROR, (_, d) => { if (d.fatal) { stopVideo(); fail(); } });
+      v.play().catch(() => {});
+    } catch (e) { fail(); }
+  });
+  fill($('viewer-foot'),
+    m ? h('div', { class: 'scrub' }, h('span', { text: L('3 小时前', '3 h ago') }), range, label) : null,
+    h('div', { class: 'links' }, m ? play : null, vbtn));
+  if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+}
+$('viewer-x').addEventListener('click', () => $('viewer').close());
+$('viewer').addEventListener('close', stopVideo);
+$('viewer').addEventListener('click', (ev) => { if (ev.target === $('viewer')) $('viewer').close(); });
+$('cams-refresh').addEventListener('click', () => refreshCams(true));
+
+// ---------- the packing list, kept in this browser ----------
+const GROUPS = { all: ['全家', 'Everyone'], adults: ['大人', 'Adults'], kids: ['孩子', 'Kids'], car: ['车里', 'In the car'], mine: ['我加的', 'Added'] };
+const WHERE = { home: ['家里', 'Home'], car: ['车上', 'Car'], there: ['山上', 'Up there'] };
+function defaultList() {
+  let n = 0;
+  return PACKING.flatMap((g) => g.items.map(([text, where]) => ({ id: 'd' + (n++), group: g.group, text, where: where || 'home', done: false })));
+}
+let pack = (() => { try { const x = JSON.parse(store.get('list') || 'null'); if (x && Array.isArray(x.items)) return x.items; } catch (e) {} return defaultList(); })();
+const savePack = () => store.set('list', JSON.stringify({ v: 1, items: pack }));
+const itemText = (it) => (Array.isArray(it.text) ? P(it.text) : String(it.text || ''));
+function renderPack() {
+  const box = $('pack');
+  const shown = pack.filter((it) => state.kids || it.group !== 'kids');
+  const done = shown.filter((it) => it.done).length;
+  const groups = Object.keys(GROUPS).map((g) => ({ g, items: shown.filter((it) => it.group === g) })).filter((x) => x.items.length);
+  const input = h('input', { type: 'text', maxlength: '80', placeholder: L('还缺什么？比如：雪镜防雾布', 'Something missing? e.g. an anti-fog cloth'), 'aria-label': L('加一样东西', 'Add an item') });
+  const sel = h('select', { 'aria-label': L('放进哪一组', 'Group') }, Object.entries(GROUPS).filter(([k]) => k !== 'mine' && (state.kids || k !== 'kids')).map(([k, w]) => h('option', { value: k, text: P(w) })));
+  const add = (ev) => { ev.preventDefault(); const t = input.value.trim(); if (!t) return; pack.push({ id: 'u' + Date.now().toString(36), group: sel.value, text: t, where: 'home', done: false }); savePack(); renderPack(); $('pack').querySelector('input[type=text]').focus(); };
+  fill(box,
+    h('p', { class: 'note', text: L('出门前对着这张单子装车：装好了就勾掉；「放在」记的是这件东西平时在哪边（家里、车上，还是已经放在山上的住处或储物柜），在山上已经有的，就不用从家里带。单子存在这个浏览器里，可以随手加减。', 'Pack the car against this list and tick things off. “Kept” is where each thing usually is: at home, in the car, or already up at the mountain in a cabin or locker, in which case it needn’t come from home. The list stays in this browser; add and remove as you like.') }),
+    h('div', { class: 'pack-h' }, h('b', { text: L(`已装好 ${done} / ${shown.length}`, `Packed ${done} of ${shown.length}`) }),
+      h('div', { class: 'links' },
+        h('label', { class: 'switch' }, h('input', { type: 'checkbox', checked: state.kids, onchange: (ev) => setKids(ev.target.checked) }), h('span', { text: L('带娃', 'Kids') })),
+        h('button', { class: 'btn', type: 'button', text: L('全部清零（下趟用）', 'Untick all (next trip)'), onclick: () => { pack.forEach((it) => { it.done = false; }); savePack(); renderPack(); } }))),
+    h('div', { class: 'progress', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': String(shown.length), 'aria-valuenow': String(done) }, h('i', { style: `width:${shown.length ? (100 * done / shown.length).toFixed(1) : 0}%` })),
+    groups.map(({ g, items }) => [h('div', { class: 'group-name', text: P(GROUPS[g]) }), h('ul', { class: 'items' }, items.map((it) => {
+      const id = 'it-' + it.id;
+      return h('li', { class: it.done ? 'done' : null },
+        h('input', { type: 'checkbox', id, checked: it.done, onchange: (ev) => { it.done = ev.target.checked; savePack(); renderPack(); } }),
+        h('label', { class: 'txt', for: id, text: itemText(it) }),
+        h('button', { class: 'del', type: 'button', 'aria-label': L(`删掉 ${itemText(it)}`, `Remove ${itemText(it)}`), text: '×', onclick: () => { pack = pack.filter((x) => x !== it); savePack(); renderPack(); } }),
+        h('div', { class: 'where' }, L('放在', 'Kept'), Object.entries(WHERE).map(([k, w]) => h('button', { type: 'button', 'aria-pressed': String(it.where === k), text: P(w), onclick: () => { it.where = k; savePack(); renderPack(); } }))));
+    }))]),
+    h('form', { class: 'add', onsubmit: add }, input, sel, h('button', { class: 'btn primary', type: 'submit', text: L('加上', 'Add') })),
+    h('p', { class: 'small', style: 'margin-top:12px' }, h('a', { href: '#', text: L('换回默认清单', 'Back to the default list'), onclick: (ev) => { ev.preventDefault(); if (confirm(L('换回默认清单？你加的东西会删掉。', 'Go back to the default list? What you added will be removed.'))) { pack = defaultList(); savePack(); renderPack(); } } })));
+}
+
+function renderFoot() {
+  fill($('foot'),
+    h('p', { text: L('数据来源：Open-Meteo（天气、降雪、降雨模型）；NWS 美国国家气象局（警报，和官方网格预报：底下是 NOAA 的 NBM 国家混合模型，含雪线和雪量水量）；Caltrans（链条管制、路况原文、施工封路、摄像头和直播，坐标来自 Caltrans 的官方数据）；CHP（实时事故和封路，就是 QuickMap 的 CHP Incidents 图层的来源）；各雪场官网的摄像头和 Mountain Report。地图 © OpenStreetMap 贡献者。',
+      'Sources: Open-Meteo (weather, snow and rain models); the National Weather Service (alerts, and the official forecast grid: NOAA’s National Blend of Models, with the snow level and the snow and water amounts); Caltrans (chain controls, road conditions text, lane closures, cameras and video, placed by Caltrans’ own coordinates); CHP (incidents and closures, the source of QuickMap’s CHP Incidents layer); and each resort’s own cameras and mountain report. Map © OpenStreetMap contributors.') }),
+    h('p', { text: L('判决只是把这些数据合在一起看，出发前以 QuickMap、CHP 和雪场 Mountain Report 的实时信息为准。四驱、全驱在链条管制区也必须随车带链条。单位默认公制（°C、cm、km/h），可以在顶上切到英制（°F、英寸、mph）。时间都是太浩湖时间。',
+      'The call only puts this data side by side; before you leave, go by QuickMap, CHP and the resort’s own report. In a chain control area even 4WD and AWD must carry chains. Times are Tahoe time.') }),
+    h('p', null, h('a', { href: 'https://open-meteo.com/', text: 'Weather data by Open-Meteo.com' }), ' (CC BY 4.0) · ', h('a', { href: 'https://quickmap.dot.ca.gov/', text: 'Caltrans QuickMap' }), ' · ', h('a', { href: '../', text: 'wentaoz.com' })));
+}
+
+// ---------- events ----------
+function setHash() {
+  const q = new URLSearchParams({ r: state.resort });
+  if (state.tab !== 'overview') q.set('t', state.tab);
+  if (state.from === 'near') q.set('from', 'near');
+  history.replaceState(null, '', '#' + q.toString());
+}
+function setTab(t) { state.tab = t; setHash(); render(); if (t === 'roads' && mapObj) setTimeout(() => mapObj.invalidateSize(), 50); window.scrollTo({ top: Math.min(window.scrollY, $('tabs').offsetTop), behavior: 'auto' }); }
+function setKids(on) { state.kids = on; store.set('kids', on ? '1' : '0'); render(); }
+for (const b of document.querySelectorAll('[data-lang]')) b.addEventListener('click', () => { state.lang = b.dataset.lang; store.set('lang', state.lang); render(); });
+for (const b of document.querySelectorAll('[data-units]')) b.addEventListener('click', () => { state.units = b.dataset.units; store.set('units', state.units); render(); });
+$('resort').addEventListener('change', (ev) => { state.resort = ev.target.value; store.set('resort', state.resort); state.hour = null; setHash(); render(); load(false); });
+for (const b of $('from').querySelectorAll('button')) b.addEventListener('click', () => { if (state.from === b.dataset.from) return; state.from = b.dataset.from; store.set('from', state.from); setHash(); render(); load(false); });
+$('refresh').addEventListener('click', () => load(true));
+$('kids').addEventListener('change', (ev) => setKids(ev.target.checked));
+const tabKeys = ['overview', 'weather', 'roads', 'pack'];
+for (const k of tabKeys) {
+  $('tab-' + k).addEventListener('click', () => setTab(k));
+  $('tab-' + k).addEventListener('keydown', (ev) => {
+    const i = tabKeys.indexOf(k), j = ev.key === 'ArrowRight' ? (i + 1) % 4 : ev.key === 'ArrowLeft' ? (i + 3) % 4 : ev.key === 'Home' ? 0 : ev.key === 'End' ? 3 : -1;
+    if (j >= 0) { ev.preventDefault(); setTab(tabKeys[j]); $('tab-' + tabKeys[j]).focus(); }
+  });
+}
+window.addEventListener('hashchange', () => {
+  const q = new URLSearchParams(location.hash.slice(1));
+  let changed = false;
+  if (resortById(q.get('r')) && q.get('r') !== state.resort) { state.resort = q.get('r'); changed = true; }
+  const from = q.get('from') === 'near' ? 'near' : 'far'; if (from !== state.from) { state.from = from; changed = true; }
+  const t = tabKeys.includes(q.get('t')) ? q.get('t') : 'overview'; state.tab = t;
+  render(); if (changed) load(false);
+});
+// light / dark: follows the system until chosen; the choice is shared with the homepage
+const root = document.documentElement, mqDark = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+function showTheme() { const b = $('btn-theme'); b.setAttribute('aria-pressed', isDark() ? 'true' : 'false'); b.textContent = isDark() ? L('浅色', 'Light') : L('深色', 'Dark'); }
+$('btn-theme').addEventListener('click', () => {
+  const next = isDark() ? 'light' : 'dark', system = mqDark && mqDark.matches ? 'dark' : 'light';
+  if (next === system) root.removeAttribute('data-theme'); else root.setAttribute('data-theme', next);
+  try { if (next === system) localStorage.removeItem('wentaoz.theme'); else localStorage.setItem('wentaoz.theme', next); } catch (e) {}
+  showTheme(); if (state.tab === 'roads') renderMap();
+});
+if (mqDark && mqDark.addEventListener) mqDark.addEventListener('change', () => { showTheme(); if (state.tab === 'roads') renderMap(); });
+$('btn-theme').hidden = false;
+
+setHash();
+render();
+load(false);
+</script>
+<!-- GoatCounter: counts visits without cookies; the totals feed the visitor map on the homepage -->
+<script data-goatcounter="https://wentaoz.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>
