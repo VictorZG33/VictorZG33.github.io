@@ -197,7 +197,8 @@ dialog.sheet::backdrop { background: rgb(12 18 24 / 0.45); }
 .files { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: flex-start; gap: 6px; margin: 3px 0 6px; white-space: normal; }
 .files:last-child { margin-bottom: 3px; }
 .files img { display: block; max-width: 160px; max-height: 160px; border-radius: 8px; }
-.doc { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 5px 10px; background: var(--bg); border-radius: 8px; font-size: 13px; }
+.doc { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 5px 10px; background: var(--bg); border: 0; border-radius: 8px; font: inherit; font-size: 13px; color: inherit; text-align: left; }
+button.doc:hover { box-shadow: 0 0 0 1px var(--film); }
 .doc b, .chip .ic { font-size: 10px; font-weight: 700; letter-spacing: 0.04em; color: var(--ink-2); }
 .stamp { margin: 6px 0 14px; text-align: center; font-size: 12px; color: var(--ink-2); }
 
@@ -338,6 +339,31 @@ dialog.sheet::backdrop { background: rgb(12 18 24 / 0.45); }
 .chip.up { opacity: 0.65; }
 .chip .rm { position: absolute; top: 3px; right: 3px; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--ink-2); font-size: 15px; line-height: 1; }
 .chip .rm:hover { background: var(--bg); color: var(--ink); }
+.chip [data-pdf] { cursor: pointer; }
+.link-row { display: flex; align-items: center; gap: 6px; padding: 2px 2px 8px; }
+.link-row input { flex: 1; min-width: 0; padding: 6px 10px; font-size: 15px; background: var(--bg); border: 1px solid var(--rule); border-radius: 9px; outline: 0; }
+.link-row input:focus { border-color: var(--film); }
+@media (pointer: coarse) { .link-row input { font-size: 16px; } }
+.link-go { flex: none; padding: 6px 14px; border: 0; border-radius: 9px; background: var(--film); color: #FFFFFF; font-weight: 600; font-size: 14px; }
+/* the PDF reader: beside the conversation, or over it on a narrow screen */
+:root { --reader: min(48vw, 780px); }
+body.reading .app { margin-right: var(--reader); }
+.reader { position: fixed; inset: 0 0 0 auto; z-index: 5; width: var(--reader); display: flex; flex-direction: column; padding-top: env(safe-area-inset-top, 0px); background: var(--panel); border-left: 1px solid var(--rule); }
+.reader-bar { display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 16px; border-bottom: 1px solid var(--rule); }
+.reader-name { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 14px; font-weight: 600; }
+.reader-at, .reader-found { flex: none; font-size: 12.5px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.reader-tools { flex: none; display: flex; align-items: center; gap: 2px; }
+.reader-tools input { width: 8em; margin-right: 4px; padding: 4px 8px; font-size: 14px; background: var(--bg); border: 1px solid var(--rule); border-radius: 8px; outline: 0; }
+.reader-tools input:focus { border-color: var(--film); }
+@media (pointer: coarse) { .reader-tools input { font-size: 16px; } }
+.reader-view { position: relative; flex: 1; min-height: 0; }
+.reader-scroll { position: absolute; inset: 0; overflow: auto; background: var(--code); }   /* pdf.js wants it absolutely placed */
+.reader-msg { position: absolute; inset: 38% 24px auto; margin: 0; text-align: center; font-size: 14px; color: var(--ink-2); }
+.reader-quote { position: absolute; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); padding: 8px 18px; border: 0; border-radius: 999px; background: var(--film); color: #FFFFFF; font-weight: 600; box-shadow: 0 6px 20px rgb(0 0 0 / 0.22); }
+@media (max-width: 1099px) {
+  .reader { width: 100%; z-index: 7; border-left: 0; }
+  body.reading .app { margin-right: 0; }
+}
 .lock { display: grid; gap: 10px; }
 .lock-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0; }
 .lock-head b { font-size: 17px; font-weight: 600; }
@@ -376,6 +402,24 @@ dialog.sheet::backdrop { background: rgb(12 18 24 / 0.45); }
   <button type="button" role="menuitem" data-do="export">导出 Markdown</button>
   <button type="button" role="menuitem" data-do="delete" class="danger">删除</button>
 </div>
+<aside class="reader" id="reader" hidden aria-label="PDF 阅读器">
+  <div class="reader-bar">
+    <strong class="reader-name" id="reader-name"></strong>
+    <span class="reader-at" id="reader-at"></span>
+    <span class="reader-tools">
+      <input type="search" id="reader-find" placeholder="在里面找" aria-label="在 PDF 里找" enterkeyhint="search">
+      <span class="reader-found" id="reader-found"></span>
+      <button type="button" class="icon" id="reader-out" aria-label="缩小"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 12h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+      <button type="button" class="icon" id="reader-in" aria-label="放大"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 6v12M6 12h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+      <button type="button" class="icon" id="reader-close" aria-label="关掉阅读器"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    </span>
+  </div>
+  <div class="reader-view">
+    <div class="reader-scroll" id="reader-scroll"><div class="pdfViewer" id="reader-pages"></div></div>
+    <p class="reader-msg" id="reader-msg" role="status" hidden></p>
+  </div>
+  <button type="button" class="reader-quote" id="reader-quote" hidden>引用到输入框</button>
+</aside>
 <dialog class="sheet" id="account" aria-labelledby="account-title">
   <form method="dialog" class="sheet-head">
     <h2 id="account-title">账号</h2>
@@ -441,9 +485,19 @@ dialog.sheet::backdrop { background: rgb(12 18 24 / 0.45); }
     </div>
     <form class="composer" id="composer">
       <div class="tray" id="tray" hidden></div>
+      <div class="link-row" id="link-row" hidden>
+        <input type="url" id="link" placeholder="粘贴网上一份 PDF 的链接" aria-label="PDF 的链接" inputmode="url" autocomplete="off" enterkeyhint="done">
+        <button type="button" class="link-go" id="link-go">加上</button>
+        <button type="button" class="icon" id="link-cancel" aria-label="不加了">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
       <div class="row">
         <button type="button" class="icon" id="clip" aria-label="加文件：图片、PDF 或纯文本">
           <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M20.5 11.5 12.3 19.7a5 5 0 0 1-7.1-7.1l8.5-8.5a3.3 3.3 0 0 1 4.7 4.7l-8.5 8.5a1.7 1.7 0 0 1-2.4-2.4l7.8-7.8" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button type="button" class="icon" id="link-btn" aria-label="加网上的一份 PDF：贴它的链接" title="加网上的 PDF">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M10 13.5a4 4 0 0 0 5.7.4l3-3a4 4 0 0 0-5.7-5.7l-1.4 1.4M14 10.5a4 4 0 0 0-5.7-.4l-3 3a4 4 0 0 0 5.7 5.7l1.4-1.4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
         <label class="sr" for="input">消息</label>
         <textarea id="input" rows="1" placeholder="说点什么…"></textarea>
@@ -468,6 +522,7 @@ const PURIFY = 'https://cdn.jsdelivr.net/npm/dompurify@3.4.17/+esm';
 const KATEX = 'https://cdn.jsdelivr.net/npm/katex@0.19.1/+esm';
 const KATEX_CSS = 'https://cdn.jsdelivr.net/npm/katex@0.19.1/dist/katex.min.css';
 const HLJS = 'https://cdn.jsdelivr.net/npm/highlight.js@11.12.0/lib/common/+esm';
+const PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@6.5.438';   // the reader, fetched the first time it opens
 const NOTE_EVERY = 60 * 60 * 1000;   // a new time note for Claude after an hour, or on a new day
 const LOOK_EVERY = 15 * 1000;        // at most this often, a page coming back into view checks the cloud
 const IMAGE_EDGE = 2048;             // pixels on an image's long side, at most, as it is uploaded
@@ -815,11 +870,13 @@ function drawTray() {
   el.hidden = !tray.length;
   el.innerHTML = tray.map((f) => `<span class="chip${f.ready ? '' : ' up'}" data-key="${f.key}">` +
     (THUMB.test(f.thumb || '') ? `<img src="${f.thumb}" alt="">` : `<span class="ic">${f.kind === 'pdf' ? 'PDF' : f.kind === 'text' ? 'TXT' : 'IMG'}</span>`) +
-    `<span class="nm"><span>${esc(f.name)}</span><span class="sz">${f.ready ? sizeOf(f.size) : '上传中…'}</span></span>` +
+    `<span class="nm"${f.kind === 'pdf' && f.ready ? ` data-pdf="${esc(f.id)}" data-name="${esc(f.name)}" title="打开来读"` : ''}><span>${esc(f.name)}</span><span class="sz">${f.ready ? sizeOf(f.size) : f.link ? '在取…' : '上传中…'}</span></span>` +
     `<button type="button" class="rm" aria-label="去掉「${esc(f.name)}」">×</button></span>`).join('');
   updateSend();
 }
 $('tray').addEventListener('click', (e) => {
+  const pdf = e.target.closest('[data-pdf]');
+  if (pdf) return openReader(pdf.dataset.pdf, pdf.dataset.name);
   const b = e.target.closest('.rm');
   if (!b) return;
   const item = tray.find((f) => f.key === b.parentNode.dataset.key);
@@ -1052,6 +1109,7 @@ function day(t) {
 function userHtml(m) {
   // A thumbnail is drawn only if it is one this page made; anything else a file's name
   const files = (m.files || []).map((f) => THUMB.test(f.thumb || '') ? `<img src="${f.thumb}" alt="${esc(f.name)}" title="${esc(f.name)}">`
+    : f.kind === 'pdf' && f.id ? `<button type="button" class="doc" data-pdf="${esc(f.id)}" data-name="${esc(f.name)}" title="${esc(f.link || '打开来读')}"><b>PDF</b>${esc(f.name)}</button>`
     : `<span class="doc"><b>${f.kind === 'pdf' ? 'PDF' : f.kind === 'image' ? 'IMG' : 'TXT'}</b>${esc(f.name)}</span>`).join('');
   return `<article class="msg user"><div class="bubble">${files ? `<div class="files">${files}</div>` : ''}${esc(userText(m))}</div></article>`;
 }
@@ -1147,6 +1205,7 @@ $('scrim').addEventListener('click', () => openSide(false));
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
   if (!menu.hidden) closeMenu(true);
+  else if (!$('reader').hidden && !$('account').open) closeReader();
   else if (document.body.classList.contains('side-open') && !renaming && !$('account').open) openSide(false);
 });
 narrow.addEventListener('change', () => openSide(false));
@@ -1267,6 +1326,198 @@ async function exportChat(id) {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 10000);
 }
+
+// ---------- a PDF from a link ----------
+// The Worker fetches it, as the page can't read other sites, and keeps it as if it had been uploaded:
+// the message then carries it like any PDF, for Claude to read and the reader to show.
+const LINK_FAILS = { bad_link: '链接不对。', not_pdf: '这个链接打开的不是 PDF。', too_big: `PDF 最大 ${MAX_FILE.pdf / 1024 / 1024} MB。`,
+  link_unreachable: '连不上这个网址。', link_status_401: '这个网站要登录才能下载。', link_status_403: '这个网站不让直接下载。', link_status_404: '这个链接打不开（404）。',
+  rate_limited: '加得太快了，等一分钟。' };
+$('link-btn').addEventListener('click', () => {
+  const row = $('link-row');
+  row.hidden = !row.hidden;
+  if (!row.hidden) $('link').focus();
+});
+$('link-cancel').addEventListener('click', () => { $('link-row').hidden = true; $('link').value = ''; input.focus(); });
+$('link').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); addLink(); }
+  else if (e.key === 'Escape') { e.stopPropagation(); $('link-cancel').click(); }
+});
+$('link-go').addEventListener('click', addLink);
+function addLink() {
+  let u = null;
+  try { u = new URL($('link').value.trim()); } catch (e) {}
+  if (!u || !/^https?:$/.test(u.protocol)) return notice('链接要以 http:// 或 https:// 开头。');
+  if (tray.length >= MAX_FILES) return notice(`一条消息最多带 ${MAX_FILES} 个文件。`);
+  $('link').value = '';
+  $('link-row').hidden = true;
+  let name = u.hostname;
+  try { name = decodeURIComponent(u.pathname.split('/').filter(Boolean).pop() || u.hostname); } catch (e) {}
+  const item = { key: newId(), name, size: 0, kind: 'pdf', ready: false, link: u.href };
+  tray.push(item);
+  drawTray();
+  (async () => {
+    const res = await fetch(CHAT_ENDPOINT + '/files/from-link', { method: 'POST', headers: { Authorization: auth(), 'Content-Type': 'application/json' }, body: JSON.stringify({ url: u.href }) });
+    const r = await res.json().catch(() => ({}));
+    if (res.status === 401 && r.error === 'bad_session') { signOut(EXPIRED, false); throw new Error(EXPIRED); }
+    if (!res.ok) throw new Error(LINK_FAILS[r.error] || (/^link_status_\d+$/.test(r.error) ? `这个链接打不开（${r.error.slice(12)}）。` : `出错了：${r.error || res.status}`));
+    if (!tray.includes(item)) return forgetFile(r.id);   // taken off while it came
+    Object.assign(item, { id: r.id, name: r.name || name, size: r.size, ready: true });
+    drawTray();
+  })().catch((err) => {
+    if (!tray.includes(item)) return;
+    tray = tray.filter((x) => x !== item);
+    drawTray();
+    notice(`「${item.name}」没加上：${err.message}`);
+  });
+}
+
+// ---------- the PDF reader ----------
+// A PDF a message carries opens beside the conversation (over it, on a narrow screen), drawn by pdf.js
+// from the copy the Worker keeps of each PDF. Text can be found in it, and a selection quoted into the
+// box with its page, for asking Claude about.
+// pdf.js once loaded, with the PDF it shows (id, and the task that loaded it); and the bytes of the
+// PDFs opened this visit, the latest up to 64 MB of them, so that going back to one fetches nothing
+const pdfjs = {}, pdfBytes = new Map(), PDF_BYTES = 64 * 1024 * 1024;
+let readerSeq = 0;
+function keepBytes(id, bytes) {
+  pdfBytes.set(id, bytes);
+  let total = 0;
+  for (const b of pdfBytes.values()) total += b.length;
+  for (const [k, b] of pdfBytes) {
+    if (total <= PDF_BYTES || k === id) break;
+    pdfBytes.delete(k);
+    total -= b.length;
+  }
+}
+const dropTask = (task) => task.destroy().catch(() => {});
+// Loads pdf.js and sets up the viewer, once, however many PDFs are opened while it loads; after a
+// failure, the next PDF opened tries again
+let readerLoad = null;
+function readerLib() {
+  return readerLoad ||= setUpReader().catch((e) => { readerLoad = null; throw e; });
+}
+async function setUpReader() {
+  if (!document.querySelector('link[data-pdfjs]')) document.head.insertAdjacentHTML('beforeend', `<link rel="stylesheet" href="${PDFJS}/web/pdf_viewer.css" data-pdfjs>`);
+  const lib = await import(`${PDFJS}/build/pdf.min.mjs`);
+  lib.GlobalWorkerOptions.workerSrc = `${PDFJS}/build/pdf.worker.min.mjs`;
+  globalThis.pdfjsLib = lib;   // the viewer finds pdf.js here
+  const ui = await import(`${PDFJS}/web/pdf_viewer.mjs`);
+  const bus = new ui.EventBus();
+  const links = new ui.PDFLinkService({ eventBus: bus, externalLinkTarget: ui.LinkTarget.BLANK, externalLinkRel: 'noopener noreferrer' });
+  const finder = new ui.PDFFindController({ eventBus: bus, linkService: links });
+  const viewer = new ui.PDFViewer({ container: $('reader-scroll'), viewer: $('reader-pages'), eventBus: bus, linkService: links, findController: finder });
+  links.setViewer(viewer);
+  bus.on('pagesinit', () => { viewer.currentScaleValue = 'page-width'; });
+  bus.on('pagechanging', ({ pageNumber }) => { $('reader-at').textContent = `${pageNumber} / ${viewer.pagesCount}`; });
+  bus.on('updatefindmatchescount', ({ matchesCount }) => { $('reader-found').textContent = matchesCount.total ? `${matchesCount.current} / ${matchesCount.total}` : ''; });
+  bus.on('updatefindcontrolstate', ({ state }) => { if (state === 1) $('reader-found').textContent = '没找到'; });
+  // A panel that changes width refits pages fitted to its width; not while it is closed, as then it has none
+  new ResizeObserver(() => {
+    if (viewer.pdfDocument && viewer.currentScaleValue === 'page-width' && $('reader-scroll').clientWidth) viewer.currentScaleValue = 'page-width';
+  }).observe($('reader-scroll'));
+  Object.assign(pdfjs, { lib, viewer, links, bus });
+  return pdfjs;
+}
+async function openReader(id, name) {
+  if (!id) return;
+  const seq = ++readerSeq, say = (t) => { $('reader-msg').textContent = t; $('reader-msg').hidden = !t; };
+  document.body.classList.add('reading');
+  $('reader').hidden = false;
+  $('reader-name').textContent = name || 'PDF';
+  if (pdfjs.id === id) return say('');   // still there, at the page it was left on
+  $('reader-at').textContent = '';
+  $('reader-found').textContent = '';
+  $('reader-find').value = '';
+  say('在打开…');
+  try {
+    const { lib, viewer, links } = await readerLib();
+    if (pdfjs.task) {   // the one before goes at once, not to be seen under this one's name
+      viewer.setDocument(null);
+      links.setDocument(null);
+      dropTask(pdfjs.task);
+      pdfjs.task = pdfjs.id = null;
+    }
+    let bytes = pdfBytes.get(id);
+    if (!bytes) {
+      const res = await fetch(CHAT_ENDPOINT + '/files/' + id, { headers: { Authorization: auth() } });
+      if (await ended(res)) return signOut(EXPIRED, false);
+      if (res.status === 404) throw new Error('这份 PDF 是加阅读器之前发的，当时没存副本，打不开。');
+      if (!res.ok) throw new Error('打不开：连不上服务器。');
+      bytes = new Uint8Array(await res.arrayBuffer());
+      keepBytes(id, bytes);
+    }
+    if (seq !== readerSeq) return;   // another one was opened meanwhile, or the reader closed
+    // pdf.js hands the bytes to its worker, which takes them, hence a copy
+    const task = lib.getDocument({ data: bytes.slice(), cMapUrl: `${PDFJS}/cmaps/`, cMapPacked: true, standardFontDataUrl: `${PDFJS}/standard_fonts/`, wasmUrl: `${PDFJS}/wasm/`, iccUrl: `${PDFJS}/iccs/` });
+    let doc;
+    try { doc = await task.promise; } catch (e) {
+      dropTask(task);
+      throw new Error('这份 PDF 打不开，可能坏了。');
+    }
+    if (seq !== readerSeq) return dropTask(task);
+    viewer.setDocument(doc);
+    links.setDocument(doc, null);
+    Object.assign(pdfjs, { id, task });
+    $('reader-at').textContent = `1 / ${doc.numPages}`;
+    say('');
+  } catch (e) {
+    if (seq === readerSeq) say(e.message || '打不开这份 PDF。');
+  }
+}
+function closeReader() {
+  readerSeq++;
+  document.body.classList.remove('reading');
+  $('reader').hidden = true;
+  $('reader-quote').hidden = true;
+  picked = null;
+}
+$('reader-close').addEventListener('click', closeReader);
+$('reader-in').addEventListener('click', () => { if (pdfjs.viewer && pdfjs.viewer.pdfDocument) pdfjs.viewer.increaseScale(); });
+$('reader-out').addEventListener('click', () => { if (pdfjs.viewer && pdfjs.viewer.pdfDocument) pdfjs.viewer.decreaseScale(); });
+// Finding: as it is typed, and Enter (Shift+Enter) for the next (the one before)
+function findInPdf(again, back) {
+  if (!pdfjs.bus) return;
+  const query = $('reader-find').value;
+  if (!query) $('reader-found').textContent = '';
+  pdfjs.bus.dispatch('find', { source: null, type: again ? 'again' : '', query, caseSensitive: false, entireWord: false, highlightAll: true, findPrevious: !!back, matchDiacritics: false });
+}
+$('reader-find').addEventListener('input', () => findInPdf(false));
+$('reader-find').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); findInPdf(true, e.shiftKey); }
+  else if (e.key === 'Escape') { e.stopPropagation(); $('reader-find').value = ''; findInPdf(false); }
+});
+// Quoting: a selection in the PDF shows the button, which puts it in the box with its page. What was
+// selected is kept as it is made, as on a phone the tap on the button can clear the selection first.
+let picked = null, pressed = 0;
+function readerSelection() {
+  const sel = getSelection(), box = $('reader-scroll');
+  return sel && sel.rangeCount && !sel.isCollapsed && box.contains(sel.anchorNode) && box.contains(sel.focusNode) && sel.toString().trim() ? sel : null;
+}
+document.addEventListener('selectionchange', () => {
+  const sel = readerSelection();
+  if (sel) {
+    const node = sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement;
+    picked = { page: node && node.closest('.page') ? node.closest('.page').dataset.pageNumber : '', text: sel.toString() };
+  } else if (Date.now() - pressed > 800) picked = null;   // not while the button is being pressed
+  $('reader-quote').hidden = $('reader').hidden || !picked;
+});
+$('reader-quote').addEventListener('pointerdown', (e) => { e.preventDefault(); pressed = Date.now(); });   // keeps the selection, where it can
+$('reader-quote').addEventListener('click', () => {
+  if (!picked) return;
+  const { page, text } = picked;
+  const lines = text.split(/\n+/).map((l) => l.trim()).filter(Boolean);
+  const quote = `> 《${$('reader-name').textContent}》${page ? `第 ${page} 页` : ''}：\n` + lines.map((l) => '> ' + l).join('\n') + '\n\n';
+  input.value = (input.value.trim() ? input.value.replace(/\s*$/, '\n\n') : '') + quote;
+  picked = null;
+  getSelection().removeAllRanges();
+  $('reader-quote').hidden = true;
+  grow();
+  store.set(KEY.draft, input.value);
+  if (matchMedia('(max-width: 1099px)').matches) closeReader();   // the box is under it
+  input.focus();
+  input.setSelectionRange(input.value.length, input.value.length);
+});
 
 // ---------- searching ----------
 // The titles here are searched at once, and the words of every message by the cloud, a moment after
@@ -1492,7 +1743,7 @@ function sendTyped() {
   if (!token) return;
   if (text.length > MAX_TEXT) return notice(`一条消息最多 ${MAX_TEXT} 个字符，这条有 ${text.length} 个。`);
   const now = Date.now(), user = { role: 'user', content: contentOf(text, files), at: now };
-  if (files.length) user.files = files.map(({ id, name, size, kind, thumb }) => ({ id, name, size, kind, ...(thumb ? { thumb } : {}) }));
+  if (files.length) user.files = files.map(({ id, name, size, kind, thumb, link }) => ({ id, name, size, kind, ...(thumb ? { thumb } : {}), ...(link ? { link } : {}) }));
   const extra = [user];
   if (needsNote(now)) extra.push({ role: 'system', content: noteFor(now), at: now });
   input.value = '';
@@ -1561,6 +1812,8 @@ thinker.addEventListener('change', () => {
 });
 
 log.addEventListener('click', async (e) => {
+  const pdf = e.target.closest('[data-pdf]');
+  if (pdf) return openReader(pdf.dataset.pdf, pdf.dataset.name);
   const b = e.target.closest('[data-act]');
   if (!b) return;
   if (b.dataset.act === 'again') return again();

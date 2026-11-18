@@ -1,7 +1,8 @@
 // The saved conversations of 闲聊 Small Talk, for the Worker in worker.js. Each user's live in a
 // SQLite-backed Durable Object of their own, the kind the Workers free plan offers: a row per
-// conversation in `chats`, a row per message in `messages`, and a row per file they uploaded in
-// `files`, which is how the Worker tells their files from anyone else's.
+// conversation in `chats`, a row per message in `messages`, a row per file they uploaded in `files`,
+// which is how the Worker tells their files from anyone else's, and in `copies` a copy of each PDF,
+// for the page's reader, as the Files API gives none back.
 //
 // A conversation only ever grows at the end or loses turns from the end (see chat/index.html), so a
 // save says how many of the stored messages stay and which follow them. Each save also names the
@@ -34,6 +35,22 @@ export class ChatStore extends DurableObject {
     this.sql.exec('CREATE TABLE IF NOT EXISTS files (id TEXT PRIMARY KEY, added INTEGER NOT NULL)');
     // Added for search: a message's words (wordsOf), filled in for older messages a few at a time
     try { this.sql.exec('ALTER TABLE messages ADD COLUMN words TEXT'); } catch {}
+    // Added for the reader: each PDF in parts, as a row holds at most 2 MB
+    this.sql.exec('CREATE TABLE IF NOT EXISTS copies (file TEXT NOT NULL, part INTEGER NOT NULL, data BLOB NOT NULL, PRIMARY KEY (file, part))');
+  }
+
+  // A file's copy, a part at a time: put, counted, read back, dropped
+  keepPart(fileId, part, data) {
+    this.sql.exec('INSERT OR REPLACE INTO copies (file, part, data) VALUES (?, ?, ?)', fileId, part, data);
+  }
+  parts(fileId) {
+    return this.sql.exec('SELECT COUNT(*) AS n FROM copies WHERE file = ?', fileId).one().n;
+  }
+  part(fileId, part) {
+    return (this.sql.exec('SELECT data FROM copies WHERE file = ? AND part = ?', fileId, part).toArray()[0] || {}).data || null;
+  }
+  dropCopy(fileId) {
+    this.sql.exec('DELETE FROM copies WHERE file = ?', fileId);
   }
 
   // Gives up to n messages saved before there was search their words; how many still lack them
@@ -106,7 +123,10 @@ export class ChatStore extends DurableObject {
       this.sql.exec('DELETE FROM chats WHERE id = ?', id);
     });
     const gone = [...files].filter((f) => !this.uses(f));
-    for (const f of gone) this.sql.exec('DELETE FROM files WHERE id = ?', f);
+    for (const f of gone) {
+      this.sql.exec('DELETE FROM files WHERE id = ?', f);
+      this.dropCopy(f);
+    }
     return gone;
   }
 
@@ -136,6 +156,7 @@ export class ChatStore extends DurableObject {
   release(fileId) {
     if (!this.sql.exec('SELECT 1 FROM files WHERE id = ?', fileId).toArray().length || this.uses(fileId)) return false;
     this.sql.exec('DELETE FROM files WHERE id = ?', fileId);
+    this.dropCopy(fileId);
     return true;
   }
 }

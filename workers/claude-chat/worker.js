@@ -18,6 +18,8 @@
 //   PUT    /chats/:id    { base, keep, append, title, model, effort } -> { version, updated } | 409 { version }
 //   DELETE /chats/:id    -> 204, and the files only it carried are deleted from the Files API
 //   POST   /files        a file's bytes, with Content-Type and X-File-Name -> { id, name, size, type }
+//   POST   /files/from-link  { url } -> the same, for a PDF fetched from a link
+//   GET    /files/:id    -> a PDF's bytes, from the copy kept of each PDF for the page's reader | 404 no_copy
 //   DELETE /files/:id    -> 204, for a file of yours no saved conversation carries (one taken off before sending)
 //
 // `first` marks the first account, which took over the conversations from before there were
@@ -27,7 +29,7 @@
 // their own, in store.js. See README.md in this folder.
 
 import Anthropic, { toFile } from '@anthropic-ai/sdk';
-import { buildChatRequest, checkChatInput, checkSave, checkUpload, checkAccount, costOf, NAME, FILE_ID } from '../../chat/chat.js';
+import { buildChatRequest, checkChatInput, checkSave, checkUpload, checkAccount, costOf, NAME, FILE_ID, MAX_FILE } from '../../chat/chat.js';
 import { hashOf, ROUNDS, b64 } from './accounts.js';
 
 export { ChatStore } from './store.js';
@@ -152,7 +154,7 @@ export default {
     }
 
     const f = pathname.match(FILES);
-    if (f) return files(request, env, store, f[1], json, fail, done);
+    if (f) return files(request, env, store, f[1], cors, json, fail, done);
     const m = pathname.match(CHATS);
     if (!m) return fail(404, 'not found');
     const id = m[1];
@@ -189,26 +191,34 @@ const apiFail = (e, fail) => {
   return fail(api && e.status ? e.status : 502, api ? e.error?.error?.message || e.message : 'upstream error');
 };
 
-async function files(request, env, store, id, json, fail, done) {
+async function files(request, env, store, id, cors, json, fail, done) {
   const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
   if (!id && request.method === 'POST') {
     const type = (request.headers.get('Content-Type') || '').split(';')[0].trim().toLowerCase();
     let name = '';
     try { name = decodeURIComponent(request.headers.get('X-File-Name') || ''); } catch {}
-    name = name.replace(/[\\/\u0000-\u001f]/g, '_').slice(-200) || 'file';
     // The size it says first, so a file too big is turned away before it is read
     let problem = checkUpload(type, Number(request.headers.get('Content-Length')) || 1);
     if (problem) return fail(problem === 'too_big' ? 413 : 415, problem);
     const bytes = await request.arrayBuffer();
     problem = checkUpload(type, bytes.byteLength);
     if (problem) return fail(problem === 'too_big' ? 413 : 400, problem);
-    try {
-      const up = await client.files.upload({ file: await toFile(bytes, name, { type }) });
-      await store.own(up.id);
-      return json(200, { id: up.id, name: up.filename, size: up.size_bytes, type: up.mime_type });
-    } catch (e) {
-      return apiFail(e, fail);
-    }
+    return keep(client, store, bytes, name, type, json, fail);
+  }
+  if (id === 'from-link' && request.method === 'POST') return fromLink(request, client, store, json, fail);
+  if (id && request.method === 'GET') {
+    if (!FILE_ID.test(id)) return fail(404, 'not found');
+    const parts = await store.parts(id);   // only the user's own store has it
+    if (!parts) return fail(404, 'no_copy');
+    let n = 0;
+    const body = new ReadableStream({
+      async pull(controller) {
+        const data = await store.part(id, n++);
+        if (data) controller.enqueue(new Uint8Array(data));
+        if (!data || n >= parts) controller.close();
+      },
+    });
+    return new Response(body, { headers: { ...cors, 'Content-Type': 'application/pdf', 'Cache-Control': 'private, max-age=31536000, immutable' } });
   }
   if (id && request.method === 'DELETE') {
     if (!FILE_ID.test(id)) return fail(404, 'not found');
@@ -221,6 +231,73 @@ async function files(request, env, store, id, json, fail, done) {
     return done();
   }
   return fail(405, 'method not allowed');
+}
+
+// A file goes up to the Files API and becomes the user's; a PDF is also kept, in parts of PART bytes,
+// for the page's reader to show again
+const PART = 1 << 20;
+async function keep(client, store, bytes, name, type, json, fail) {
+  name = String(name).replace(/[\\/\u0000-\u001f]/g, '_').slice(-200) || 'file';
+  let up;
+  try {
+    up = await client.files.upload({ file: await toFile(bytes, name, { type }) });
+  } catch (e) {
+    return apiFail(e, fail);
+  }
+  await store.own(up.id);
+  // A PDF's copy, for the reader: a part per row. Should that fail, the file still goes with the
+  // message, only without a copy, rather than half of one.
+  if (type === 'application/pdf') {
+    const all = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+    try {
+      for (let at = 0, n = 0; at < all.byteLength; at += PART, n++) await store.keepPart(up.id, n, all.slice(at, at + PART));
+    } catch {
+      await store.dropCopy(up.id).catch(() => {});
+    }
+  }
+  return json(200, { id: up.id, name: up.filename, size: up.size_bytes, type: up.mime_type });
+}
+
+// A PDF from a link, fetched here, as the page can't read other sites itself; then kept as if it had
+// been uploaded. At most MAX_FILE.pdf bytes, and it must be a PDF: one starts with %PDF- within its
+// first kilobyte.
+async function fromLink(request, client, store, json, fail) {
+  let x, url;
+  try { x = await request.json(); } catch { return fail(400, 'bad json'); }
+  try { url = new URL(String((x && x.url) || '').trim()); } catch { return fail(400, 'bad_link'); }
+  if (!/^https?:$/.test(url.protocol) || url.href.length > 2000) return fail(400, 'bad_link');
+  let res;
+  try {
+    res = await fetch(url.href, { headers: { Accept: 'application/pdf,*/*;q=0.5', 'User-Agent': 'Mozilla/5.0 (compatible; SmallTalk)' }, redirect: 'follow', signal: AbortSignal.timeout(25000) });
+  } catch {
+    return fail(502, 'link_unreachable');
+  }
+  if (!res.ok) return fail(502, 'link_status_' + res.status);
+  const max = MAX_FILE.pdf;
+  if (Number(res.headers.get('Content-Length')) > max) return fail(413, 'too_big');
+  const reader = res.body.getReader(), chunks = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > max) { await reader.cancel(); return fail(413, 'too_big'); }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(size);
+  chunks.reduce((at, c) => { bytes.set(c, at); return at + c.byteLength; }, 0);
+  const head = String.fromCharCode(...bytes.subarray(0, 1024));
+  if (!head.includes('%PDF-')) return fail(415, 'not_pdf');
+  // Its name: the one the site gives, or the end of the address it came from
+  const given = res.headers.get('Content-Disposition') || '';
+  let name = '';
+  try {
+    const star = given.match(/filename\*\s*=\s*(?:UTF-8|utf-8)''([^;]+)/), plain = given.match(/filename\s*=\s*"?([^";]+)"?/);
+    name = star ? decodeURIComponent(star[1]) : plain ? plain[1] : decodeURIComponent(new URL(res.url || url.href).pathname.split('/').filter(Boolean).pop() || '');
+  } catch {}
+  name = (name || url.hostname).trim();
+  if (!/\.pdf$/i.test(name)) name += '.pdf';
+  return keep(client, store, bytes, name, 'application/pdf', json, fail);
 }
 
 async function chat(request, env, ctx, store, accounts, me, cors, fail) {
