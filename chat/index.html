@@ -33,6 +33,7 @@
   --code: #F3F5F8;
   --film: #3178D3;
   --alert: #B3261E;
+  --hl-kw: #CF222E; --hl-str: #0A3069; --hl-num: #0550AE; --hl-fn: #8250DF; --hl-var: #953800; --hl-tag: #116329;   /* code */
   --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
   --ui: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", Roboto, sans-serif;
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -43,12 +44,14 @@
   :root:not([data-theme="light"]) {
     --bg: #0C1218; --panel: #10171F; --ink: #E9EDF2; --ink-2: #9FAAB8; --rule: #28323D;
     --bubble: #1A2430; --code: #141C25; --alert: #F2897C;
+    --hl-kw: #FF7B72; --hl-str: #A5D6FF; --hl-num: #79C0FF; --hl-fn: #D2A8FF; --hl-var: #FFA657; --hl-tag: #7EE787;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0C1218; --panel: #10171F; --ink: #E9EDF2; --ink-2: #9FAAB8; --rule: #28323D;
   --bubble: #1A2430; --code: #141C25; --alert: #F2897C;
+  --hl-kw: #FF7B72; --hl-str: #A5D6FF; --hl-num: #79C0FF; --hl-fn: #D2A8FF; --hl-var: #FFA657; --hl-tag: #7EE787;
   color-scheme: dark;
 }
 
@@ -188,6 +191,34 @@ button:disabled { cursor: default; }
 .md th { background: var(--code); font-weight: 600; }
 .md hr { border: 0; border-top: 1px solid var(--rule); margin: 1.2em 0; }
 .md .plain { white-space: pre-wrap; }
+/* Claude's thinking, as a summary: open while it thinks, folded once it answers */
+.md .think { margin: 0 0 0.8em; font-size: 14px; color: var(--ink-2); }
+.md .think summary { display: inline-flex; align-items: center; gap: 7px; list-style: none; cursor: pointer; user-select: none; -webkit-user-select: none; }
+.md .think summary::-webkit-details-marker { display: none; }
+.md .think summary::after { content: ""; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: translateY(-1px) rotate(-45deg); transition: transform 0.15s; }
+.md .think[open] summary::after { transform: translateY(-3px) rotate(45deg); }
+.md .think summary:hover { color: var(--ink); }
+.md .think-body { margin: 6px 0 0; padding: 0 0 0 12px; border-left: 2px solid var(--rule); }
+.md .think-body > :last-child { margin-bottom: 0; }
+/* math, by KaTeX; until it loads, its TeX */
+.md .katex { font-size: 1.08em; }
+.md .katex-display { margin: 0.4em 0; padding: 2px 0; overflow-x: auto; overflow-y: hidden; }
+.md code.tex { background: none; padding: 0; }
+/* code: a bar with its language and a copy button, and colours by highlight.js */
+.md .code { margin: 0 0 0.8em; background: var(--code); border-radius: 8px; overflow: hidden; }
+.md .code pre { margin: 0; padding-top: 4px; border-radius: 0; }
+.md .code-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 4px 4px 0 14px; font: 12px/1.6 var(--mono); color: var(--ink-2); }
+.md .code-bar button { border: 0; border-radius: 6px; padding: 2px 8px; background: none; font: 12px/1.6 var(--ui); color: var(--ink-2); }
+.md .code-bar button:hover { background: var(--bubble); color: var(--ink); }
+.md .hljs-comment, .md .hljs-quote { color: var(--ink-2); font-style: italic; }
+.md .hljs-keyword, .md .hljs-doctag, .md .hljs-template-tag, .md .hljs-selector-tag, .md .hljs-type, .md .hljs-meta, .md .hljs-deletion { color: var(--hl-kw); }
+.md .hljs-string, .md .hljs-regexp, .md .hljs-meta .hljs-string, .md .hljs-addition { color: var(--hl-str); }
+.md .hljs-number, .md .hljs-literal, .md .hljs-symbol, .md .hljs-bullet, .md .hljs-built_in, .md .hljs-attr, .md .hljs-attribute, .md .hljs-property, .md .hljs-selector-attr, .md .hljs-selector-class, .md .hljs-selector-id, .md .hljs-link { color: var(--hl-num); }
+.md .hljs-title, .md .hljs-section { color: var(--hl-fn); }
+.md .hljs-variable, .md .hljs-template-variable { color: var(--hl-var); }
+.md .hljs-name, .md .hljs-tag, .md .hljs-selector-pseudo { color: var(--hl-tag); }
+.md .hljs-emphasis { font-style: italic; }
+.md .hljs-strong { font-weight: 600; }
 .md .search { font-size: 13px; color: var(--ink-2); }
 .md .search q { quotes: "「" "」"; }
 .md .search q + q { margin-left: 4px; }
@@ -374,6 +405,9 @@ const CHAT_ENDPOINT = 'https://claude-chat.wentaozhang1997.workers.dev';
 const SDK = 'https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@0.133.0';
 const MARKED = 'https://cdn.jsdelivr.net/npm/marked@18.1.3/+esm';
 const PURIFY = 'https://cdn.jsdelivr.net/npm/dompurify@3.4.17/+esm';
+const KATEX = 'https://cdn.jsdelivr.net/npm/katex@0.19.1/+esm';
+const KATEX_CSS = 'https://cdn.jsdelivr.net/npm/katex@0.19.1/dist/katex.min.css';
+const HLJS = 'https://cdn.jsdelivr.net/npm/highlight.js@11.12.0/lib/common/+esm';
 const NOTE_EVERY = 60 * 60 * 1000;   // a new time note for Claude after an hour, or on a new day
 const LOOK_EVERY = 15 * 1000;        // at most this often, a page coming back into view checks the cloud
 const IMAGE_EDGE = 2048;             // pixels on an image's long side, at most, as it is uploaded
@@ -775,31 +809,133 @@ function noteFor(now) {
 
 // ---------- drawing ----------
 let toHtml = null;   // Markdown to safe HTML, once marked and DOMPurify have loaded
-const drawn = new WeakMap();   // each reply's HTML, so a long conversation isn't parsed again on every turn
+let drawn = new WeakMap();   // each reply's HTML, so a long conversation isn't parsed again on every turn
 // Only what Markdown text needs. No images: one in a reply would be fetched from wherever its address
-// points, which could carry words of the conversation off to that server.
+// points, which could carry words of the conversation off to that server. A class only on code, naming
+// its language, so a reply can't dress itself up as the page's own buttons or sources.
 const SAFE = {
   ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'del', 'code', 'pre', 'blockquote', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'a', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'hr'],
-  ALLOWED_ATTR: ['href', 'title', 'align', 'start'],
+  ALLOWED_ATTR: ['href', 'title', 'align', 'start', 'class'],
 };
 Promise.all([import(MARKED), import(PURIFY)]).then(([{ Marked }, { default: purify }]) => {
   const marked = new Marked({ gfm: true, breaks: true });
   purify.addHook('afterSanitizeAttributes', (n) => { if (n.tagName === 'A') { n.setAttribute('target', '_blank'); n.setAttribute('rel', 'noopener noreferrer'); } });
+  purify.addHook('uponSanitizeAttribute', (n, a) => { if (a.attrName === 'class') a.keepAttr = n.nodeName === 'CODE' && /^language-[\w+#.-]{1,30}$/.test(a.attrValue); });
   toHtml = (s) => purify.sanitize(marked.parse(s), SAFE);
   render();
 }).catch(() => {});   // without them, replies show as plain text
-const md = (s) => toHtml ? toHtml(s) : `<p class="plain">${esc(s)}</p>`;
+
+// Math is drawn by KaTeX and code coloured by highlight.js, each fetched the first time a reply needs
+// it. Until then, math shows as its TeX and code plain.
+const lib = {}, fetching = new Set();
+function want(name) {
+  if (lib[name] || fetching.has(name)) return;
+  fetching.add(name);
+  if (name === 'katex') document.head.insertAdjacentHTML('beforeend', `<link rel="stylesheet" href="${KATEX_CSS}">`);
+  import(name === 'katex' ? KATEX : HLJS).then((m) => { lib[name] = m.default; drawn = new WeakMap(); render(); }).catch(() => {});
+}
+
+// Math comes out of the Markdown before marked reads it, as marked would take its _ and * for
+// emphasis, and goes back once the HTML is safe: $$…$$ and \[…\] as formulas on their own, $…$ and
+// \(…\) within a line. Code keeps its dollars, fenced or inline. A $ that opens math has no space
+// after it, and the one closing it none before it and no digit after, so $5 and $10 stay prices; and
+// Chinese between two dollars, outside \text{}, is prose, as in 价格是$10，公式是$x$.
+const MATH = /\\\$|\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\]|\\\(([\s\S]+?)\\\)|\$(?=[^\s$])((?:\\.|[^$\n\\])+?)(?<=[^\s\\])\$(?!\d)/g;
+const CJK = /[\u3000-\u303f\u3400-\u9fff\uf900-\ufaff\uff00-\uffef]/;
+const mathLike = (tex) => !CJK.test(tex.replace(/\\(?:text\w*|mathrm|operatorname|mbox)\s*\{[^{}]*\}/g, ''));
+function takeMath(src) {
+  const maths = [], codes = [], out = [];
+  const unhide = (s) => s.replace(/\uE002(\d+)\uE003/g, (all, i) => codes[+i]);
+  let fence = '', prose = [];
+  const flush = () => {
+    if (!prose.length) return;
+    // Inline code is set aside first, so a $ in it can't open or close math
+    const text = prose.join('\n').replace(/(`+)[\s\S]*?\1/g, (all) => `\uE002${codes.push(all) - 1}\uE003`);
+    let done = '', at = 0;
+    MATH.lastIndex = 0;
+    for (let m; (m = MATH.exec(text));) {
+      const [all, block, square, round, inline] = m, tex = block ?? square ?? round ?? inline;
+      if (tex == null) continue;   // an escaped \$
+      if (!tex.trim() || (inline != null && !mathLike(inline))) { MATH.lastIndex = m.index + 1; continue; }   // not math after all: look again just past its first $
+      maths.push({ tex: unhide(tex.trim()), display: block != null || square != null });
+      done += text.slice(at, m.index) + `\uE000${maths.length - 1}\uE001`;
+      at = m.index + all.length;
+    }
+    out.push(unhide(done + text.slice(at)));
+    prose = [];
+  };
+  for (const line of src.split('\n')) {
+    const f = line.match(/^ {0,3}(`{3,}|~{3,})/);
+    if (fence) {
+      out.push(line);
+      if (f && f[1][0] === fence[0] && f[1].length >= fence.length && !line.trim().slice(f[1].length).trim()) fence = '';
+    } else if (f) {
+      flush();
+      fence = f[1];
+      out.push(line);
+    } else prose.push(line);
+  }
+  flush();
+  return { text: out.join('\n'), maths };
+}
+const mathMemo = new Map();
+function mathHtml({ tex, display }) {
+  if (!lib.katex) return `<code class="tex">${esc(display ? `$$${tex}$$` : `$${tex}$`)}</code>`;
+  const key = (display ? 'D' : 'I') + tex;
+  let html = mathMemo.get(key);
+  if (html == null) {
+    // Untrusted: no links, classes or styles of its own, and no huge or endless formulas
+    try { html = lib.katex.renderToString(tex, { displayMode: display, throwOnError: false, trust: false, strict: 'ignore', maxSize: 50, maxExpand: 1000 }); }
+    catch (e) { html = `<code class="tex">${esc(tex)}</code>`; }
+    if (mathMemo.size > 1000) mathMemo.clear();
+    mathMemo.set(key, html);
+  }
+  return html;
+}
+// Each code block gets a bar with its language and a copy button, and its colours
+const tpl = document.createElement('template');
+function dressCode(html) {
+  tpl.innerHTML = html;
+  for (const pre of tpl.content.querySelectorAll('pre')) {
+    const code = pre.querySelector('code');
+    if (!code) continue;
+    want('hljs');
+    const lang = ((code.className.match(/^language-([\w+#.-]+)$/) || [])[1] || '').toLowerCase();
+    if (lib.hljs && lang && lib.hljs.getLanguage(lang)) {
+      try { code.innerHTML = lib.hljs.highlight(code.textContent, { language: lang, ignoreIllegals: true }).value; } catch (e) {}
+    }
+    const box = document.createElement('div');
+    box.className = 'code';
+    box.innerHTML = `<div class="code-bar"><span>${esc(lang)}</span><button type="button" data-act="copy-code">复制</button></div>`;
+    pre.replaceWith(box);
+    box.append(pre);
+  }
+  return tpl.innerHTML;
+}
+function md(s) {
+  if (!toHtml) return `<p class="plain">${esc(s)}</p>`;
+  const { text, maths } = takeMath(s);
+  if (maths.length) want('katex');
+  const html = toHtml(text).replace(/\uE000(\d+)\uE001/g, (all, i) => (maths[+i] ? mathHtml(maths[+i]) : ''));
+  return html.includes('<pre') ? dressCode(html) : html;
+}
 
 const DOTS = '<span class="dots" role="img" aria-label="Claude 在想"><i></i><i></i><i></i></span>';
 
-// A reply as the page draws it: its runs of text, and the web searches Claude ran between them, each
-// one running until its results are in. Thinking and the results themselves aren't drawn.
+// A reply as the page draws it: its runs of text, the summaries of its thinking, and the web searches
+// Claude ran between them, each one running until its results are in. The results aren't drawn.
 function partsOf(content) {
   const parts = [], answered = new Set(content.filter((b) => b.type === 'web_search_tool_result').map((b) => b.tool_use_id));
   let text = '';
   for (const b of content) {
     if (b.type === 'text') text += b.text;
-    else if (b.type === 'server_tool_use' && b.name === 'web_search') {
+    else if (b.type === 'thinking' && b.thinking && b.thinking.trim()) {
+      if (text.trim()) parts.push({ text });
+      text = '';
+      const last = parts.at(-1);
+      if (last && last.think != null) last.think += '\n\n' + b.thinking;
+      else parts.push({ think: b.thinking });
+    } else if (b.type === 'server_tool_use' && b.name === 'web_search') {
       if (text.trim()) parts.push({ text });
       text = '';
       let query = '';
@@ -813,8 +949,19 @@ function partsOf(content) {
   return parts;
 }
 const textOf = (m) => typeof m.content === 'string' ? m.content : partsOf(m.content).filter((p) => p.text).map((p) => p.text.trim()).join('\n\n');
-function bodyHtml(content) {
-  return partsOf(content).map((p) => p.text ? md(p.text)
+// `live` while the reply comes: the thinking in progress is open, with the seconds so far (`secs`),
+// and `opened` keeps any summary the reader opened or closed meanwhile. `thought` is the seconds the
+// reply thought before its first word.
+function bodyHtml(content, { live = false, opened = null, secs = 0, thought = 0 } = {}) {
+  const parts = partsOf(content), last = content.at(-1);
+  let k = 0;
+  return parts.map((p, i) => p.text ? md(p.text)
+    : p.think != null ? (() => {
+      const n = k++, running = live && i === parts.length - 1 && last && last.type === 'thinking';
+      const open = opened && opened.has(n) ? opened.get(n) : running;
+      const label = running ? (secs ? `正在思考 · ${secs} 秒` : '正在思考') : n === 0 && thought ? `想了 ${thought} 秒` : '思考过程';
+      return `<details class="think" data-k="${n}"${open ? ' open' : ''}><summary>${label}</summary><div class="think-body">${md(p.think)}</div></details>`;
+    })()
     : `<p class="search">${p.searches.some((q) => q.running) ? '正在搜索' : '搜索了'}：${p.searches.map((q) => `<q>${esc(q.query || '…')}</q>`).join('')}` +
       `${p.searches.some((q) => q.running) ? DOTS.replace('Claude 在想', '在搜索') : ''}</p>`).join('');
 }
@@ -847,7 +994,7 @@ function userHtml(m) {
 
 function replyHtml(m, i, last) {
   let html = drawn.get(m);
-  if (!html) { html = `<div class="md">${bodyHtml(m.content)}</div>` + sourcesHtml(m.content); if (toHtml) drawn.set(m, html); }
+  if (!html) { html = `<div class="md">${bodyHtml(m.content, { thought: m.thought })}</div>` + sourcesHtml(m.content); if (toHtml) drawn.set(m, html); }
   const flags = [m.stopped && '回复中断了', m.truncated && '回复太长，被截断了', m.by && `由 ${m.by} 回答`].filter(Boolean);
   const meta = [m.model && nameOf(m.model), m.effort, m.cost != null && money(m.cost)].filter(Boolean).join(' · ');
   return `<article class="msg claude" data-i="${i}">${html}` +
@@ -996,7 +1143,12 @@ async function run(c, base, extra, typed) {
   node.className = 'msg claude';
   node.setAttribute('aria-busy', 'true');
   node.innerHTML = `<div class="md">${DOTS}<span class="wait"></span></div>`;
-  const job = { c, ctrl: new AbortController(), stream: null, stopped: false, view, node, typed, started: Date.now() };
+  const job = { c, ctrl: new AbortController(), stream: null, stopped: false, view, node, typed, started: Date.now(), opened: new Map() };
+  // A summary the reader opens or closes stays so while the reply goes on
+  node.addEventListener('click', (e) => {
+    const d = e.target.closest('summary') && e.target.closest('details.think');
+    if (d) job.opened.set(+d.dataset.k, !d.open);
+  });
   jobs.set(c.id, job);
   render();
   drawList();
@@ -1015,17 +1167,18 @@ async function run(c, base, extra, typed) {
   // At high effort the thinking can go on for minutes: after a few seconds, count them
   const t0 = Date.now(), wait = out.querySelector('.wait');
   const tick = setInterval(() => {
+    if (shown) return paint();   // the thinking shown counts its seconds
     const sec = Math.round((Date.now() - t0) / 1000);
     if (sec >= 3) wait.textContent = sec < 60 ? `想了 ${sec} 秒` : `想了 ${Math.floor(sec / 60)} 分 ${String(sec % 60).padStart(2, '0')} 秒`;
   }, 1000);
   // What has come: the reply so far from the requests before a pause, and the one coming in now
-  let sofar = [], snap = null, queued = false, shown = '';
+  let sofar = [], snap = null, queued = false, shown = '', firstWord = 0;
   const live = () => (snap ? sofar.concat(snap.content) : sofar);
+  const thoughtFor = () => (firstWord ? Math.max(1, Math.round((firstWord - t0) / 1000)) : 0);
   const paint = () => {
     queued = false;
-    const html = bodyHtml(live());
-    if (!html || html === shown) return;   // still thinking: the dots and the timer stay
-    clearInterval(tick);
+    const html = bodyHtml(live(), { live: true, opened: job.opened, secs: Math.round((Date.now() - t0) / 1000), thought: thoughtFor() });
+    if (!html || html === shown) return;   // nothing to show yet: the dots and the timer stay
     shown = html;
     const stick = node.isConnected && nearBottom();
     out.innerHTML = html;
@@ -1044,7 +1197,11 @@ async function run(c, base, extra, typed) {
       if (!res.ok) { const e = new Error((await res.json().catch(() => ({}))).error || res.statusText); e.status = res.status; throw e; }
       const stream = job.stream = BetaMessageStream.fromReadableStream(res.body);
       if (job.stopped) stream.abort();
-      stream.on('streamEvent', (e, s) => { snap = s; if (!queued) { queued = true; requestAnimationFrame(paint); } });
+      stream.on('streamEvent', (e, s) => {
+        snap = s;
+        if (!firstWord && s.content.some((b) => (b.type === 'text' && b.text) || b.type === 'server_tool_use')) firstWord = Date.now();
+        if (!queued) { queued = true; requestAnimationFrame(paint); }
+      });
       msg = await stream.finalMessage();
       const spent = costOf(model, msg.usage);
       if (spent != null) cost = (cost || 0) + spent;
@@ -1056,8 +1213,9 @@ async function run(c, base, extra, typed) {
       if (round === MAX_RESUMES) throw new Error('paused too often');   // kept as far as it got, below
     }
     if (!sofar.some((b) => b.type === 'text')) return fail('Claude 这次没说话，再试一次？');
+    const pondered = sofar.some((b) => b.type === 'thinking' && b.thinking && b.thinking.trim());
     commit(c, view.concat([{
-      role: 'assistant', content: sofar, at: Date.now(), model, effort, cost,
+      role: 'assistant', content: sofar, at: Date.now(), model, effort, cost, thought: pondered ? thoughtFor() || undefined : undefined,
       by: msg.model && !msg.model.startsWith(model) ? msg.model : undefined,
       truncated: msg.stop_reason === 'max_tokens' || undefined,
     }]));
@@ -1166,9 +1324,10 @@ log.addEventListener('click', async (e) => {
   const b = e.target.closest('[data-act]');
   if (!b) return;
   if (b.dataset.act === 'again') return again();
-  const job = jobs.get(conv.id), m = (job ? job.view : conv.messages)[+b.closest('[data-i]').dataset.i];
+  const code = b.dataset.act === 'copy-code' && b.closest('.code');
+  const job = jobs.get(conv.id), m = !code && (job ? job.view : conv.messages)[+b.closest('[data-i]').dataset.i];
   try {
-    await navigator.clipboard.writeText(textOf(m));
+    await navigator.clipboard.writeText(code ? code.querySelector('pre').textContent : textOf(m));
     b.textContent = '已复制';
     setTimeout(() => { b.textContent = '复制'; }, 1500);
   } catch (err) {}

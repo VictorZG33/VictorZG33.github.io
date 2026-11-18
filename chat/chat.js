@@ -92,7 +92,7 @@ const SYSTEM = `You are Claude, chatting with the user through a small private c
 
 - Talk like a thoughtful friend: warm, natural and direct. Match the length of what they write: a short reply to a short message, more only when they ask for it or the question needs it.
 - Reply in the language they write in. For Chinese, use Simplified Chinese unless they write Traditional.
-- Plain conversational prose suits a chat best. Use Markdown (a list, a table, a code block) only when it helps. The page does not render LaTeX, so write any formula in plain text with Unicode symbols (x², √, ≈, →).
+- Plain conversational prose suits a chat best. Use Markdown (a list, a table, a code block naming its language) only when it helps. For math, write LaTeX: $…$ within a line, $$…$$ for a formula on its own. The page renders both.
 - You can search the web. Search when the answer depends on something current or specific you may not know well (news, prices, weather, schedules, recent releases, a particular person, place or product), or when the user asks you to look something up; otherwise answer from what you know. You can't open links, but you can search for what one points to. The page lists the sources you cite below your reply. When you are unsure, say so rather than guessing.
 - System messages in the conversation give the user's local date and time when they wrote.`;
 
@@ -143,8 +143,10 @@ export function checkChatInput(x) {
 }
 
 // The parameters for client.beta.messages.stream(). Every model here thinks adaptively; effort sets
-// how much. The top-level cache_control caches the conversation so far, so each turn re-reads the
-// earlier ones at a tenth to a fortieth of the price; a change of effort starts that cache over once.
+// how much. Its thinking comes back as a summary, which the page shows folded above the reply; the
+// summary costs nothing extra, as the thinking is billed the same either way. The top-level
+// cache_control caches the conversation so far, so each turn re-reads the earlier ones at a tenth to
+// a fortieth of the price; a change of effort starts that cache over once.
 //
 // Each thinking block the models write is bound to everything before it: the system prompt, the
 // tools and the earlier messages. Change any of them and the block no longer fits, which on these
@@ -156,7 +158,7 @@ export function buildChatRequest(x) {
   const req = {
     model: m.id,
     max_tokens: MAX_OUT[effort],
-    thinking: { type: 'adaptive', block_binding: { prefix_mismatch_behavior: 'drop_block' } },
+    thinking: { type: 'adaptive', display: 'summarized', block_binding: { prefix_mismatch_behavior: 'drop_block' } },
     output_config: { effort },
     cache_control: { type: 'ephemeral' },
     tools: [WEB_SEARCH],
