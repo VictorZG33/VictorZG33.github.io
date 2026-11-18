@@ -1,0 +1,7 @@
+# The road data server behind 上山 First Chair (wentaoz.com/ski/): Caltrans' chain controls, cameras,
+# lane closures and road text, and CHP's incidents, cut down to the mountain highways.
+# .github/workflows/ski-roads.yml deploys it whenever this folder or ski/roads.js changes on main.
+name = "ski-roads"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+workers_dev = true      # served at https://ski-roads.<your subdomain>.workers.dev

@@ -1,0 +1,45 @@
+# Deploys the road data server behind 上山 First Chair (wentaoz.com/ski/): the Cloudflare Worker in
+# workers/ski-roads, which fetches Caltrans' and CHP's feeds and sends the page only the mountain
+# highways. It needs no key of its own, only CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID, the same
+# repository secrets the other Workers use; until both are set it does nothing.
+name: Ski roads server
+
+on:
+  push:
+    branches: [main]
+    paths: ['workers/ski-roads/**', 'ski/roads.js', '.github/workflows/ski-roads.yml']
+  workflow_dispatch:        # and on demand, from the Actions tab
+
+permissions:
+  contents: read
+
+concurrency: ski-roads
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - name: Wait for the Cloudflare secrets
+        if: env.CLOUDFLARE_API_TOKEN == '' || env.CLOUDFLARE_ACCOUNT_ID == ''
+        run: echo "::notice::Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID as repository secrets to deploy the ski roads server."
+
+      - uses: actions/checkout@v4
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+
+      - uses: actions/setup-node@v4
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        with:
+          node-version: 22
+
+      - name: Deploy, and show the server's address in the run summary
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        working-directory: workers/ski-roads
+        shell: bash
+        run: |
+          npm ci --no-audit --no-fund
+          npx wrangler deploy | tee deploy.log
+          url=$(grep -o 'https://[a-z0-9.-]*\.workers\.dev' deploy.log | head -n 1)
+          echo "::notice title=Ski roads server address (ROADS_ENDPOINT in ski/index.html)::$url"
