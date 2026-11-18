@@ -22,6 +22,9 @@ const inBox = (lat, lon) => lat >= BOX.south && lat <= BOX.north && lon >= BOX.w
 export const CHP_CENTERS = ['TKCC', 'SACC'];
 
 export const caltransUrl = (kind, d) => `https://cwwp2.dot.ca.gov/data/d${d}/${kind}/${kind}StatusD${String(d).padStart(2, '0')}.json`;
+// The same files as CSV. Caltrans' server answers either with a 500 now and then, more often in a storm,
+// when everyone is looking; the chain controls are asked for in both, by turns, until one answers.
+export const caltransCsvUrl = (kind, d) => caltransUrl(kind, d).replace(/\.json$/, '.csv');
 // CHP's incidents come two ways: CHP's own feed, and the copy Caltrans' QuickMap draws its CHP
 // Incidents layer from. CHP's sits behind a firewall that doesn't answer Cloudflare, so the Worker
 // reads QuickMap's first.
@@ -100,6 +103,54 @@ export function keepChains(json) {
     } else if (status && status !== had.status && !had.also.includes(status)) had.also.push(status);
   }
   return [...by.values()];
+}
+
+// Caltrans' chain control CSV, turned into the shape of its JSON, for keepChains
+// Caltrans writes one checkpoint a line and quotes the fields that hold commas. Fields are found with
+// indexOf, which keeps a cold parse of District 3's file to a few milliseconds of a Worker's ten.
+function splitLine(line) {
+  const row = [];
+  let i = 0;
+  for (;;) {
+    if (line.charCodeAt(i) === 34) {
+      let j = i + 1, f = '';
+      for (;;) {
+        const k = line.indexOf('"', j);
+        if (k < 0) { f += line.slice(j); i = line.length; break; }
+        if (line.charCodeAt(k + 1) === 34) { f += line.slice(j, k + 1); j = k + 2; continue; }
+        f += line.slice(j, k); i = k + 1; break;
+      }
+      row.push(f);
+    } else {
+      const k = line.indexOf(',', i);
+      row.push(k < 0 ? line.slice(i) : line.slice(i, k));
+      if (k < 0) return row;
+      i = k;
+    }
+    if (i >= line.length) return row;
+    i++;
+  }
+}
+function parseCsv(text) {
+  const rows = [];
+  for (const line of text.split('\n')) {
+    const l = line.charCodeAt(line.length - 1) === 13 ? line.slice(0, -1) : line;
+    if (l) rows.push(l.indexOf('"') < 0 ? l.split(',') : splitLine(l));
+  }
+  return rows;
+}
+export function ccFromCsv(text) {
+  const rows = parseCsv(String(text || ''));
+  const head = (rows.shift() || []).map((k) => k.trim());
+  const ix = Object.fromEntries(head.map((k, i) => [k, i]));
+  if (!('status' in ix) || !('route' in ix)) throw new Error('not a chain control CSV');
+  const g = (r, k) => (k in ix ? r[ix[k]] || '' : '');
+  return { data: rows.filter((r) => r.length >= head.length - 1).map((r) => ({ cc: {
+    index: g(r, 'index'), inService: g(r, 'inService'),
+    location: { locationName: g(r, 'locationName'), nearbyPlace: g(r, 'nearbyPlace'), longitude: g(r, 'longitude'), latitude: g(r, 'latitude'),
+      elevation: g(r, 'elevation'), direction: g(r, 'direction'), county: g(r, 'county'), route: g(r, 'route'), postmile: g(r, 'postmile') },
+    statusData: { statusTimestamp: { statusDate: g(r, 'statusDate'), statusTime: g(r, 'statusTime') }, status: g(r, 'status'), statusDescription: g(r, 'statusDescription') },
+  } })) };
 }
 
 // The road cameras that work, each with its picture (renewed about once a minute) and its video, if any

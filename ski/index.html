@@ -464,7 +464,7 @@ footer a { color: inherit; }
 
 <script type="module">
 import { RESORTS, PACKING, NEAR_KM } from './data.js';
-import { caltransUrl, keepChains, keepCams, keepClosures, chainRank, chpKind, countiesOf, pacificMs } from './roads.js';
+import { caltransUrl, caltransCsvUrl, ccFromCsv, keepChains, keepCams, keepClosures, chainRank, chpKind, countiesOf, pacificMs } from './roads.js';
 
 // The server that reads CHP's incidents and Caltrans' road text for the page (workers/ski-roads). The
 // Caltrans files it also trims are fetched straight from Caltrans when it can't be reached.
@@ -676,9 +676,26 @@ async function roadFeed(kind, d) {
     } catch (e) { if (!d) throw e; }
   }
   if (!d) throw new Error('no server');
-  const file = { chains: 'cc', cams: 'cctv', closures: 'lcs' }[kind];
-  const json = await getJSON(caltransUrl(file, d), 40000);
-  const keep = { chains: keepChains, cams: keepCams, closures: (j) => keepClosures(j) }[kind];
+  // Caltrans' server answers a 500 now and then: the chain controls are tried as CSV and JSON by turns,
+  // the other files twice
+  if (kind === 'chains') {
+    let last;
+    for (let k = 0; k < 3; k++) {
+      if (k) await new Promise((r) => setTimeout(r, 800 * k));
+      try {
+        if (k % 2 === 0) {
+          const res = await fetch(caltransCsvUrl('cc', d), { signal: AbortSignal.timeout ? AbortSignal.timeout(30000) : undefined });
+          if (!res.ok) throw new Error('cwwp2.dot.ca.gov ' + res.status);
+          return { at: Date.now(), data: keepChains(ccFromCsv(await res.text())), via: 'caltrans' };
+        }
+        return { at: Date.now(), data: keepChains(await getJSON(caltransUrl('cc', d), 40000)), via: 'caltrans' };
+      } catch (e) { last = e; }
+    }
+    throw last;
+  }
+  const file = { cams: 'cctv', closures: 'lcs' }[kind];
+  const json = await retry(() => getJSON(caltransUrl(file, d), 40000));
+  const keep = { cams: keepCams, closures: (j) => keepClosures(j) }[kind];
   return { at: Date.now(), data: keep(json), via: 'caltrans' };
 }
 const pt = (p) => `${p.at[0].toFixed(4)},${p.at[1].toFixed(4)}`;
