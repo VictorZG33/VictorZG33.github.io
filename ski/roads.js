@@ -22,7 +22,11 @@ const inBox = (lat, lon) => lat >= BOX.south && lat <= BOX.north && lon >= BOX.w
 export const CHP_CENTERS = ['TKCC', 'SACC'];
 
 export const caltransUrl = (kind, d) => `https://cwwp2.dot.ca.gov/data/d${d}/${kind}/${kind}StatusD${String(d).padStart(2, '0')}.json`;
+// CHP's incidents come two ways: CHP's own feed, and the copy Caltrans' QuickMap draws its CHP
+// Incidents layer from. CHP's sits behind a firewall that doesn't answer Cloudflare, so the Worker
+// reads QuickMap's first.
 export const CHP_URL = 'https://media.chp.ca.gov/sa_xml/sa.xml';
+export const CHP_KML_URL = 'https://quickmap.dot.ca.gov/data/chp-only.kml';
 export const roadsUrl = (n) => `https://roads.dot.ca.gov/?roadnumber=${n}`;
 
 // Caltrans and CHP write Pacific time without saying whether it is standard or daylight time.
@@ -172,6 +176,37 @@ export function parseChp(xml, centers = CHP_CENTERS) {
         notes: times.length, last: times.length ? Math.max(...times) : null,
       });
     }
+  }
+  return out;
+}
+
+// The same incidents from QuickMap's KML, for the same dispatch centres, in the same shape. Each
+// placemark is one incident: its log number (YYMMDD, then the centre's two letters, as 261118TK0012),
+// what it is, when it started and where, and the dispatchers' notes, of which again only the count and
+// the latest time are kept. QuickMap doesn't give CHP's area or location notes.
+export function parseChpKml(kml, centers = CHP_CENTERS) {
+  const out = [];
+  const codes = centers.map((c) => c.slice(0, 2));
+  // split, and a look at the log number before any other parsing, keep this well inside the 10 ms of CPU
+  // a Worker request may use on the free plan: there are some 300 incidents statewide
+  for (const chunk of String(kml || '').split('<Placemark>').slice(1)) {
+    const at = chunk.indexOf('CHP Incident ');
+    if (at < 0 || !codes.includes(chunk.slice(at + 19, at + 21))) continue;
+    const p = chunk.slice(0, chunk.indexOf('</Placemark>') >>> 0);
+    const id = (/CHP Incident\s+(\d{6}([A-Z]{2})\d+)/.exec(p) || [])[1];
+    if (!id || !codes.includes(id.slice(6, 8))) continue;
+    const texts = [...p.matchAll(/<p class="iw-text">([\s\S]*?)<\/p>/g)].map((t) => t[1]);
+    const head = (texts[0] || '').split(/<br\s*\/?>/i).map((s) => unxml(s.replace(/<[^>]+>/g, '')).replace(/\s+/g, ' ').trim());
+    const notes = (texts[1] || '').split(/<br\s*\/?>/i).map((s) => s.replace(/<[^>]+>/g, '').trim()).filter(Boolean);
+    const times = notes.map((s) => chpMs((/^([A-Za-z]{3}\s+\d{1,2}\s+\d{4}\s+\d{1,2}:\d{2}\s*[AP]M)/i.exec(s) || [])[1])).filter(Boolean);
+    const ll = /<coordinates>\s*(-?\d+\.\d+),(-?\d+\.\d+)/.exec(p);
+    out.push({
+      id, center: id.slice(6, 8) + 'CC', at: chpMs(head[0]),
+      type: unxml((/<h2 class="iw-title">([\s\S]*?)<\/h2>/.exec(p) || [])[1] || '').replace(/\s+/g, ' ').trim(),
+      where: head.slice(1).join(' ').trim(), desc: '', area: '',
+      lat: ll ? +ll[2] : null, lon: ll ? +ll[1] : null,
+      notes: notes.length, last: times.length ? Math.max(...times) : null,
+    });
   }
   return out;
 }
