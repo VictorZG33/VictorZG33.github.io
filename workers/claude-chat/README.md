@@ -20,8 +20,12 @@ The Worker:
 | `POST /login` `{ name, password }` | `{ token, id, name, first }`, or `401 bad_login` for a wrong name or password alike |
 | `POST /logout` | `204`, and the token stops working |
 | `GET /` | `{ id, name, first }`, whose session it is, with no call to Claude |
+| `POST /password` `{ password, next }` | a new password, given the current one: `204`, and the account's other sessions end, or `403 bad_password` |
+| `GET /usage` | what the account's replies cost, by month: `{ mine: [{ month, cost, replies, searches }] }`, and for the first account `all`, every account's this month and last |
 | `POST /` `{ model, effort, messages }` | Claude's reply, streamed, searching the web when it needs to. `checkChatInput` in `chat/chat.js` checks the conversation and `buildChatRequest` shapes the request, so the models, the prompt, the tools and `max_tokens` are fixed there, whatever the page sends |
+| `POST /title` `{ user, reply }` | a short name for a new conversation, from its first message and reply, by Claude Haiku 5.5: `{ title }`, `''` when none came |
 | `GET /chats` | every conversation, latest first, without its messages |
+| `GET /search?q=` | the conversations with `q` in their title or the words of their messages: `{ hits: [{ id, snippet }], pending }` |
 | `GET /chats/:id` | one conversation with its messages |
 | `PUT /chats/:id` `{ base, keep, append, title, model, effort }` | saves a conversation (checked by `checkSave` in `chat/chat.js`) |
 | `DELETE /chats/:id` | deletes one, and the files only it carried |
@@ -38,7 +42,9 @@ The accounts are kept in one SQLite-backed Durable Object, `Accounts` in `accoun
 
 Each user's conversations live in a `ChatStore` of their own, named in their row in `users` (`store`), which nobody else's account ever gets. The first account to be opened takes over `chats`, the store that held the conversations from before there were accounts, and the page on a browser that used the passcode hands that account its copies too, so the owner of the site should open theirs first. That browser's page offers to open an account, with the invite code already filled in from the passcode.
 
-There is no page for managing accounts. The Cloudflare dashboard's [Data Studio](https://developers.cloudflare.com/durable-objects/observability/data-studio/) can open the `Accounts` object (Durable Objects, the `claude-chat` Worker's `Accounts`, then Data Studio with the object name `accounts`) and edit its tables:
+Each user can change their password in the page's account panel (their name at the foot of the conversation list), which ends their sessions on other devices. The panel also shows what their replies have cost, by month: the Worker adds up each reply's cost from the usage the API reports (tokens and searches, at the prices in `chat/chat.js`), in the `spend` table of `Accounts`, from the day this was added; a reply stopped partway counts as far as its usage had been reported. The first account sees every account's spending there too, and the others are told so. There is no cap on what an account spends; the workspace's spend limit is the one cap.
+
+There is no page for closing accounts or resetting forgotten passwords. The Cloudflare dashboard's [Data Studio](https://developers.cloudflare.com/durable-objects/observability/data-studio/) can open the `Accounts` object (Durable Objects, the `claude-chat` Worker's `Accounts`, then Data Studio with the object name `accounts`) and edit its tables:
 
 - To close an account, delete its row in `users`; its sessions stop working at once. Its conversations stay in its store, out of everyone's reach, even of someone who later opens an account under the same name.
 - To reset a forgotten password, note the row's `store`, delete the row, and have the person open the account again under the same name; then set `store` in the new row back to what it was, and their conversations are theirs again.
@@ -50,6 +56,10 @@ They are kept in one SQLite-backed Durable Object, `ChatStore` in `store.js`: a 
 The page keeps a copy of each conversation in the browser's `localStorage` too, under keys of the account's own, so it opens at once and survives a dropped connection: a save that fails is marked in the conversation list and goes up at the next chance. When the page comes back into view, it looks for what changed on other devices. Signing out on a device (*退出登录*, at the foot of the conversation list) ends the session there and clears the copies the cloud already has; anything not saved yet waits for the same account to sign in again.
 
 The Workers free plan includes SQLite-backed Durable Objects: up to 5 GB stored across the account and 100,000 rows written a day, of which a turn takes three or four. Deploying creates the objects; there is nothing to set up for them.
+
+Each conversation's menu in the list (⋯) renames it, exports it as a Markdown file (what was said and when, the thinking summaries, searches and cited pages, and files by name), or deletes it. A save that changes only a title, a model or an effort keeps the conversation's time, and so its place in the list. After a new conversation's first answer, the page asks `POST /title` for a name when the first message is long (over 20 characters) or only files; a shorter one is its own title, and a title changed by hand is never replaced.
+
+The search box above the list searches the titles at once and, a moment after typing stops, the words of every message in the cloud (`GET /search`): what the user wrote, the names of their files, and Claude's replies, but not the thinking, the time notes or the search results. Each message keeps its words in a column of its own for this, filled in as it is saved; messages saved before search get theirs a few at a time, on each look at the list or search, so that no one call takes long, and the page asks again while some are still without.
 
 ## Files
 
