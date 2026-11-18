@@ -612,6 +612,14 @@ const CHAIN = {
 };
 CHAIN['ROAD CLOSED'] = CHAIN.RC;
 const chainInfo = (s) => CHAIN[String(s || '').toUpperCase()] || CHAIN[s] || null;
+// The checkpoints of a drive in brief: the most demanding status of all, the highest R level, which is
+// what a car needs, and a hold, an escort or metering, which slows everyone
+function chainSummary(list) {
+  const ranked = [...list].sort((a, b) => chainRank(b.status) - chainRank(a.status));
+  const st = (c) => String(c.status || '').toUpperCase();
+  return { worst: ranked[0] || null, rx: ranked.find((c) => /^R-[123]$/.test(st(c))) || null,
+    held: ranked.find((c) => ['HT', 'ESC', 'VM'].includes(st(c))) || null };
+}
 
 // ---------- geometry: is a thing on the drive ----------
 function prepLeg(leg, i) {
@@ -878,14 +886,20 @@ function verdict() {
   const raise = (n, text, main) => { reasons.push({ n, text, main }); level = Math.max(level, n); };
   // chain controls
   if (rd.chains.length || !rd.missing.includes('chains')) checked.push(L('Caltrans 链条管制等级', 'Caltrans chain control'));
-  let worst = null;
-  for (const c of rd.chains) if (!worst || chainRank(c.status) > chainRank(worst.status)) worst = c;
+  // What a car needs is the highest R level on the way; a hold, an escort or metering is said beside it,
+  // since a storm brings them together (R-2 eastbound while westbound is held for spinouts)
+  const { worst, rx, held } = chainSummary(rd.chains);
   const wr = worst ? chainRank(worst.status) : 0;
   if (wr >= 6) raise(2, L(`Caltrans 在 ${worst.name} 封路`, `Caltrans has closed the road at ${worst.name}`), 'closed');
-  else if (worst && worst.status === 'R-3') raise(2, L(`R-3 链条管制（${worst.name}）：所有车都要装链条`, `R-3 at ${worst.name}: chains on every vehicle`), 'r3');
-  else if (wr >= 3) raise(1, `${worst.status} · ${P(chainInfo(worst.status)[0])} · ${worst.name} ${dirWord(worst.dir)}`, worst.status === 'R-1' ? 'r1' : 'chains');
-  else if (wr >= 2) raise(1, L(`${worst.name} 检查点在分批放车，路上会慢`, `Traffic is being metered at ${worst.name}`), 'slow');
-  else if (worst && wr === 0.5) reasons.push({ n: 0, text: L(`货车在 ${worst.name} 查链条，小车不受影响`, `Trucks are being screened for chains at ${worst.name}; cars aren't`) });
+  if (rx && rx.status === 'R-3') raise(2, L(`R-3 链条管制（${rx.name}）：所有车都要装链条`, `R-3 at ${rx.name}: chains on every vehicle`), 'r3');
+  else if (rx) raise(1, `${rx.status} · ${P(chainInfo(rx.status)[0])} · ${rx.name} ${dirWord(rx.dir)}`, rx.status === 'R-1' ? 'r1' : 'chains');
+  if (held) {
+    const how = { HT: L(`${held.name} ${dirWord(held.dir)}暂停放行（多是有车打滑出事），要等`, `Traffic held at ${held.name}, ${dirWord(held.dir)} (often for spinouts): expect a wait`),
+      ESC: L(`${held.name} ${dirWord(held.dir)}由 CHP 护送通行，会慢`, `CHP is escorting traffic at ${held.name}, ${dirWord(held.dir)}: slow going`),
+      VM: L(`${held.name} 检查点在分批放车，路上会慢`, `Traffic is being metered at ${held.name}`) }[held.status.toUpperCase()];
+    raise(1, how, held.status.toUpperCase() === 'HT' ? 'held' : 'slow');
+  }
+  if (!rx && !held && worst && wr === 0.5) reasons.push({ n: 0, text: L(`货车在 ${worst.name} 查链条，小车不受影响`, `Trucks are being screened for chains at ${worst.name}; cars aren't`) });
   // closures: Caltrans' own words, CHP, and work zones that close the highway
   checked.push(L('走廊封路（Caltrans 原文 / CHP / 施工）', 'closures (Caltrans text, CHP, work zones)'));
   for (const t of Object.values(rd.text)) for (const s of t.items) if (closedText(s.text)) raise(2, L(`Caltrans：${t.route} 封路 — ${s.text}`, `Caltrans: ${t.route} — ${s.text}`), 'closed');
@@ -931,7 +945,9 @@ function verdict() {
       `CHP is at a crash on the way: ${chpWord(x.type)}, ${x.where}${x.area ? ' (' + x.area + ')' : ''}${inc.length > 1 ? `, and ${inc.length - 1} more` : ''}`), 'crash');
   }
   // the headline
-  const main = (reasons.filter((r) => r.n === level).find((r) => r.main) || {}).main;
+  // the first reason at the top level names the headline, the chains before a hold or a crash
+  const order = ['closed', 'r3', 'chains', 'r1', 'storm', 'snow', 'held', 'work', 'crash', 'wind', 'slow'];
+  const main = reasons.filter((r) => r.n === level && r.main).map((r) => r.main).sort((a, b) => order.indexOf(a) - order.indexOf(b))[0];
   const head = level === 2
     ? (main === 'r3' ? L('今天别去：链条管制 R-3', 'Stay home: R-3 chain control') : L('今天别去：路封了', 'Stay home: the road is closed'))
     : level === 1
@@ -939,6 +955,7 @@ function verdict() {
         storm: L('能去，但要早走慢开', 'Go, but leave early and drive slowly'),
         snow: L('能去，但要早走慢开', 'Go, but leave early and drive slowly'), wind: L('能去，但山上风大，缆车可能停', 'Go, but wind may hold the upper lifts'),
         crash: L('能去，路上有事故，留意绕行', 'Go, but there is a crash on the way'), work: L('能去，路上有施工封路', 'Go, but a work zone closes the road'),
+        held: L('能去，但路上暂停放行，要等', 'Go, but traffic is being held: expect a wait'),
         slow: L('能去，但路上会慢', 'Go, but expect delays') }[main] || L('能去，但要小心', 'Go, carefully'))
       : (reasons.some((r) => r.ok) ? L('放心去，还有新雪', 'Good to go, with new snow') : L('放心去', 'Good to go'));
   return { level, head, reasons: reasons.sort((a, b) => b.n - a.n), checked, day, missing: rd.missing };
@@ -1336,10 +1353,12 @@ function renderChains() {
     fill(box, h('p', { class: 'err', text: rd.missing.includes('chains') ? L('链条管制暂时拿不到（Caltrans）。出发前打开 QuickMap 看。', 'Chain controls are unavailable right now (Caltrans). Check QuickMap before you leave.') : L('正在取链条管制…', 'Fetching chain controls…') }));
     return;
   }
-  let worst = rd.chains[0];
-  for (const c of rd.chains) if (chainRank(c.status) > chainRank(worst.status)) worst = c;
+  const sum = chainSummary(rd.chains);
+  // a closure first, then the R level a car needs, then a hold or escort, else no chains
+  const worst = chainRank(sum.worst.status) >= 6 ? sum.worst : sum.rx || sum.held || sum.worst;
   const rank = chainRank(worst.status), info = chainInfo(worst.status) || CHAIN['R-0'];
   const shown = rank >= 1 ? worst.status : 'R-0';
+  const also = sum.held && sum.held !== worst ? sum.held : null;
   box.className = 'card chain-hero ' + (rank >= 5 ? 'c2' : rank >= 2 ? 'c1' : 'c0');
   const trucks = rd.chains.filter((c) => chainRank(c.status) === 0.5);
   const active = rd.chains.filter((c) => chainRank(c.status) >= 1).sort((a, b) => chainRank(b.status) - chainRank(a.status));
@@ -1353,8 +1372,10 @@ function renderChains() {
     h('div', { class: 'lab', text: L('链条管制 · 走廊最高等级', 'Chain control: the highest on the way') }),
     h('div', { class: 'lvl' }, h('b', { text: shown }), h('span', { text: P((rank >= 1 ? info : CHAIN['R-0'])[0]) })),
     h('p', { text: rank >= 1 ? `${P(info[1])} ${L(`最高的是 ${worst.name}（${worst.route}，${dirWord(worst.dir)}）。`, `Highest at ${worst.name} (${worst.route}, ${dirWord(worst.dir)}).`)}` : P(CHAIN['R-0'][1]) }),
+    also ? h('p', { text: L(`另外：${also.name}（${dirWord(also.dir)}）${P(chainInfo(also.status)[0])}。${P(chainInfo(also.status)[1])}`, `Also: ${P(chainInfo(also.status)[0])} at ${also.name} (${dirWord(also.dir)}). ${P(chainInfo(also.status)[1])}`) }) : null,
     trucks.length ? h('p', { class: 'small', text: L(`货车在 ${[...new Set(trucks.map((c) => c.name))].join('、')} 查链条，小车不受影响。`, `Trucks are being screened at ${[...new Set(trucks.map((c) => c.name))].join(', ')}; cars aren’t.`) }) : null,
-    active.length ? h('ul', { class: 'cp' }, active.map(cpRow)) : null,
+    active.length ? h('ul', { class: 'cp' }, active.slice(0, 6).map(cpRow)) : null,
+    active.length > 6 ? h('p', { class: 'small muted', text: L(`另有 ${active.length - 6} 个检查点也在管制，见下面的全部列表。`, `${active.length - 6} more checkpoints have controls; see the full list below.`) }) : null,
     h('details', { style: 'margin-top:8px' }, h('summary', { class: 'fold small muted', text: L(`全部 ${rd.chains.length} 个检查点`, `All ${rd.chains.length} checkpoints`) }), h('ul', { class: 'cp' }, rd.chains.map(cpRow))));
 }
 
