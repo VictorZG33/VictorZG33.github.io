@@ -105,11 +105,11 @@ button:disabled { cursor: default; }
 .list .t { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .list .d { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 12px; color: var(--ink-2); }
 .list .tag { color: var(--alert); }
+.list .tag.live { color: var(--film); }
 .list .del { flex: none; width: 32px; height: 32px; margin-right: 2px; background: none; border: 0; border-radius: 8px; font-size: 17px; color: var(--ink-2); visibility: hidden; }
 .list li:hover .del, .list li:focus-within .del, .list li.on .del { visibility: visible; }
 .list .del:hover { color: var(--alert); }
 @media (pointer: coarse) { .list .del { visibility: visible; } }
-.side.busy .list, .side.busy .new { pointer-events: none; opacity: 0.6; }   /* while a reply comes */
 .none { margin: 0; padding: 20px 18px; color: var(--ink-2); font-size: 14px; }
 .side-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 18px calc(12px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--rule); }
 .who { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 14px; font-weight: 600; }
@@ -395,14 +395,20 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, v); return true; } catch (e) { return false; } },
   del(k) { try { localStorage.removeItem(k); } catch (e) {} },
 };
-const log = $('log'), input = $('input'), sendBtn = $('send'), picker = $('model'), thinker = $('effort'), side = $('side');
+const log = $('log'), input = $('input'), sendBtn = $('send'), picker = $('model'), thinker = $('effort');
 const coarse = matchMedia('(pointer: coarse)').matches;   // a phone or tablet: Enter makes a new line
 const narrow = matchMedia('(max-width: 899px)');           // the list of conversations slides in
 const ICON = {
   send: '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 19V5M5.5 11.5 12 5l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   stop: '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2.5" fill="currentColor"/></svg>',
 };
-let busy = null;   // the request in flight: { ctrl, stream, stopped, view }, view being the messages it shows
+// The replies coming in, by conversation: { c, ctrl, stream, stopped, view, node, typed, started },
+// view being the messages the reply follows and node the reply as it is drawn. A conversation can be
+// left while its reply comes, and others asked meanwhile; each reply lands in its own conversation.
+const jobs = new Map();
+// Messages that got no answer while another conversation was open, by conversation:
+// { c, typed, why, at }. The list marks them, and opening one puts the message back in the box.
+const missed = new Map();
 let token = store.get(AUTH.token) || '', me = null;
 try { me = JSON.parse(store.get(AUTH.me)); } catch (e) {}
 if (!token || !me || typeof me.id !== 'string' || typeof me.name !== 'string') { token = ''; me = null; }
@@ -489,17 +495,18 @@ const common = (a, b) => { let i = 0; while (i < a.length && i < b.length && a[i
 const userText = (m) => typeof m.content === 'string' ? m.content : m.content.filter((b) => b.type === 'text').map((b) => b.text).join('');
 const titleOf = (m) => (userText(m) || (m.files && m.files[0] && m.files[0].name) || '附件').replace(/\s+/g, ' ').trim().slice(0, 40);
 
-// A turn that brought an answer: the open conversation becomes `next`, here at once, in the cloud soon
-function commit(next) {
-  conv.synced = Math.min(conv.synced, common(next, conv.messages));
-  conv.messages = next;
-  conv.updated = Date.now();
-  if (!conv.title) conv.title = titleOf(next.find((m) => m.role === 'user'));
-  conv.dirty = true;
-  stash(conv);
-  enlist(conv);
-  store.set(KEY.current, conv.id);
-  upload(conv);
+// A turn that brought an answer: conversation c becomes `next`, here at once, in the cloud soon. It
+// need not be the one open: the answer may have come while another was being read.
+function commit(c, next) {
+  c.synced = Math.min(c.synced, common(next, c.messages));
+  c.messages = next;
+  c.updated = Date.now();
+  if (!c.title) c.title = titleOf(next.find((m) => m.role === 'user'));
+  c.dirty = true;
+  stash(c);
+  enlist(c);
+  if (c === conv) store.set(KEY.current, c.id);
+  upload(c);
 }
 
 // ---------- the cloud ----------
@@ -582,10 +589,10 @@ const look = () => inOrder(async () => {
     : { id: s.id, title: s.title, model: modelInfo(s.model).id, effort: anEffort(s.effort), updated: s.updated, version: s.version, dirty: false });
   for (const e of index) {
     if (cloud.has(e.id)) continue;
-    const c = e.id === conv.id ? conv : load(e.id);
+    const c = e.id === conv.id ? conv : (jobs.get(e.id) || {}).c || load(e.id);
     if (e.version && !e.dirty) {   // deleted on another device
       store.del(KEY.conv + e.id);
-      if (e.id === conv.id && !busy) show(fresh());
+      if (e.id === conv.id && !jobs.has(e.id)) show(fresh());
     } else if (c && c.messages.length) {   // never uploaded, or deleted elsewhere after changing here
       if (c.version) Object.assign(c, { version: 0, synced: 0, dirty: true });
       next.push({ ...e, version: 0, dirty: true });
@@ -594,26 +601,35 @@ const look = () => inOrder(async () => {
   }
   index = next.sort((a, b) => b.updated - a.updated);
   saveIndex();
-  const id = conv.messages.length || !wanted ? conv.id : wanted;
+  const id = conv.messages.length || jobs.has(conv.id) || !wanted ? conv.id : wanted;
   wanted = null;
   const s = cloud.get(id);
-  if (s && !busy && !conv.dirty && (id !== conv.id || s.version > conv.version)) {
+  if (s && !jobs.has(id) && !conv.dirty && (id !== conv.id || s.version > conv.version)) {
     const c = await pull(id);
-    if (c && !busy && (conv.id === id || !conv.messages.length)) show(c);
+    if (c && !jobs.has(id) && (conv.id === id || (!conv.messages.length && !jobs.has(conv.id)))) show(c);
   }
   if (conv.dirty) upload(conv);
 });
 
+// Opening a conversation whose reply is coming shows the reply as far as it has got; opening one
+// whose message got no answer puts the message back in the box
 async function openChat(id) {
-  if (busy) return;
+  const job = jobs.get(id), miss = missed.get(id);
+  if (job) return show(job.c);
   const e = index.find((x) => x.id === id);
-  let c = load(id);
+  let c = miss && !e ? miss.c : load(id);
   if (!c || (e && !c.dirty && e.version > c.version)) c = (await inOrder(() => pull(id))) || c;
-  if (c && !busy) show(c);
-  else if (!c) notice('打不开这段对话：连不上服务器。');
+  if (!c) return notice('打不开这段对话：连不上服务器。');
+  show(jobs.has(id) ? jobs.get(id).c : c);
+  if (miss && missed.get(id) === miss) {
+    missed.delete(id);
+    drawList();
+    giveBack(miss.typed, miss.why);
+  }
 }
 
 async function remove(id) {
+  if (jobs.has(id)) return;
   const e = index.find((x) => x.id === id);
   if (e && e.version) {
     const ok = await inOrder(() => api('DELETE', '/chats/' + id).then((r) => r.ok, () => false));
@@ -770,7 +786,7 @@ Promise.all([import(MARKED), import(PURIFY)]).then(([{ Marked }, { default: puri
   const marked = new Marked({ gfm: true, breaks: true });
   purify.addHook('afterSanitizeAttributes', (n) => { if (n.tagName === 'A') { n.setAttribute('target', '_blank'); n.setAttribute('rel', 'noopener noreferrer'); } });
   toHtml = (s) => purify.sanitize(marked.parse(s), SAFE);
-  if (!busy) render();
+  render();
 }).catch(() => {});   // without them, replies show as plain text
 const md = (s) => toHtml ? toHtml(s) : `<p class="plain">${esc(s)}</p>`;
 
@@ -843,18 +859,19 @@ function replyHtml(m, i, last) {
 }
 
 function render() {
-  const ms = busy ? busy.view : conv.messages, out = [];
+  const job = jobs.get(conv.id), ms = job ? job.view : conv.messages, out = [];
   ms.forEach((m, i) => {
     if (m.role === 'user') {
       // A time note follows the message it belongs to; it is drawn above it, as a time stamp
       const note = ms[i + 1] && ms[i + 1].role === 'system' ? ms[i + 1] : null;
       if (note) out.push(`<p class="stamp">${esc(stamp(note.at))}</p>`);
       out.push(userHtml(m));
-    } else if (m.role === 'assistant') out.push(replyHtml(m, i, i === ms.length - 1 && !busy));
+    } else if (m.role === 'assistant') out.push(replyHtml(m, i, i === ms.length - 1 && !job));
   });
   log.innerHTML = out.join('');
+  if (job) log.append(job.node);   // the reply coming, as far as it has got
   $('empty').hidden = ms.length > 0;
-  $('new-btn').disabled = $('new-top').disabled = !!busy || !ms.length;
+  updateSend();
 }
 
 const nearBottom = () => innerHeight + scrollY >= document.documentElement.scrollHeight - 120;
@@ -862,12 +879,20 @@ const scrollDown = () => scrollTo(0, document.documentElement.scrollHeight);
 function notice(text) { $('notice').textContent = text; $('notice').hidden = !text; }
 
 // ---------- the list of conversations ----------
+// The conversations, the latest first. One whose reply is coming, or whose message got no answer, goes
+// at the top, marked, from the moment its message is sent: a new one is listed before it has an answer.
 function drawList() {
-  $('chat-list').innerHTML = index.map((e) =>
-    `<li${e.id === conv.id ? ' class="on"' : ''}><button type="button" class="open" data-open="${esc(e.id)}"${e.id === conv.id ? ' aria-current="true"' : ''}><span class="t">${esc(e.title)}</span>` +
-    `<span class="d">${esc(day(e.updated))}${e.model ? ' · ' + esc(nameOf(e.model)) : ''}${anEffort(e.effort) ? ' · ' + e.effort : ''}${e.dirty || !e.version ? ' · <span class="tag">还没存到云端</span>' : ''}</span></button>` +
-    `<button type="button" class="del" data-del="${esc(e.id)}" aria-label="删除「${esc(e.title)}」">×</button></li>`).join('');
-  $('chat-none').hidden = index.length > 0;
+  const row = (id, title, desc, del) => `<li${id === conv.id ? ' class="on"' : ''}><button type="button" class="open" data-open="${esc(id)}"${id === conv.id ? ' aria-current="true"' : ''}>` +
+    `<span class="t">${esc(title)}</span><span class="d">${desc}</span></button>` +
+    (del ? `<button type="button" class="del" data-del="${esc(id)}" aria-label="删除「${esc(title)}」">×</button>` : '') + '</li>';
+  const marked = [...jobs.values()].map((j) => ({ c: j.c, at: j.started, first: j.view.find((m) => m.role === 'user'), tag: '<span class="tag live">回复中…</span>' }))
+    .concat([...missed.values()].filter((x) => !jobs.has(x.c.id)).map((x) => ({ c: x.c, at: x.at, first: { content: x.typed.text, files: x.typed.files }, tag: '<span class="tag">没收到回复</span>' })))
+    .sort((a, b) => b.at - a.at);
+  const ids = new Set(marked.map((x) => x.c.id));
+  $('chat-list').innerHTML = marked.map((x) => row(x.c.id, x.c.title || (x.first ? titleOf(x.first) : '新对话'), `${esc(day(x.at))} · ${x.tag}`, false))
+    .concat(index.filter((e) => !ids.has(e.id)).map((e) => row(e.id, e.title,
+      `${esc(day(e.updated))}${e.model ? ' · ' + esc(nameOf(e.model)) : ''}${anEffort(e.effort) ? ' · ' + e.effort : ''}${e.dirty || !e.version ? ' · <span class="tag">还没存到云端</span>' : ''}`, true))).join('');
+  $('chat-none').hidden = index.length + marked.length > 0;
 }
 // On a narrow screen the list slides in over the page
 function openSide(open) {
@@ -898,7 +923,6 @@ $('chat-list').addEventListener('click', async (e) => {
   }
 });
 function newChat() {
-  if (busy) return;
   closeSide();
   show(fresh());
   if (!coarse && token) input.focus();
@@ -906,26 +930,24 @@ function newChat() {
 $('new-btn').addEventListener('click', newChat);
 $('new-top').addEventListener('click', newChat);
 $('forget').addEventListener('click', () => {
-  if (busy) return;
+  if (jobs.size) return notice('还有回复没说完，等它说完再退出。');
   closeSide();
   signOut('已退出。这台设备上存的对话也清掉了，云端的还在。');
 });
 
 // ---------- talking to Claude ----------
+// The send button, the menus and 新对话, for the conversation open: while its reply comes, the button
+// stops it and the menus wait. Other conversations can be asked meanwhile.
 function updateSend() {
-  if (busy) return;
-  sendBtn.disabled = tray.some((f) => !f.ready) || !(input.value.trim() || tray.length);
-}
-function setBusy(on) {
-  sendBtn.classList.toggle('stop', on);
-  sendBtn.setAttribute('aria-label', on ? '停止' : '发送');
-  sendBtn.innerHTML = on ? ICON.stop : ICON.send;
-  sendBtn.disabled = false;
-  updateSend();
-  picker.disabled = on;
-  thinker.disabled = on;
-  side.classList.toggle('busy', on);
-  $('new-btn').disabled = $('new-top').disabled = on || !conv.messages.length;
+  const job = jobs.get(conv.id), stopping = !!job;
+  if (sendBtn.classList.contains('stop') !== stopping || !sendBtn.firstChild) {
+    sendBtn.classList.toggle('stop', stopping);
+    sendBtn.setAttribute('aria-label', stopping ? '停止' : '发送');
+    sendBtn.innerHTML = stopping ? ICON.stop : ICON.send;
+  }
+  sendBtn.disabled = !stopping && (tray.some((f) => !f.ready) || !(input.value.trim() || tray.length));
+  picker.disabled = thinker.disabled = stopping;
+  $('new-btn').disabled = $('new-top').disabled = !(job ? job.view : conv.messages).length;
 }
 
 // What goes back to the API of a reply. Empty text blocks are refused there. After a refusal
@@ -946,6 +968,7 @@ function problemText(err) {
   if (st === 400 && /retention/i.test(why)) return `这个模型要求组织开着 30 天的数据保留，换个模型试试：${why}`;
   if (st === 401 || st === 403) return `Anthropic API key 不能用了：${why}`;
   if (st >= 500) return 'Claude 暂时过载或出错了，稍后再试。';
+  if (!st && /stream ended/i.test(why)) return '连接中途断了，没收到回复，再发一次试试。';
   if (!st && /fetch|network|load failed|connection|terminated/i.test(why)) return '连不上服务器，检查一下网络。（在中国大陆，workers.dev 要翻墙才打得开。）';
   return `出错了：${why}`;
 }
@@ -962,23 +985,33 @@ function giveBack(typed, why) {
 // again), and `extra` the user's new message with its time note, if any. The conversation itself
 // changes only when an answer comes. A long run of searches can make the API pause a reply partway
 // (stop reason pause_turn): the reply so far then goes back as it is, and the API carries on with it.
-async function run(base, extra, typed) {
+async function run(c, base, extra, typed) {
   notice('');
-  const model = conv.model, effort = effortOf({ model, effort: conv.effort }), view = base.concat(extra);
+  const model = c.model, effort = effortOf({ model, effort: c.effort }), view = base.concat(extra);
   const ask = (sofar) => ({ model, effort, messages: (sofar.length ? view.concat([{ role: 'assistant', content: sofar }]) : view).map(({ role, content }) => ({ role, content })) });
   const problem = checkChatInput(ask([]));
   if (problem) return giveBack(typed, problem === 'too_long' ? '这段对话太长了，开一个新对话吧。' : `发不出去（${problem}）。`);
 
-  const job = busy = { ctrl: new AbortController(), stream: null, stopped: false, view };
-  setBusy(true);
-  render();
   const node = document.createElement('article');
   node.className = 'msg claude';
   node.setAttribute('aria-busy', 'true');
   node.innerHTML = `<div class="md">${DOTS}<span class="wait"></span></div>`;
-  log.append(node);
+  const job = { c, ctrl: new AbortController(), stream: null, stopped: false, view, node, typed, started: Date.now() };
+  jobs.set(c.id, job);
+  render();
+  drawList();
   scrollDown();
   const out = node.firstChild;
+  const here = () => conv === c;   // the conversation is the one open
+  // No answer: the message goes back in the box, or, if another conversation is open now, waits in
+  // this one, which the list marks
+  const fail = (why) => {
+    if (here()) return giveBack(typed, why);
+    const title = c.title || titleOf(view.find((m) => m.role === 'user'));
+    if (!typed) return notice(`「${title}」重新生成没成功：${why}`);
+    missed.set(c.id, { c, typed, why, at: Date.now() });   // the reason shows when it is opened
+    notice(`「${title}」没收到回复，在左边点开它，消息会回到输入框。`);
+  };
   // At high effort the thinking can go on for minutes: after a few seconds, count them
   const t0 = Date.now(), wait = out.querySelector('.wait');
   const tick = setInterval(() => {
@@ -994,7 +1027,7 @@ async function run(base, extra, typed) {
     if (!html || html === shown) return;   // still thinking: the dots and the timer stay
     clearInterval(tick);
     shown = html;
-    const stick = nearBottom();
+    const stick = node.isConnected && nearBottom();
     out.innerHTML = html;
     if (stick) scrollDown();
   };
@@ -1013,17 +1046,17 @@ async function run(base, extra, typed) {
       if (job.stopped) stream.abort();
       stream.on('streamEvent', (e, s) => { snap = s; if (!queued) { queued = true; requestAnimationFrame(paint); } });
       msg = await stream.finalMessage();
-      const c = costOf(model, msg.usage);
-      if (c != null) cost = (cost || 0) + c;
+      const spent = costOf(model, msg.usage);
+      if (spent != null) cost = (cost || 0) + spent;
       // A refusal can come partway through a reply, and the part already shown is not an answer
-      if (msg.stop_reason === 'refusal') return giveBack(typed, 'Claude 的安全策略拦下了这条消息，没有回答。换个说法试试？');
+      if (msg.stop_reason === 'refusal') return fail('Claude 的安全策略拦下了这条消息，没有回答。换个说法试试？');
       sofar = sofar.concat(keepable(msg.content));
       snap = null;
       if (msg.stop_reason !== 'pause_turn') break;
       if (round === MAX_RESUMES) throw new Error('paused too often');   // kept as far as it got, below
     }
-    if (!sofar.some((b) => b.type === 'text')) return giveBack(typed, 'Claude 这次没说话，再试一次？');
-    commit(view.concat([{
+    if (!sofar.some((b) => b.type === 'text')) return fail('Claude 这次没说话，再试一次？');
+    commit(c, view.concat([{
       role: 'assistant', content: sofar, at: Date.now(), model, effort, cost,
       by: msg.model && !msg.model.startsWith(model) ? msg.model : undefined,
       truncated: msg.stop_reason === 'max_tokens' || undefined,
@@ -1031,28 +1064,31 @@ async function run(base, extra, typed) {
   } catch (err) {
     const text = textOf({ content: live() });
     if (err.status === 401 && err.message === 'bad_session') {
-      giveBack(typed, '');
+      if (here()) giveBack(typed, '');
       signOut(EXPIRED, false);
     } else if (text.trim()) {
       // Stopped, or cut off partway: what came is kept as plain text, without its thinking and
       // searches, and 重新生成 asks again
-      commit(view.concat([{ role: 'assistant', content: [{ type: 'text', text: text.trimEnd() }], at: Date.now(), model, effort, stopped: true }]));
-      if (!job.stopped) notice('回复中途断了，点「重新生成」可以重来。');
-    } else giveBack(typed, job.stopped ? '' : problemText(err));
+      commit(c, view.concat([{ role: 'assistant', content: [{ type: 'text', text: text.trimEnd() }], at: Date.now(), model, effort, stopped: true }]));
+      if (!job.stopped) notice(here() ? '回复中途断了，点「重新生成」可以重来。' : `「${c.title}」的回复中途断了，打开它点「重新生成」可以重来。`);
+    } else if (job.stopped) giveBack(typed, '');   // stopped before a word: the message goes back in the box
+    else fail(problemText(err));
   } finally {
     clearInterval(tick);
-    store.del(KEY.sent);
-    busy = null;
-    const stick = nearBottom();
-    render();
-    setBusy(false);
-    if (stick) scrollDown();
+    if (typed && store.get(KEY.sent) === typed.text) store.del(KEY.sent);
+    jobs.delete(c.id);
+    if (here()) {
+      const stick = nearBottom();
+      render();
+      if (stick) scrollDown();
+    } else updateSend();
+    drawList();
   }
 }
 
 function sendTyped() {
   const text = input.value.trim();
-  if (busy || tray.some((f) => !f.ready)) return;
+  if (jobs.has(conv.id) || tray.some((f) => !f.ready)) return;
   const files = tray.slice();
   if (!text && !files.length) return;
   if (!token) return;
@@ -1067,19 +1103,22 @@ function sendTyped() {
   grow();
   store.del(KEY.draft);
   store.set(KEY.sent, text);
-  run(conv.messages, extra, { text, files });
+  if (missed.delete(conv.id)) drawList();
+  run(conv, conv.messages, extra, { text, files });
 }
 
 function again() {
-  if (busy || !conv.messages.length || conv.messages.at(-1).role !== 'assistant') return;
-  run(conv.messages.slice(0, -1), [], null);
+  if (jobs.has(conv.id) || !conv.messages.length || conv.messages.at(-1).role !== 'assistant') return;
+  run(conv, conv.messages.slice(0, -1), [], null);
 }
 
+// Stops the reply coming in the conversation open
 function stop() {
-  if (!busy) return;
-  busy.stopped = true;
-  busy.ctrl.abort();
-  if (busy.stream) busy.stream.abort();
+  const job = jobs.get(conv.id);
+  if (!job) return;
+  job.stopped = true;
+  job.ctrl.abort();
+  if (job.stream) job.stream.abort();
 }
 
 // ---------- the box you type in, the model and the effort ----------
@@ -1096,7 +1135,7 @@ input.addEventListener('keydown', (e) => {
   e.preventDefault();
   sendTyped();
 });
-composer.addEventListener('submit', (e) => { e.preventDefault(); if (busy) stop(); else sendTyped(); });
+composer.addEventListener('submit', (e) => { e.preventDefault(); if (jobs.has(conv.id)) stop(); else sendTyped(); });
 
 // The model and the effort apply to this conversation from its next message on, and new conversations
 // start with them. A change goes up to the cloud with the conversation.
@@ -1127,7 +1166,7 @@ log.addEventListener('click', async (e) => {
   const b = e.target.closest('[data-act]');
   if (!b) return;
   if (b.dataset.act === 'again') return again();
-  const m = (busy ? busy.view : conv.messages)[+b.closest('[data-i]').dataset.i];
+  const job = jobs.get(conv.id), m = (job ? job.view : conv.messages)[+b.closest('[data-i]').dataset.i];
   try {
     await navigator.clipboard.writeText(textOf(m));
     b.textContent = '已复制';
@@ -1249,7 +1288,7 @@ function signOut(msg, tell = true) {
   location.reload();
 }
 // Signing in or out in another tab: this one follows, unless a reply is still coming
-addEventListener('storage', (e) => { if (e.key === AUTH.token && (e.newValue || '') !== token && !busy) location.reload(); });
+addEventListener('storage', (e) => { if (e.key === AUTH.token && (e.newValue || '') !== token && !jobs.size) location.reload(); });
 
 // Coming back to the page, as after chatting on another device
 document.addEventListener('visibilitychange', () => {
@@ -1261,7 +1300,6 @@ input.value = store.get(KEY.draft) || store.get(KEY.sent) || '';
 store.del(KEY.sent);
 picker.value = conv.model;
 drawEffort();
-setBusy(false);
 grow();
 render();
 drawList();
