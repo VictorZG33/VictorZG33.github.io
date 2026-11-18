@@ -7,9 +7,19 @@
      Worker checks are what keep others from using it, since anyone can read this repository. -->
 <meta name="robots" content="noindex, nofollow">
 <title>闲聊 Small Talk</title>
+<!-- Added to the home screen, the page opens on its own, like an app, without the browser's bars -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="闲聊">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0C1218" media="(prefers-color-scheme: dark)">
 <script>
-/* Apply the theme picked with the Dark button on the homepage before first paint */
-(function () { try { var t = localStorage.getItem('wentaoz.theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {} })();
+/* Apply the theme picked with the Dark button on the homepage before first paint, with the browser's
+   bar (and the app's, on the home screen) in its colour */
+(function () { try { var t = localStorage.getItem('wentaoz.theme'); if (t === 'light' || t === 'dark') { document.documentElement.setAttribute('data-theme', t); document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) { m.setAttribute('content', t === 'dark' ? '#0C1218' : '#FFFFFF'); m.removeAttribute('media'); }); } } catch (e) {} })();
 </script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20fill%3D%22%230F1720%22%2F%3E%3Cpath%20d%3D%22M6%207h20v13H14l-6%205v-5H6z%22%20fill%3D%22%233178D3%22%2F%3E%3C%2Fsvg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -142,6 +152,7 @@ dialog.sheet::backdrop { background: rgb(12 18 24 / 0.45); }
 .usage td + td, .usage th + th { text-align: right; padding-left: 12px; }
 .usage .sub { display: block; font-size: 12.5px; color: var(--ink-2); }
 .sheet .fine { margin: 10px 0 0; font-size: 12.5px; color: var(--ink-2); }
+.sheet #install-go { margin-top: 12px; }
 .sheet #pw-form { display: grid; gap: 10px; }
 .sheet .msg-line { margin: 0; font-size: 14px; color: var(--alert); }
 .sheet .msg-line.ok { color: var(--film); }
@@ -186,7 +197,17 @@ dialog.sheet::backdrop { background: rgb(12 18 24 / 0.45); }
 .empty p { margin: 0; color: var(--ink-2); font-size: 14px; }
 
 .msg { margin: 0 0 22px; }
-.msg.user { display: flex; justify-content: flex-end; }
+.msg.user { display: flex; flex-direction: column; align-items: flex-end; }
+.msg.user .acts { margin: 3px -8px 0 0; }
+/* the last message, being changed where it is */
+.edit { width: min(100%, 40rem); padding: 8px 10px 8px 14px; background: var(--bg); border: 1px solid var(--film); border-radius: 14px; }
+.edit .files { justify-content: flex-start; }
+.edit textarea { display: block; width: 100%; max-height: 50vh; max-height: 50dvh; padding: 2px 0; border: 0; outline: 0; background: none; resize: none; font-size: 16px; line-height: 1.5; }
+.edit-acts { display: flex; justify-content: flex-end; gap: 6px; margin-top: 6px; }
+.edit-acts button { padding: 5px 14px; border: 1px solid var(--rule); border-radius: 9px; background: none; font-size: 14px; }
+.edit-acts button:hover { background: var(--bubble); }
+.edit-acts .go { border-color: var(--film); background: var(--film); color: #FFFFFF; font-weight: 600; }
+.edit-acts .go:hover { background: var(--film); }
 .bubble {
   max-width: 85%;
   padding: 9px 14px;
@@ -254,6 +275,9 @@ button.doc:hover { box-shadow: 0 0 0 1px var(--film); }
 .md .search q { quotes: "「" "」"; }
 .md .search q + q { margin-left: 4px; }
 .md .search .dots { padding: 0 0 0 6px; vertical-align: middle; }
+.md .search .read + .read::before { content: "·"; margin: 0 6px; }
+.md .search .read a { color: inherit; text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 2px; }
+.md .search .read a:hover { color: var(--film); text-decoration-color: currentColor; }
 .md .search .dots i { width: 5px; height: 5px; }
 .sources { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 10px 0 0; font-size: 12.5px; line-height: 1.4; }
 .sources .lab { color: var(--ink-2); margin-right: 2px; }
@@ -431,6 +455,11 @@ body.reading .app { margin-right: var(--reader); }
     <h3>花费</h3>
     <div id="usage"></div>
   </section>
+  <section id="install-sec" hidden>
+    <h3>添加到主屏幕</h3>
+    <p class="fine" id="install-how"></p>
+    <button type="button" class="lock-go" id="install-go" hidden>添加到主屏幕</button>
+  </section>
   <section>
     <h3>修改密码</h3>
     <form id="pw-form">
@@ -510,7 +539,7 @@ body.reading .app { margin-right: var(--reader); }
 </div>
 
 <script type="module">
-import { MODELS, EFFORTS, FILE_KINDS, MAX_FILE, MAX_FILES, MIN_PASSWORD, modelInfo, effortOf, costOf, MAX_TEXT, checkChatInput, checkAccount } from './chat.js';
+import { MODELS, EFFORTS, FILE_KINDS, MAX_FILE, MAX_FILES, MIN_PASSWORD, modelInfo, effortOf, costOf, MAX_TEXT, MAX_STORED, MAX_FETCHES, checkChatInput, checkAccount } from './chat.js';
 
 // ---------- settings ----------
 // The Worker in workers/claude-chat: it holds the Anthropic API key, keeps each user's conversations
@@ -915,8 +944,8 @@ const contentOf = (text, files) => !files.length ? text : [
 // Claude can't see a clock, so after the user's message the page adds a short system message with
 // their local time: on the first message, then once an hour has passed or the day has changed. It is
 // part of the conversation from then on, like any other turn.
-function needsNote(now) {
-  const last = conv.messages.findLast((m) => m.role === 'system');
+function needsNote(now, ms = conv.messages) {
+  const last = ms.findLast((m) => m.role === 'system');
   return !last || now - last.at >= NOTE_EVERY || new Date(last.at).toDateString() !== new Date(now).toDateString();
 }
 function noteFor(now) {
@@ -1040,9 +1069,10 @@ function md(s) {
 const DOTS = '<span class="dots" role="img" aria-label="Claude 在想"><i></i><i></i><i></i></span>';
 
 // A reply as the page draws it: its runs of text, the summaries of its thinking, and the web searches
-// Claude ran between them, each one running until its results are in. The results aren't drawn.
+// Claude ran and the pages it read between them, each one running until its result is in. The search
+// results and the pages' text aren't drawn: a page read is its title, linked, or why it wasn't read.
 function partsOf(content) {
-  const parts = [], answered = new Set(content.filter((b) => b.type === 'web_search_tool_result').map((b) => b.tool_use_id));
+  const parts = [], results = new Map(content.filter((b) => b.type === 'web_search_tool_result' || b.type === 'web_fetch_tool_result').map((b) => [b.tool_use_id, b]));
   let text = '';
   for (const b of content) {
     if (b.type === 'text') text += b.text;
@@ -1057,9 +1087,20 @@ function partsOf(content) {
       text = '';
       let query = '';
       try { query = String((b.input && b.input.query) || ''); } catch (e) {}   // still arriving
-      const search = { query, running: !answered.has(b.id) }, last = parts.at(-1);
+      const search = { query, running: !results.has(b.id) }, last = parts.at(-1);
       if (last && last.searches) last.searches.push(search);
       else parts.push({ searches: [search] });
+    } else if (b.type === 'server_tool_use' && b.name === 'web_fetch') {
+      if (text.trim()) parts.push({ text });
+      text = '';
+      let url = '';
+      try { url = String((b.input && b.input.url) || ''); } catch (e) {}   // still arriving
+      const r = results.get(b.id), got = (r && r.content) || {}, last = parts.at(-1);
+      const read = { url: (got.type === 'web_fetch_result' && got.url) || url, running: !r,
+        title: (got.type === 'web_fetch_result' && got.content && typeof got.content.title === 'string' && got.content.title.trim()) || '',
+        failed: r && got.type !== 'web_fetch_result' ? String(got.error_code || 'unavailable') : '' };
+      if (last && last.reads) last.reads.push(read);
+      else parts.push({ reads: [read] });
     }
   }
   if (text.trim()) parts.push({ text });
@@ -1079,8 +1120,22 @@ function bodyHtml(content, { live = false, opened = null, secs = 0, thought = 0 
       const label = running ? (secs ? `正在思考 · ${secs} 秒` : '正在思考') : n === 0 && thought ? `想了 ${thought} 秒` : '思考过程';
       return `<details class="think" data-k="${n}"${open ? ' open' : ''}><summary>${label}</summary><div class="think-body">${md(p.think)}</div></details>`;
     })()
+    : p.reads ? readsHtml(p.reads)
     : `<p class="search">${p.searches.some((q) => q.running) ? '正在搜索' : '搜索了'}：${p.searches.map((q) => `<q>${esc(q.query || '…')}</q>`).join('')}` +
       `${p.searches.some((q) => q.running) ? DOTS.replace('Claude 在想', '在搜索') : ''}</p>`).join('');
+}
+// The pages Claude opened: each by its title (or its address), linked, and why one couldn't be read
+const FETCH_FAILS = { url_not_accessible: '打不开', url_not_allowed: '不让读', unsupported_content_type: '不是网页', content_too_large: '太大了',
+  too_many_requests: '太频繁了', max_uses_exceeded: `一条回复最多读 ${MAX_FETCHES} 个页面`, url_not_in_prior_context: '对话里没出现过这个链接',
+  url_too_long: '链接太长', invalid_tool_input: '链接不对', unavailable: '出错了' };
+const shortUrl = (url) => { try { const u = new URL(url); return (u.hostname.replace(/^www\./, '') + u.pathname.replace(/\/$/, '')).slice(0, 48); } catch (e) { return url.slice(0, 48); } };
+function readsHtml(reads) {
+  const running = reads.some((r) => r.running), none = !running && reads.every((r) => r.failed);
+  return `<p class="search">${running ? '正在读' : none ? '没读到' : '读了'}：` + reads.map((r) => {
+    const name = esc(r.title || shortUrl(r.url) || '…'), why = r.failed ? FETCH_FAILS[r.failed] || r.failed : '';
+    return '<span class="read">' + (/^https?:\/\//i.test(r.url) ? `<a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer" title="${esc(r.url)}">${name}</a>` : name) +
+      (why ? `（${none ? '' : '没读到：'}${esc(why)}）` : '') + '</span>';
+  }).join('') + `${running ? DOTS.replace('Claude 在想', '在读') : ''}</p>`;
 }
 // The pages Claude cited, in the order it first cited them, each once
 const hostOf = (url) => { try { return new URL(url).hostname.replace(/^www\./, ''); } catch (e) { return ''; } };
@@ -1106,12 +1161,22 @@ function day(t) {
   return d.toLocaleDateString('zh-CN', d.getFullYear() === now.getFullYear() ? { month: 'long', day: 'numeric' } : { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-function userHtml(m) {
-  // A thumbnail is drawn only if it is one this page made; anything else a file's name
-  const files = (m.files || []).map((f) => THUMB.test(f.thumb || '') ? `<img src="${f.thumb}" alt="${esc(f.name)}" title="${esc(f.name)}">`
-    : f.kind === 'pdf' && f.id ? `<button type="button" class="doc" data-pdf="${esc(f.id)}" data-name="${esc(f.name)}" title="${esc(f.link || '打开来读')}"><b>PDF</b>${esc(f.name)}</button>`
-    : `<span class="doc"><b>${f.kind === 'pdf' ? 'PDF' : f.kind === 'image' ? 'IMG' : 'TXT'}</b>${esc(f.name)}</span>`).join('');
-  return `<article class="msg user"><div class="bubble">${files ? `<div class="files">${files}</div>` : ''}${esc(userText(m))}</div></article>`;
+// A thumbnail is drawn only if it is one this page made; anything else a file's name
+const filesHtml = (m) => (m.files || []).map((f) => THUMB.test(f.thumb || '') ? `<img src="${f.thumb}" alt="${esc(f.name)}" title="${esc(f.name)}">`
+  : f.kind === 'pdf' && f.id ? `<button type="button" class="doc" data-pdf="${esc(f.id)}" data-name="${esc(f.name)}" title="${esc(f.link || '打开来读')}"><b>PDF</b>${esc(f.name)}</button>`
+  : `<span class="doc"><b>${f.kind === 'pdf' ? 'PDF' : f.kind === 'image' ? 'IMG' : 'TXT'}</b>${esc(f.name)}</span>`).join('');
+// `editable` for the last message, which can be changed and sent again
+function userHtml(m, editable) {
+  const files = filesHtml(m);
+  return `<article class="msg user"><div class="bubble">${files ? `<div class="files">${files}</div>` : ''}${esc(userText(m))}</div>` +
+    (editable ? '<div class="acts"><button type="button" data-act="edit" title="改这条消息，重新发给 Claude">编辑</button></div>' : '') + '</article>';
+}
+// The last message being changed: its text in a box, its files as they were
+function editHtml(m) {
+  const files = filesHtml(m);
+  return `<article class="msg user editing"><div class="edit">${files ? `<div class="files">${files}</div>` : ''}` +
+    '<textarea rows="1" aria-label="改这条消息"></textarea>' +
+    '<div class="edit-acts"><button type="button" data-act="edit-cancel">取消</button><button type="button" class="go" data-act="edit-send">发送</button></div></div></article>';
 }
 
 function replyHtml(m, i, last) {
@@ -1127,17 +1192,35 @@ function replyHtml(m, i, last) {
     '</div></article>';
 }
 
+let editing = null;   // { id, msg, text, focus }: the conversation, its last message being changed, the text so far
+const lastAsked = (ms) => ms.map((m) => m.role).lastIndexOf('user');
 function render() {
   const job = jobs.get(conv.id), ms = job ? job.view : conv.messages, out = [];
+  // The last message can be changed while no reply comes; an edit of another one, or of one that is
+  // no longer last, as when another device has added a turn, is let go
+  const last = job || !token ? -1 : lastAsked(ms);
+  if (editing && (editing.id !== conv.id || last < 0 || ms[last] !== editing.msg)) editing = null;
+  const typing = document.activeElement && document.activeElement.matches('.edit textarea') ? document.activeElement : null;
   ms.forEach((m, i) => {
     if (m.role === 'user') {
       // A time note follows the message it belongs to; it is drawn above it, as a time stamp
       const note = ms[i + 1] && ms[i + 1].role === 'system' ? ms[i + 1] : null;
       if (note) out.push(`<p class="stamp">${esc(stamp(note.at))}</p>`);
-      out.push(userHtml(m));
+      out.push(i === last && editing ? editHtml(m) : userHtml(m, i === last));
     } else if (m.role === 'assistant') out.push(replyHtml(m, i, i === ms.length - 1 && !job));
   });
   log.innerHTML = out.join('');
+  const box = log.querySelector('.edit textarea');
+  if (box) {
+    box.value = editing.text;
+    fitEdit(box);
+    if (editing.focus || typing) {
+      const [from, to] = typing ? [typing.selectionStart, typing.selectionEnd] : [box.value.length, box.value.length];
+      editing.focus = false;
+      box.focus();
+      box.setSelectionRange(from, to);
+    }
+  }
   if (job) log.append(job.node);   // the reply coming, as far as it has got
   $('empty').hidden = ms.length > 0;
   updateSend();
@@ -1290,7 +1373,7 @@ $('chat-list').addEventListener('keydown', (e) => {
 $('chat-list').addEventListener('focusout', (e) => { if (e.target.matches('.rename') && renaming) endRename(true); });
 
 // A conversation as a Markdown file, saved by the browser: what was said, the thinking summaries,
-// the searches and the pages cited, and the files by name
+// the searches, the pages read and the pages cited, and the files by name
 function markdownOf(c) {
   const when = (t) => new Date(t).toLocaleString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
   const out = [`# ${c.title || '对话'}`, ''];
@@ -1305,6 +1388,11 @@ function markdownOf(c) {
       for (const p of partsOf(m.content)) {
         if (p.text) out.push(p.text.trim(), '');
         else if (p.think != null) out.push(['> **思考过程**', ...p.think.trim().split('\n')].join('\n> '), '');
+        else if (p.reads) {
+          const none = p.reads.every((r) => r.failed);
+          out.push(`*${none ? '没读到' : '读了'}：${p.reads.map((r) => `[${(r.title || shortUrl(r.url)).replace(/[[\]]/g, '')}](${r.url})` +
+            (r.failed ? `（${none ? '' : '没读到：'}${FETCH_FAILS[r.failed] || r.failed}）` : '')).join(' · ')}*`, '');
+        }
         else out.push(`*搜索了：${p.searches.map((q) => `「${q.query}」`).join('')}*`, '');
       }
       const cited = citedOf(m.content);
@@ -1392,17 +1480,28 @@ function keepBytes(id, bytes) {
 }
 const dropTask = (task) => task.destroy().catch(() => {});
 // Loads pdf.js and sets up the viewer, once, however many PDFs are opened while it loads; after a
-// failure, the next PDF opened tries again
-let readerLoad = null;
+// failure, the next PDF opened tries again. The viewer waits for pdf.js's stylesheet, which gives the
+// pages their size: a page without one is never seen, and so never drawn.
+let readerLoad = null, readerStyle = null;
 function readerLib() {
   return readerLoad ||= setUpReader().catch((e) => { readerLoad = null; throw e; });
 }
+function readerCss() {
+  return readerStyle ||= new Promise((ok, fail) => {
+    const link = Object.assign(document.createElement('link'), { rel: 'stylesheet', href: `${PDFJS}/web/pdf_viewer.css` });
+    link.onload = ok;
+    link.onerror = () => { link.remove(); readerStyle = null; fail(new Error('css')); };
+    document.head.append(link);
+  });
+}
 async function setUpReader() {
-  if (!document.querySelector('link[data-pdfjs]')) document.head.insertAdjacentHTML('beforeend', `<link rel="stylesheet" href="${PDFJS}/web/pdf_viewer.css" data-pdfjs>`);
-  const lib = await import(`${PDFJS}/build/pdf.min.mjs`);
-  lib.GlobalWorkerOptions.workerSrc = `${PDFJS}/build/pdf.worker.min.mjs`;
-  globalThis.pdfjsLib = lib;   // the viewer finds pdf.js here
-  const ui = await import(`${PDFJS}/web/pdf_viewer.mjs`);
+  let lib, ui;
+  try {
+    [lib] = await Promise.all([import(`${PDFJS}/build/pdf.min.mjs`), readerCss()]);
+    lib.GlobalWorkerOptions.workerSrc = `${PDFJS}/build/pdf.worker.min.mjs`;
+    globalThis.pdfjsLib = lib;   // the viewer finds pdf.js here
+    ui = await import(`${PDFJS}/web/pdf_viewer.mjs`);
+  } catch (e) { throw new Error('阅读器没加载上：连不上 jsDelivr，检查一下网络再试。'); }
   const bus = new ui.EventBus();
   const links = new ui.PDFLinkService({ eventBus: bus, externalLinkTarget: ui.LinkTarget.BLANK, externalLinkRel: 'noopener noreferrer' });
   const finder = new ui.PDFFindController({ eventBus: bus, linkService: links });
@@ -1412,10 +1511,15 @@ async function setUpReader() {
   bus.on('pagechanging', ({ pageNumber }) => { $('reader-at').textContent = `${pageNumber} / ${viewer.pagesCount}`; });
   bus.on('updatefindmatchescount', ({ matchesCount }) => { $('reader-found').textContent = matchesCount.total ? `${matchesCount.current} / ${matchesCount.total}` : ''; });
   bus.on('updatefindcontrolstate', ({ state }) => { if (state === 1) $('reader-found').textContent = '没找到'; });
-  // A panel that changes width refits pages fitted to its width; not while it is closed, as then it has none
-  new ResizeObserver(() => {
-    if (viewer.pdfDocument && viewer.currentScaleValue === 'page-width' && $('reader-scroll').clientWidth) viewer.currentScaleValue = 'page-width';
-  }).observe($('reader-scroll'));
+  // A panel that changes width refits pages fitted to its width; not while it is closed, as then it has
+  // none. Pages that change size are looked at again for which ones are in view, to be drawn.
+  const resized = new ResizeObserver(() => {
+    if (!viewer.pdfDocument || !$('reader-scroll').clientWidth) return;
+    if (viewer.currentScaleValue === 'page-width') viewer.currentScaleValue = 'page-width';
+    viewer.update();
+  });
+  resized.observe($('reader-scroll'));
+  resized.observe($('reader-pages'));
   Object.assign(pdfjs, { lib, viewer, links, bus });
   return pdfjs;
 }
@@ -1598,16 +1702,24 @@ function problemText(err) {
 // A request that brought no answer: the message and its files go back in the box, so pressing send
 // tries again
 function giveBack(typed, why) {
+  if (typed && typed.edit) {   // a changed message: back in its editor, drawn once no reply is coming
+    const i = lastAsked(conv.messages);
+    if (i >= 0) editing = { id: conv.id, msg: conv.messages[i], text: typed.text, focus: true };
+    if (!jobs.has(conv.id)) render();
+    return notice(why);
+  }
   if (typed && !input.value.trim()) { input.value = typed.text; grow(); store.set(KEY.draft, typed.text); }
   if (typed && typed.files.length && !tray.length) { tray = typed.files.map((f) => ({ ...f, key: newId(), ready: true })); drawTray(); }
   notice(why);
 }
 
-// One turn. `base` is the conversation it builds on (all of it, or all but the last reply when asking
-// again), and `extra` the user's new message with its time note, if any. The conversation itself
-// changes only when an answer comes. A long run of searches can make the API pause a reply partway
-// (stop reason pause_turn): the reply so far then goes back as it is, and the API carries on with it.
-async function run(c, base, extra, typed) {
+// One turn. `base` is the conversation it builds on (all of it, all but the last reply when asking
+// again, or all before the last message when that is changed), and `extra` the user's new message
+// with its time note, if any. The conversation itself changes only when an answer comes, and
+// `retitle` then gives a changed first message its own title. A long run of searches can make the
+// API pause a reply partway (stop reason pause_turn): the reply so far then goes back as it is, and
+// the API carries on with it.
+async function run(c, base, extra, typed, { retitle = false } = {}) {
   notice('');
   const model = c.model, effort = effortOf({ model, effort: c.effort }), view = base.concat(extra);
   const ask = (sofar) => ({ model, effort, messages: (sofar.length ? view.concat([{ role: 'assistant', content: sofar }]) : view).map(({ role, content }) => ({ role, content })) });
@@ -1689,11 +1801,16 @@ async function run(c, base, extra, typed) {
     }
     if (!sofar.some((b) => b.type === 'text')) return fail('Claude 这次没说话，再试一次？');
     const pondered = sofar.some((b) => b.type === 'thinking' && b.thinking && b.thinking.trim()), first = !base.some((m) => m.role === 'assistant');
-    commit(c, view.concat([{
+    const reply = {
       role: 'assistant', content: sofar, at: Date.now(), model, effort, cost, thought: pondered ? thoughtFor() || undefined : undefined,
       by: msg.model && !msg.model.startsWith(model) ? msg.model : undefined,
       truncated: msg.stop_reason === 'max_tokens' || undefined,
-    }]));
+    };
+    // What Claude read comes with its reply; a PDF it fetched comes whole, and can make the reply too
+    // big for the cloud to keep, so it isn't kept
+    if (JSON.stringify(reply).length > MAX_STORED) return fail('Claude 读到的东西太大，这条回复存不下。网上的 PDF 请用回形针旁边的链接按钮加进来，再问一次。');
+    if (retitle) c.title = '';
+    commit(c, view.concat([reply]));
     if (first) nameIt(c);
   } catch (err) {
     const text = textOf({ content: live() });
@@ -1761,6 +1878,42 @@ function again() {
   run(conv, conv.messages.slice(0, -1), [], null);
 }
 
+// ---------- changing the last message ----------
+// The last message can be changed where it is and sent again. It and the reply to it then give way to
+// the new one, as a conversation only ever loses turns from its end, so the earlier turns keep their
+// thinking. Its files stay with it. Enter sends on a computer, Escape lets it be.
+function fitEdit(box) {
+  box.style.height = 'auto';
+  box.style.height = box.scrollHeight + 'px';
+}
+function startEdit() {
+  const i = lastAsked(conv.messages);
+  if (i < 0 || jobs.has(conv.id) || !token) return;
+  editing = { id: conv.id, msg: conv.messages[i], text: userText(conv.messages[i]), focus: true };
+  render();
+}
+function endEdit() {
+  editing = null;
+  render();
+}
+function sendEdit() {
+  const c = conv, i = lastAsked(c.messages);
+  if (!editing || jobs.has(c.id) || !token || i < 0 || c.messages[i] !== editing.msg) return endEdit();
+  const old = c.messages[i], text = editing.text.trim(), held = Array.isArray(old.content) ? old.content.filter((b) => b.type !== 'text') : [];
+  if (!text && !held.length) return;   // nothing left to send
+  if (text.length > MAX_TEXT) return notice(`一条消息最多 ${MAX_TEXT} 个字符，这条有 ${text.length} 个。`);
+  const now = Date.now(), base = c.messages.slice(0, i);
+  const user = { role: 'user', content: held.length ? held.concat(text ? [{ type: 'text', text }] : []) : text, at: now, ...(old.files ? { files: old.files } : {}) };
+  const extra = [user];
+  if (needsNote(now, base)) extra.push({ role: 'system', content: noteFor(now), at: now });
+  // A first message's own title follows it; a name given by Haiku or by hand stays
+  const retitle = !base.some((m) => m.role === 'user') && c.title === titleOf(old);
+  editing = null;
+  store.set(KEY.sent, text);
+  if (missed.delete(c.id)) drawList();
+  run(c, base, extra, { text, files: old.files || [], edit: true }, { retitle });
+}
+
 // Stops the reply coming in the conversation open
 function stop() {
   const job = jobs.get(conv.id);
@@ -1817,6 +1970,9 @@ log.addEventListener('click', async (e) => {
   const b = e.target.closest('[data-act]');
   if (!b) return;
   if (b.dataset.act === 'again') return again();
+  if (b.dataset.act === 'edit') return startEdit();
+  if (b.dataset.act === 'edit-cancel') return endEdit();
+  if (b.dataset.act === 'edit-send') return sendEdit();
   const code = b.dataset.act === 'copy-code' && b.closest('.code');
   const job = jobs.get(conv.id), m = !code && (job ? job.view : conv.messages)[+b.closest('[data-i]').dataset.i];
   try {
@@ -1824,6 +1980,17 @@ log.addEventListener('click', async (e) => {
     b.textContent = '已复制';
     setTimeout(() => { b.textContent = '复制'; }, 1500);
   } catch (err) {}
+});
+
+log.addEventListener('input', (e) => {
+  if (!editing || !e.target.matches('.edit textarea')) return;
+  editing.text = e.target.value;
+  fitEdit(e.target);
+});
+log.addEventListener('keydown', (e) => {
+  if (!e.target.matches('.edit textarea')) return;
+  if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); endEdit(); }
+  else if (e.key === 'Enter' && !e.shiftKey && !coarse && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); sendEdit(); }
 });
 
 // ---------- accounts ----------
@@ -1937,6 +2104,7 @@ $('who').addEventListener('click', async () => {
   $('pw-user').value = me.name;
   $('pw-msg').textContent = '';
   $('usage').innerHTML = '<p class="fine">在读…</p>';
+  drawInstall();
   $('account').showModal();
   try {
     const res = await api('GET', '/usage');
@@ -1944,6 +2112,31 @@ $('who').addEventListener('click', async () => {
     drawUsage(await res.json());
   } catch (e) { $('usage').innerHTML = '<p class="fine">读不到：连不上服务器。</p>'; }
 });
+// ---------- the home screen ----------
+// Added to the home screen, the page opens like an app, on its own, without the browser's address bar.
+// Chrome and Edge offer to install it (beforeinstallprompt), which the account panel's button does;
+// on an iPhone or iPad it is Safari's share menu, which the panel describes. Opened from the home
+// screen, the panel leaves it out.
+let installer = null;
+addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); installer = e; drawInstall(); });
+addEventListener('appinstalled', () => { installer = null; drawInstall(); });
+const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+function drawInstall() {
+  const apple = /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+  $('install-sec').hidden = standalone();
+  $('install-go').hidden = !installer;
+  $('install-how').textContent = (installer ? '' : apple ? '在 Safari 里点分享按钮，再点「添加到主屏幕」。' : '在浏览器的菜单里选「添加到主屏幕」或「安装应用」。') +
+    '之后从主屏幕打开，就像一个 App，没有浏览器的地址栏；第一次打开可能要再登录一次。';
+}
+$('install-go').addEventListener('click', async () => {
+  const ask = installer;
+  if (!ask) return;
+  installer = null;
+  ask.prompt();
+  await ask.userChoice.catch(() => {});
+  drawInstall();
+});
+
 const monthOf = (m) => `${+m.slice(5)} 月`;
 const dollars = (x) => (x ? money(x) : '$0');
 function drawUsage({ mine, all }) {

@@ -1,0 +1,17 @@
+{
+  "id": "/chat/",
+  "name": "闲聊 Small Talk",
+  "short_name": "闲聊",
+  "description": "和 Claude 闲聊",
+  "lang": "zh-CN",
+  "start_url": "/chat/",
+  "scope": "/chat/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#FFFFFF",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

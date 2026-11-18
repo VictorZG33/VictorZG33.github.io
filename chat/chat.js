@@ -49,16 +49,27 @@ export function costOf(id, u) {
 // encrypted, and go back with the conversation, unchanged, so Claude keeps them in later turns.
 // This is the basic tool, which Claude calls directly; the later versions filter results by running
 // code first, which suits long research better than a chat, and makes a reply carry its code too.
-// A conversation's tools must never change once it has begun (see buildChatRequest), so this stays
-// as it is: change it and every conversation so far loses the reasoning in its earlier turns.
+// A conversation's tools should never change once it has begun (see buildChatRequest): change them
+// and every conversation so far loses the reasoning in its earlier turns, as it did when web search
+// came, and again when web fetch did.
 export const MAX_SEARCHES = 5;
 const WEB_SEARCH = { type: 'web_search_20250305', name: 'web_search', max_uses: MAX_SEARCHES };
+
+// Web fetch, which Anthropic also runs: Claude opens a page whose address is in the conversation, one
+// the user wrote or a search found, and reads it, at most MAX_FETCHES a reply. The page's text comes
+// into the reply, cut to about FETCH_TOKENS tokens, and stays with the conversation like the search
+// results, so these keep a conversation from growing too big to store or send. Fetching costs nothing
+// but the tokens read. A PDF would come whole, as base64, however long, so the prompt sends links to
+// PDFs to the link button, which attaches them as files. The basic tool, for the reason above.
+export const MAX_FETCHES = 3;
+const FETCH_TOKENS = 20000;
+const WEB_FETCH = { type: 'web_fetch_20250910', name: 'web_fetch', max_uses: MAX_FETCHES, max_content_tokens: FETCH_TOKENS };
 
 export const MAX_TEXT = 40000;        // characters in one message the user types
 const MAX_NOTE = 400;                 // characters in one of the page's time notes
 const MAX_MESSAGES = 400;
 const MAX_TOTAL = 3000000;            // characters of JSON in the whole conversation, reasoning included
-const MAX_STORED = 1000000;           // characters of JSON in one stored message, well inside a row's 8 MB
+export const MAX_STORED = 1000000;    // characters of JSON in one stored message, inside a row's 2 MB
 const MAX_TITLE = 100;
 
 // Files a message can carry: images, PDFs and plain text. The Worker uploads each to the Anthropic
@@ -93,7 +104,7 @@ const SYSTEM = `You are Claude, chatting with the user through a small private c
 - Talk like a thoughtful friend: warm, natural and direct. Match the length of what they write: a short reply to a short message, more only when they ask for it or the question needs it.
 - Reply in the language they write in. For Chinese, use Simplified Chinese unless they write Traditional.
 - Plain conversational prose suits a chat best. Use Markdown (a list, a table, a code block naming its language) only when it helps. For math, write LaTeX: $…$ within a line, $$…$$ for a formula on its own. The page renders both.
-- You can search the web. Search when the answer depends on something current or specific you may not know well (news, prices, weather, schedules, recent releases, a particular person, place or product), or when the user asks you to look something up; otherwise answer from what you know. You can't open links, but you can search for what one points to. The page lists the sources you cite below your reply. When you are unsure, say so rather than guessing.
+- You can search the web, and read a web page whose address is in the conversation: one the user gave you, or one a search found. Search when the answer depends on something current or specific you may not know well (news, prices, weather, schedules, recent releases, a particular person, place or product), or when the user asks you to look something up; read a page when the user shares a link or asks about one; otherwise answer from what you know. Don't fetch a link to a PDF: ask the user to add it with the link button beside the paperclip, which attaches the PDF for you both to read. The page shows the pages you read, and lists the sources you cite below your reply. When you are unsure, say so rather than guessing.
 - System messages in the conversation give the user's local date and time when they wrote.`;
 
 const ROLES = ['user', 'assistant', 'system'];
@@ -151,8 +162,9 @@ export function checkChatInput(x) {
 // Each thinking block the models write is bound to everything before it: the system prompt, the
 // tools and the earlier messages. Change any of them and the block no longer fits, which on these
 // models is an error unless the request says to drop such blocks instead. The page only ever adds to
-// a conversation, so that happens only when this file's prompt or tools change, as when web search
-// came: conversations from before carry on, without the reasoning of their earlier turns.
+// a conversation or takes turns off its end, so that happens only when this file's prompt or tools
+// change, as when web search and web fetch came: conversations from before carry on, without the
+// reasoning of their earlier turns.
 export function buildChatRequest(x) {
   const m = modelInfo(x.model), effort = effortOf(x);
   const req = {
@@ -161,7 +173,7 @@ export function buildChatRequest(x) {
     thinking: { type: 'adaptive', display: 'summarized', block_binding: { prefix_mismatch_behavior: 'drop_block' } },
     output_config: { effort },
     cache_control: { type: 'ephemeral' },
-    tools: [WEB_SEARCH],
+    tools: [WEB_SEARCH, WEB_FETCH],
     system: SYSTEM,
     messages: x.messages.map(({ role, content }) => ({ role, content })),
     betas: ['thinking-binding-controls-2026-08-01'],
