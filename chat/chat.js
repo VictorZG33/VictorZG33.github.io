@@ -69,7 +69,7 @@ export const MAX_TEXT = 40000;        // characters in one message the user type
 const MAX_NOTE = 400;                 // characters in one of the page's time notes
 const MAX_MESSAGES = 400;
 const MAX_TOTAL = 3000000;            // characters of JSON in the whole conversation, reasoning included
-export const MAX_STORED = 1000000;    // characters of JSON in one stored message, inside a row's 2 MB
+export const MAX_STORED = 1000000;    // characters of JSON in one stored message, well inside a row's 8 MB
 const MAX_TITLE = 100;
 
 // Files a message can carry: images, PDFs and plain text. The Worker uploads each to the Anthropic

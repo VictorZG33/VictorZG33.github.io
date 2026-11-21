@@ -275,6 +275,7 @@ button.doc:hover { box-shadow: 0 0 0 1px var(--film); }
 .md .search q { quotes: "「" "」"; }
 .md .search q + q { margin-left: 4px; }
 .md .search .dots { padding: 0 0 0 6px; vertical-align: middle; }
+.msg.claude .net { margin: 8px 0 0; font-size: 13px; color: var(--ink-2); }
 .md .search .read + .read::before { content: "·"; margin: 0 6px; }
 .md .search .read a { color: inherit; text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 2px; }
 .md .search .read a:hover { color: var(--film); text-decoration-color: currentColor; }
@@ -563,7 +564,7 @@ const MAX_RESUMES = 3;               // times a reply paused partway through its
 // box if the page reloads. Before there were accounts these had no prefix but 'chat.', and the
 // passcode was kept too.
 const AUTH = { token: 'chat.token', me: 'chat.me', flash: 'chat.flash', passcode: 'chat.passcode' };
-const keysOf = (p) => ({ model: p + 'model', effort: p + 'effort', index: p + 'index', conv: p + 'c.', current: p + 'current', draft: p + 'draft', sent: p + 'sent' });
+const keysOf = (p) => ({ model: p + 'model', effort: p + 'effort', index: p + 'index', conv: p + 'c.', current: p + 'current', draft: p + 'draft', sent: p + 'sent', jobs: p + 'jobs' });
 const prefixOf = (id) => `chat.u.${id}:`;   // ':' can't be in a name, so no account's keys start with another's
 
 const $ = (id) => document.getElementById(id);
@@ -1686,6 +1687,9 @@ function keepable(content) {
 
 function problemText(err) {
   const st = err && err.status, why = String((err && err.message) || err);
+  if (err && err.kind === 'connection_error') return '连接中途断了，没收到回复，再发一次试试。';
+  if (err && err.kind === 'lost') return '这条回复在服务器上断了，再发一次试试。';
+  if (st === 404 && why === 'no_reply') return '这条回复在服务器上找不到了，再发一次试试。';
   if (st === 429) return why === 'rate_limited' ? '发得太快了，等一分钟再试。' : 'Claude 那边限流了，稍后再试。';
   if (st === 403 && why === 'not_your_file') return '有个附件已经失效了，去掉它，重新传一次。';
   if (st === 503 && why === 'not_configured') return '服务器还没配置好：Worker 缺 ANTHROPIC_API_KEY 或 CHAT_PASSCODE。';
@@ -1713,15 +1717,128 @@ function giveBack(typed, why) {
   notice(why);
 }
 
+// ---------- a reply that outlasts a lost connection ----------
+// Claude's reply is asked for, and read to its end, by the user's own object at the Worker, whatever
+// becomes of this page's connection (see workers/claude-chat/store.js). The page reads its lines as
+// they come and keeps them. When the connection drops (a lift, a train, a phone put away), it waits
+// for the network and asks for the rest of the same reply, from the line it had got to, and reads
+// on where it was: nothing is asked twice, and nothing is lost. A reply coming is noted in this
+// browser too, so that a page closed or reloaded meanwhile reads on from the server when it opens.
+const RETRY = [1000, 2000, 4000, 8000, 15000];   // ms between tries after a lost connection, the last over and over
+const notedJobs = () => { try { return JSON.parse(store.get(KEY.jobs)) || {}; } catch (e) { return {}; } };
+function note(id, j) {   // conversation id -> what reading on needs, or null once the reply has ended
+  const all = notedJobs();
+  if (j) all[id] = j;
+  else delete all[id];
+  if (Object.keys(all).length) store.set(KEY.jobs, JSON.stringify(all));
+  else store.del(KEY.jobs);
+}
+// A reply's lines as they come, whole, each kept in `lines`; the blank lines that keep a quiet
+// connection open are dropped. A line saying the reply failed at the server becomes an error that
+// isn't tried again.
+function keeper(lines) {
+  const dec = new TextDecoder(), enc = new TextEncoder();
+  let rest = '';
+  return new TransformStream({
+    transform(chunk, controller) {
+      const parts = (rest + dec.decode(chunk, { stream: true })).split('\n');
+      rest = parts.pop();
+      for (const line of parts) {
+        if (!line.trim()) continue;
+        if (line.startsWith('{"type":"error"')) {
+          const x = JSON.parse(line);
+          throw Object.assign(new Error(x.error.message), { status: x.status, kind: x.error.type, failed: true });
+        }
+        lines.push(line);
+        controller.enqueue(enc.encode(line + '\n'));
+      }
+    },
+  });
+}
+// The lines read before a lost connection, then the rest as it comes
+function replay(before, rest) {
+  if (!before.length) return rest;
+  let head = new TextEncoder().encode(before.join('\n') + '\n');
+  const reader = rest.getReader();
+  return new ReadableStream({
+    async pull(controller) {
+      if (head) { controller.enqueue(head); head = null; return; }
+      const { done, value } = await reader.read();
+      if (done) controller.close();
+      else controller.enqueue(value);
+    },
+    cancel: (reason) => reader.cancel(reason),
+  });
+}
+// The server's own word that a reply failed, as against a lost connection: the SDK wraps it
+const failed = (e) => (e && e.failed ? e : e && e.cause && e.cause.failed ? e.cause : null);
+// After a lost connection: the note under the reply, and a wait, cut short when the network comes
+// back, the page is looked at again, or the reply is stopped
+function lost(job, tries) {
+  job.net.hidden = false;
+  return new Promise((ok) => {
+    const seen = () => { if (document.visibilityState === 'visible') done(); };
+    const done = () => { clearTimeout(t); removeEventListener('online', done); document.removeEventListener('visibilitychange', seen); job.wake = null; ok(); };
+    const t = setTimeout(done, RETRY[Math.min(tries, RETRY.length - 1)]);
+    addEventListener('online', done);
+    document.addEventListener('visibilitychange', seen);
+    job.wake = done;
+  });
+}
+// Reads reply `rid` to its end and returns its message: asked for with `body`, unless the server has
+// it already (as after a reload), and asked for again from where it had got to after each lost
+// connection. `onEvent` gets each event, those read before a lost connection again too.
+async function follow(job, rid, body, onEvent) {
+  const { BetaMessageStream } = await import(`${SDK}/lib/BetaMessageStream.mjs/+esm`);
+  const lines = [];
+  let asked = !body, tries = 0, barren = 0;
+  for (;;) {
+    if (job.stopped) throw new Error('stopped');
+    const following = asked;
+    let res;
+    try {
+      res = following ? await fetch(`${CHAT_ENDPOINT}/replies/${rid}?from=${lines.length}`, { headers: { Authorization: auth() }, signal: job.ctrl.signal })
+        : await fetch(CHAT_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: auth() }, body, signal: job.ctrl.signal });
+    } catch (e) {
+      asked = true;   // the request may have got there
+      if (job.stopped) throw e;
+      await lost(job, tries++);
+      continue;
+    }
+    if (!res.ok) {
+      const e = new Error((await res.json().catch(() => ({}))).error || res.statusText);
+      e.status = res.status;
+      if (following && res.status === 404 && body && !lines.length) { asked = false; continue; }   // it never got there: ask
+      if (following && (res.status === 429 || res.status >= 500)) { await lost(job, tries++); continue; }
+      throw e;
+    }
+    asked = true;
+    job.net.hidden = true;
+    const had = lines.length;
+    const stream = job.stream = BetaMessageStream.fromReadableStream(replay(lines.slice(), res.body.pipeThrough(keeper(lines))));
+    if (job.stopped) stream.abort();
+    stream.on('streamEvent', onEvent);
+    try {
+      const msg = await stream.finalMessage();
+      if (msg.stop_reason) return msg;   // whole; one that ended before its end reads on
+    } catch (e) {
+      if (job.stopped || failed(e)) throw failed(e) || e;
+    }
+    if (lines.length > had) tries = barren = 0;
+    else if (++barren > 3) throw Object.assign(new Error('the reply stopped coming'), { kind: 'lost' });
+    await lost(job, tries++);
+  }
+}
+
 // One turn. `base` is the conversation it builds on (all of it, all but the last reply when asking
 // again, or all before the last message when that is changed), and `extra` the user's new message
 // with its time note, if any. The conversation itself changes only when an answer comes, and
 // `retitle` then gives a changed first message its own title. A long run of searches can make the
 // API pause a reply partway (stop reason pause_turn): the reply so far then goes back as it is, and
-// the API carries on with it.
-async function run(c, base, extra, typed, { retitle = false } = {}) {
+// the API carries on with it. `resumed` is a reply this browser noted, read on after a reload.
+async function run(c, base, extra, typed, { retitle = false, resumed = null } = {}) {
   notice('');
-  const model = c.model, effort = effortOf({ model, effort: c.effort }), view = base.concat(extra);
+  const model = resumed ? resumed.model : c.model, effort = resumed ? resumed.effort : effortOf({ model, effort: c.effort }), view = base.concat(extra);
   const ask = (sofar) => ({ model, effort, messages: (sofar.length ? view.concat([{ role: 'assistant', content: sofar }]) : view).map(({ role, content }) => ({ role, content })) });
   const problem = checkChatInput(ask([]));
   if (problem) return giveBack(typed, problem === 'too_long' ? '这段对话太长了，开一个新对话吧。' : `发不出去（${problem}）。`);
@@ -1729,8 +1846,13 @@ async function run(c, base, extra, typed, { retitle = false } = {}) {
   const node = document.createElement('article');
   node.className = 'msg claude';
   node.setAttribute('aria-busy', 'true');
-  node.innerHTML = `<div class="md">${DOTS}<span class="wait"></span></div>`;
-  const job = { c, ctrl: new AbortController(), stream: null, stopped: false, view, node, typed, started: Date.now(), opened: new Map() };
+  node.innerHTML = `<div class="md">${DOTS}<span class="wait"></span></div><p class="net" role="status" hidden>网络断了。Claude 那边还在接着回答，网络一回来就接着收。</p>`;
+  const job = { c, ctrl: new AbortController(), stream: null, stopped: false, view, node, typed, started: resumed ? resumed.started : Date.now(), opened: new Map(),
+    rid: null, rids: [], wake: null, net: node.querySelector('.net') };
+  // Held while the reply comes, so that another tab opening meanwhile doesn't read it on too
+  let release = null, ended = false;
+  if (navigator.locks) navigator.locks.request('chat.reply:' + c.id, () => (ended ? null : new Promise((ok) => { release = ok; }))).catch(() => {});
+  if (c === conv) store.set(KEY.current, c.id);   // a page reloaded meanwhile opens it
   // A summary the reader opens or closes stays so while the reply goes on
   node.addEventListener('click', (e) => {
     const d = e.target.closest('summary') && e.target.closest('details.think');
@@ -1752,7 +1874,7 @@ async function run(c, base, extra, typed, { retitle = false } = {}) {
     notice(`「${title}」没收到回复，在左边点开它，消息会回到输入框。`);
   };
   // At high effort the thinking can go on for minutes: after a few seconds, count them
-  const t0 = Date.now(), wait = out.querySelector('.wait');
+  const t0 = job.started, wait = out.querySelector('.wait');
   const tick = setInterval(() => {
     if (shown) return paint();   // the thinking shown counts its seconds
     const sec = Math.round((Date.now() - t0) / 1000);
@@ -1771,25 +1893,20 @@ async function run(c, base, extra, typed, { retitle = false } = {}) {
     out.innerHTML = html;
     if (stick) scrollDown();
   };
-  let msg, cost;
+  let msg, cost = resumed ? resumed.cost : undefined;
+  if (resumed) sofar = resumed.sofar || [];
+  const onEvent = (e, s) => {
+    snap = s;
+    if (!firstWord && s.content.some((b) => (b.type === 'text' && b.text) || b.type === 'server_tool_use')) firstWord = Date.now();
+    if (!queued) { queued = true; requestAnimationFrame(paint); }
+  };
   try {
-    const { BetaMessageStream } = await import(`${SDK}/lib/BetaMessageStream.mjs/+esm`);
-    for (let round = 0; ; round++) {
-      const res = await fetch(CHAT_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: auth() },
-        body: JSON.stringify(ask(sofar)),
-        signal: job.ctrl.signal,
-      });
-      if (!res.ok) { const e = new Error((await res.json().catch(() => ({}))).error || res.statusText); e.status = res.status; throw e; }
-      const stream = job.stream = BetaMessageStream.fromReadableStream(res.body);
-      if (job.stopped) stream.abort();
-      stream.on('streamEvent', (e, s) => {
-        snap = s;
-        if (!firstWord && s.content.some((b) => (b.type === 'text' && b.text) || b.type === 'server_tool_use')) firstWord = Date.now();
-        if (!queued) { queued = true; requestAnimationFrame(paint); }
-      });
-      msg = await stream.finalMessage();
+    for (let round = resumed ? resumed.round : 0; ; round++) {
+      const again = resumed && round === resumed.round, rid = again ? resumed.rid : newId();
+      job.rid = rid;
+      job.rids.push(rid);
+      note(c.id, { rid, round, keep: base.length, extra, typed, sofar, cost, retitle, model, effort, started: job.started });
+      msg = await follow(job, rid, again ? null : JSON.stringify({ ...ask(sofar), reply: rid }), onEvent);
       const spent = costOf(model, msg.usage);
       if (spent != null) cost = (cost || 0) + spent;
       // A refusal can come partway through a reply, and the part already shown is not an answer
@@ -1826,6 +1943,12 @@ async function run(c, base, extra, typed, { retitle = false } = {}) {
     else fail(problemText(err));
   } finally {
     clearInterval(tick);
+    if (job.wake) job.wake();
+    note(c.id, null);
+    // The server keeps each reply until it is told the page has it: told now, as far as the network allows
+    for (const rid of job.rids) api('DELETE', '/replies/' + rid).catch(() => {});
+    ended = true;
+    if (release) release();
     if (typed && store.get(KEY.sent) === typed.text) store.del(KEY.sent);
     jobs.delete(c.id);
     if (here()) {
@@ -1921,6 +2044,24 @@ function stop() {
   job.stopped = true;
   job.ctrl.abort();
   if (job.stream) job.stream.abort();
+  if (job.wake) job.wake();
+  // The reply would go on at the server, which is told, as far as the network allows
+  if (job.rid) api('POST', `/replies/${job.rid}/stop`).catch(() => {});
+}
+
+// Replies that were coming when this page was last closed or reloaded read on from the server, in
+// the conversations they were coming in: a new one, kept only once it has an answer, made again
+// from what was noted. A reply another tab is still reading is left to it.
+async function readOn() {
+  const was = wanted;   // the conversation open last time, before the cloud is looked at
+  for (const [id, j] of Object.entries(notedJobs())) {
+    if (jobs.has(id) || !j || !j.rid || !j.extra) continue;
+    if (navigator.locks && !(await navigator.locks.request('chat.reply:' + id, { ifAvailable: true }, (held) => !!held))) continue;
+    const c = (conv.id === id ? conv : load(id)) || (j.keep === 0 ? { ...fresh(), id, model: j.model, effort: anEffort(j.effort) } : null);
+    if (!c || c.messages.length < j.keep) { note(id, null); continue; }
+    if (was === id && conv.id !== id && !conv.messages.length && !jobs.has(conv.id)) show(c);
+    run(c, c.messages.slice(0, j.keep), j.extra, j.typed, { retitle: j.retitle, resumed: j });
+  }
 }
 
 // ---------- the box you type in, the model and the effort ----------
@@ -2198,15 +2339,16 @@ document.addEventListener('visibilitychange', () => {
 });
 
 // ---------- start ----------
-input.value = store.get(KEY.draft) || store.get(KEY.sent) || '';
-store.del(KEY.sent);
+const coming = Object.values(notedJobs()).some((j) => j && j.typed && j.typed.text === store.get(KEY.sent));
+input.value = store.get(KEY.draft) || (coming ? '' : store.get(KEY.sent)) || '';
+if (!coming) store.del(KEY.sent);
 picker.value = conv.model;
 drawEffort();
 grow();
 render();
 drawList();
 scrollDown();
-if (token) { unlock(); look(); }
+if (token) { unlock(); look(); readOn(); }
 else {
   let flash = '';
   try { flash = sessionStorage.getItem(AUTH.flash) || ''; sessionStorage.removeItem(AUTH.flash); } catch (e) {}
