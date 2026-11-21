@@ -9,7 +9,7 @@ The page is linked from nowhere on the site and tells search engines to leave it
 The Worker:
 
 1. accepts requests only from `https://wentaoz.com` (the `Origin` header),
-2. allows 20 requests a minute per IP address (the `CHAT_LIMIT` binding in `wrangler.toml`), guesses at passwords and the invite code included; a message and its save take two,
+2. allows 20 requests a minute per IP address (the `CHAT_LIMIT` binding in `wrangler.toml`), guesses at passwords and the invite code included; a message and its save take two, and asking for the rest of a reply after a lost connection one more,
 3. opens an account (`POST /account`) for whoever sends the invite code, its `CHAT_PASSCODE` secret, and signs people in (`POST /login`), each time handing the page a session token,
 4. for anything else, takes that token from the `Authorization` header (`Bearer <token>`) and looks up whose session it is, and then
 5. answers one of these, with that user's own conversations and files:
@@ -22,7 +22,10 @@ The Worker:
 | `GET /` | `{ id, name, first }`, whose session it is, with no call to Claude |
 | `POST /password` `{ password, next }` | a new password, given the current one: `204`, and the account's other sessions end, or `403 bad_password` |
 | `GET /usage` | what the account's replies cost, by month: `{ mine: [{ month, cost, replies, searches }] }`, and for the first account `all`, every account's this month and last |
-| `POST /` `{ model, effort, messages }` | Claude's reply, streamed, searching the web and reading pages when it needs to. `checkChatInput` in `chat/chat.js` checks the conversation and `buildChatRequest` shapes the request, so the models, the prompt, the tools and `max_tokens` are fixed there, whatever the page sends |
+| `POST /` `{ model, effort, messages, reply }` | Claude's reply, streamed, searching the web and reading pages when it needs to; `reply` is the page's id for it, under which the reply goes on whatever happens to the connection (see below). `checkChatInput` in `chat/chat.js` checks the conversation and `buildChatRequest` shapes the request, so the models, the prompt, the tools and `max_tokens` are fixed there, whatever the page sends |
+| `GET /replies/:id?from=n` | the same reply's events from the nth on, as they come, or `404 no_reply` |
+| `POST /replies/:id/stop` | `204`, and the reply ends: the page's stop button |
+| `DELETE /replies/:id` | `204`: the page has kept the reply in its conversation |
 | `POST /title` `{ user, reply }` | a short name for a new conversation, from its first message and reply, by Claude Haiku 5.5: `{ title }`, `''` when none came |
 | `GET /chats` | every conversation, latest first, without its messages |
 | `GET /search?q=` | the conversations with `q` in their title or the words of their messages: `{ hits: [{ id, snippet }], pending }` |
@@ -65,6 +68,16 @@ Each conversation's menu in the list (⋯) renames it, exports it as a Markdown 
 
 The search box above the list searches the titles at once and, a moment after typing stops, the words of every message in the cloud (`GET /search`): what the user wrote, the names of their files, and Claude's replies, but not the thinking, the time notes or the search results. Each message keeps its words in a column of its own for this, filled in as it is saved; messages saved before search get theirs a few at a time, on each look at the list or search, so that no one call takes long, and the page asks again while some are still without.
 
+## Replies that outlast a lost connection
+
+A reply can take minutes: Claude may think for a long while at high effort, and search and read before it answers. On a phone, the connection often doesn't last that long, as when the signal goes in a lift or the page is put away. So the reply isn't asked for by the Worker, whose work ends when the page's connection does, but by the user's own Durable Object (`ask` in `store.js`): an object asking something of another server stays up until it has the answer, for up to 15 minutes, whatever becomes of the page that asked.
+
+The object reads the reply to its end, an event a line, as newline-delimited JSON, and keeps the lines: in memory while it comes, and in its storage (`replies` and `reply_lines`), saved every five seconds, for a day. The page gives each reply an id. When its connection drops, it shows a note under the reply (网络断了…), waits for the network (a second, then two, four, eight, then every fifteen, or at once when the network comes back or the page is looked at again), and asks for the rest of the same reply from the line it had got to (`GET /replies/:id?from=n`). It reads on where it was, the lines it had already read again for its reader, so nothing is shown twice and Claude is asked once. A request that may not have got through is asked again under the same id, and gets the same reply. A reply still coming is noted in the browser (`chat.u.<name>:jobs`), so a page closed or reloaded meanwhile reads on when it opens; a lock keeps two tabs from both reading it on. Once the page has kept a reply in its conversation, it tells the object to forget it (`DELETE /replies/:id`).
+
+Since a lost connection no longer ends a reply, the stop button tells the object to stop (`POST /replies/:id/stop`), and the request to Claude ends there; what the reply cost so far goes on the user's month, as every reply's cost does when it ends, all of it counted by the object. A reply that fails partway, as when the API is overloaded, ends with a line saying so (`{ type: 'error', error: { type, message }, status }`), which the page shows rather than trying again. Two things can still end a reply early: going on for more than 15 minutes with no page reading it, and a new deployment of the Worker, which can restart the objects. The page then gets what had come, marked 回复中断了.
+
+On the free plan, an object is billed for the time it is busy: 13,000 GB-s a day are included, at 128 MB an object about 29 hours of replies a day, shared by replies coming at once. A reply's lines take a few rows written a minute, of the 100,000 a day.
+
 ## Files
 
 A message can carry up to ten files: images (JPEG, PNG, GIF, WebP, up to 5 MB), PDFs (up to 30 MB) and plain text (up to 1 MB). The paperclip in the box you type in picks them, and they can be pasted or dragged in as well. The page makes an image at most 2,048 pixels on its long side, as a JPEG, unless it is already that small in one of those four kinds, and sends text files of any extension (`.md`, `.csv`, `.py` …) as plain text. Word, Excel and other documents aren't taken: the API doesn't read them.
@@ -77,7 +90,7 @@ The link button beside the paperclip takes a PDF's web address instead. The page
 
 A PDF opens in a reader beside the conversation, over it on a screen narrower than 1,100 pixels: click one in the box you type in, before it is sent, or in any message. The reader is [pdf.js](https://mozilla.github.io/pdf.js/), loaded from jsDelivr the first time a PDF is opened. It shows which page you are on and zooms, finds words as you type them (Enter for the next, Shift+Enter for the one before), and quotes what you select into the box you type in, with its page (`> 《name》第 N 页：`), so you can ask Claude about that passage. Escape or × closes it.
 
-The reader draws the Worker's own copy of the PDF, as the Files API gives none back. The copy is kept in the user's store, in rows of 1 MB (a row holds at most 2 MB), and read back by `GET /files/:id`, which only finds the user's own. It goes when its file does: taken off before sending, or deleted with the last conversation that carries it. The page keeps the PDFs opened during a visit, up to 64 MB of them, so going back to one fetches nothing. PDFs sent before the reader have no copy, and the reader says so. The copies count towards the Durable Object storage of the Cloudflare account, 5 GB on the free plan, each PDF once however many messages carry it.
+The reader draws the Worker's own copy of the PDF, as the Files API gives none back. The copy is kept in the user's store, in rows of 1 MB, and read back by `GET /files/:id`, which only finds the user's own. It goes when its file does: taken off before sending, or deleted with the last conversation that carries it. The page keeps the PDFs opened during a visit, up to 64 MB of them, so going back to one fetches nothing. PDFs sent before the reader have no copy, and the reader says so. The copies count towards the Durable Object storage of the Cloudflare account, 5 GB on the free plan, each PDF once however many messages carry it.
 
 ## Web search
 

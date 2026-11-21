@@ -10,7 +10,11 @@
 //   GET    /             -> { id, name, first }
 //   GET    /usage        -> { mine: [{ month, cost, replies, searches }], all?: [{ name, month, … }] }, all for the first account
 //   POST   /password     { password, next } -> 204, and the account's other sessions end | 403 bad_password
-//   POST   /             { model, effort, messages } -> Claude's reply, streamed as newline-delimited events
+//   POST   /             { model, effort, messages, reply } -> Claude's reply, streamed as newline-delimited events;
+//                         `reply` is the page's id for it, under which it goes on whatever the connection
+//   GET    /replies/:id?from=n  -> the same reply's events from the nth on, as they come | 404 no_reply
+//   POST   /replies/:id/stop    -> 204, and the reply ends
+//   DELETE /replies/:id  -> 204, the reply forgotten once the page has kept it
 //   POST   /title        { user, reply } -> { title }: a short name for a new conversation, by Haiku, or ''
 //   GET    /search?q=    -> { hits: [{ id, snippet }], pending }: the conversations with q in their title or words
 //   GET    /chats        -> { chats: [{ id, title, model, effort, updated, version, size }] }, the latest first
@@ -29,8 +33,9 @@
 // their own, in store.js. See README.md in this folder.
 
 import Anthropic, { toFile } from '@anthropic-ai/sdk';
-import { buildChatRequest, checkChatInput, checkSave, checkUpload, checkAccount, costOf, NAME, FILE_ID, MAX_FILE } from '../../chat/chat.js';
+import { checkSave, checkUpload, checkAccount, costOf, NAME, FILE_ID, MAX_FILE } from '../../chat/chat.js';
 import { hashOf, ROUNDS, b64 } from './accounts.js';
+import { filesIn } from './store.js';
 
 export { ChatStore } from './store.js';
 export { Accounts } from './accounts.js';
@@ -38,6 +43,7 @@ export { Accounts } from './accounts.js';
 const ORIGINS = ['https://wentaoz.com', 'https://www.wentaoz.com'];
 const CHATS = /^\/chats(?:\/([a-z0-9]{6,32}))?$/;
 const FILES = /^\/files(?:\/([^/]+))?$/;
+const REPLIES = /^\/replies\/([a-z0-9]{6,32})(\/stop)?$/;
 
 const enc = new TextEncoder();
 const b64url = (bytes) => btoa(String.fromCharCode(...new Uint8Array(bytes))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -53,9 +59,6 @@ async function sameSecret(given, expected) {
 }
 
 const tokenOf = (request) => ((request.headers.get('Authorization') || '').match(/^Bearer ([A-Za-z0-9_-]{20,100})$/) || [])[1] || '';
-// The files the user's messages carry
-const filesIn = (messages) => [...new Set(messages.flatMap((m) => m.role === 'user' && Array.isArray(m.content) ? m.content : [])
-  .filter((b) => b.source && b.source.type === 'file').map((b) => b.source.file_id))];
 
 export default {
   async fetch(request, env, ctx) {
@@ -150,7 +153,24 @@ export default {
     if (pathname === '/') {
       if (method === 'GET') return json(200, { id: me.id, name: me.name, first: me.first });
       if (method !== 'POST') return fail(405, 'GET or POST only');
-      return chat(request, env, ctx, store, accounts, me, cors, fail);
+      // The reply is asked for, and read to its end, by the user's own object: see store.js. What the
+      // page sent goes there as it came, the object checking it; one far too long to be a
+      // conversation goes no further.
+      const text = await request.text();
+      if (text.length > 4000000) return fail(400, 'too_long');
+      return relay(await store.ask(text, me.id), cors);
+    }
+    const r = pathname.match(REPLIES);
+    if (r) {
+      if (r[2]) {
+        if (method !== 'POST') return fail(405, 'POST only');
+        await store.stopReply(r[1]);
+        return done();
+      }
+      if (method === 'GET') return relay(await store.follow(r[1], Number(new URL(request.url).searchParams.get('from')) || 0), cors);
+      if (method !== 'DELETE') return fail(405, 'GET or DELETE only');
+      await store.forgetReply(r[1]);
+      return done();
     }
 
     const f = pathname.match(FILES);
@@ -300,33 +320,9 @@ async function fromLink(request, client, store, json, fail) {
   return keep(client, store, bytes, name, 'application/pdf', json, fail);
 }
 
-async function chat(request, env, ctx, store, accounts, me, cors, fail) {
-  let input;
-  try { input = await request.json(); } catch { return fail(400, 'bad json'); }
-  const problem = checkChatInput(input);
-  if (problem) return fail(400, problem);
-  // Only files of the user's own: the Files API would read anyone's
-  const ids = filesIn(input.messages);
-  if (ids.length && !(await store.owns(ids))) return fail(403, 'not_your_file');
-
-  const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
-  const stream = client.beta.messages.stream(buildChatRequest(input));
-  try {
-    await stream.withResponse();   // surfaces an API error (bad key, overload) before any bytes go out
-  } catch (e) {
-    return apiFail(e, fail);
-  }
-  // What the reply cost, from its usage, goes on its user's month once it ends, or as far as it got if
-  // the page stopped listening first: then without the output not yet reported
-  let seen = null;
-  stream.on('streamEvent', (e, snapshot) => { seen = snapshot; });
-  ctx.waitUntil(stream.done().catch(() => {}).then(() => {
-    const u = (stream.receivedMessages.at(-1) || seen || {}).usage;
-    if (u) return accounts.spend(me.id, costOf(input.model, u) || 0, (u.server_tool_use && u.server_tool_use.web_search_requests) || 0, 1);
-  }).catch(() => {}));
-  // Newline-delimited events, read on the page with BetaMessageStream.fromReadableStream()
-  return new Response(keepAlive(stream.toReadableStream()), { headers: { ...cors, 'Content-Type': 'application/x-ndjson', 'Cache-Control': 'no-store' } });
-}
+// What the user's object answers, passed on as it comes, with the headers this site needs
+const relay = (res, cors) => new Response(res.body, { status: res.status, headers: {
+  ...cors, 'Content-Type': res.headers.get('Content-Type') || 'application/json', 'Cache-Control': 'no-store' } });
 
 // A name for a new conversation, from its first message and reply, by the smallest model: a
 // hundredth of a cent or so, which goes on the user's month too
@@ -353,35 +349,3 @@ async function title(request, env, ctx, accounts, me, json, fail) {
   return json(200, { title: name });   // '' when none came: the page keeps the title it has
 }
 
-// At high effort Claude can think for minutes before it writes a word, and the stream carries nothing
-// meanwhile: the SDK drops the API's own pings. A connection that quiet can be cut on the way, so a
-// blank line goes out after every 15 seconds of silence; the page's reader skips blank lines. When
-// the page stops listening (its stop button), the request to Claude is cancelled too.
-function keepAlive(body) {
-  const reader = body.getReader(), blank = new TextEncoder().encode('\n');
-  let timer;
-  return new ReadableStream({
-    async start(controller) {
-      const beat = () => { timer = setTimeout(() => { controller.enqueue(blank); beat(); }, 15000); };
-      beat();
-      try {
-        for (;;) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          clearTimeout(timer);
-          controller.enqueue(value);
-          beat();
-        }
-        controller.close();
-      } catch (e) {
-        controller.error(e);
-      } finally {
-        clearTimeout(timer);
-      }
-    },
-    cancel(reason) {
-      clearTimeout(timer);
-      return reader.cancel(reason);
-    },
-  });
-}
